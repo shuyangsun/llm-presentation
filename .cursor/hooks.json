@@ -3,21 +3,21 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "bash .agents/agents/vcs/scripts/cursor-hook.sh sessionStart",
+        "command": "bash .agents/skills/vcs/scripts/cursor-hook.sh sessionStart",
         "timeout": 60,
         "failClosed": true
       }
     ],
     "beforeShellExecution": [
       {
-        "command": "bash .agents/agents/vcs/scripts/cursor-hook.sh beforeShellExecution",
+        "command": "bash .agents/skills/vcs/scripts/cursor-hook.sh beforeShellExecution",
         "timeout": 30,
         "failClosed": true
       }
     ],
     "preToolUse": [
       {
-        "command": "bash .agents/agents/vcs/scripts/cursor-hook.sh preToolUse",
+        "command": "bash .agents/skills/vcs/scripts/cursor-hook.sh preToolUse",
         "matcher": "Shell|Write|Edit|Delete|Task",
         "timeout": 30,
         "failClosed": true
@@ -25,7 +25,7 @@
     ],
     "afterFileEdit": [
       {
-        "command": "bash .agents/agents/vcs/scripts/cursor-hook.sh afterFileEdit",
+        "command": "bash .agents/skills/vcs/scripts/cursor-hook.sh afterFileEdit",
         "timeout": 30,
         "failClosed": true
       }

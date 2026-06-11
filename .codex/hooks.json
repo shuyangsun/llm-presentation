@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"$(jj root 2>/dev/null || git rev-parse --show-toplevel)\"; bash \"$repo/.agents/agents/vcs/scripts/session-start.sh\" --hook codex --ide codex",
+            "command": "repo=\"$(jj root 2>/dev/null || git rev-parse --show-toplevel)\"; bash \"$repo/.agents/skills/vcs/scripts/session-start.sh\" --hook codex --ide codex",
             "timeout": 60,
             "statusMessage": "Starting VCS isolation"
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"$(jj root 2>/dev/null || git rev-parse --show-toplevel)\"; bash \"$repo/.agents/agents/vcs/scripts/vcs-check.sh\" hook --agent codex",
+            "command": "repo=\"$(jj root 2>/dev/null || git rev-parse --show-toplevel)\"; bash \"$repo/.agents/skills/vcs/scripts/vcs-check.sh\" hook --agent codex",
             "timeout": 30,
             "statusMessage": "Checking VCS workspace"
           }
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"$(jj root 2>/dev/null || git rev-parse --show-toplevel)\"; bash \"$repo/.agents/agents/vcs/scripts/vcs-check.sh\" hook --agent codex",
+            "command": "repo=\"$(jj root 2>/dev/null || git rev-parse --show-toplevel)\"; bash \"$repo/.agents/skills/vcs/scripts/vcs-check.sh\" hook --agent codex",
             "timeout": 30,
             "statusMessage": "Checking VCS workspace"
           }

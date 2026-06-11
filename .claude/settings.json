@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/agents/vcs/scripts/session-start.sh\" --hook claude --ide claude",
+            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/skills/vcs/scripts/session-start.sh\" --hook claude --ide claude",
             "timeout": 60
           }
         ]
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/agents/vcs/scripts/vcs-check.sh\" hook --agent claude",
+            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/skills/vcs/scripts/vcs-check.sh\" hook --agent claude",
             "timeout": 30
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/agents/vcs/scripts/vcs-check.sh\" hook --agent claude",
+            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/skills/vcs/scripts/vcs-check.sh\" hook --agent claude",
             "timeout": 30
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/agents/vcs/scripts/vcs-check.sh\" hook --agent claude",
+            "command": "repo=\"${CLAUDE_PROJECT_DIR:-$(jj root 2>/dev/null || git rev-parse --show-toplevel)}\"; bash \"$repo/.agents/skills/vcs/scripts/vcs-check.sh\" hook --agent claude",
             "timeout": 30
           }
         ]
