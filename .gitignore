@@ -30,6 +30,7 @@ $RECYCLE.BIN/
 .idea/
 
 # Local environment and secrets
+.venv/
 .env
 .env.*
 !.env.example
@@ -37,6 +38,8 @@ $RECYCLE.BIN/
 
 # Logs and caches
 *.log
+__pycache__/
+*.py[cod]
 .cache/
 tmp/
 temp/

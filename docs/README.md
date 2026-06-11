@@ -8,3 +8,4 @@
 
 - [VCS guardrails session](coding-sessions/2026-06-10/0000-codex-vcs-guardrails.md) - records the setup of local VCS guardrail hooks and jj workflow checks.
 - [Open-source ASR VTT research session](coding-sessions/2026-06-10/0001-codex-open-source-asr-vtt-research.md) - records the hook fix, ASR research, documentation, and local commit workflow.
+- [ASR VTT pipeline session](coding-sessions/2026-06-11/0002-codex-asr-vtt-pipeline.md) - records the CUDA ASR implementation, WhisperX and Parakeet backend validation, ffmpeg wrapper fix, and local commit workflow.
