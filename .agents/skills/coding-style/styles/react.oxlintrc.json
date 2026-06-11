@@ -1,0 +1,32 @@
+{
+  "plugins": ["react"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react",
+            "importNames": ["useMemo", "useCallback", "memo", "forwardRef"],
+            "message": "Manual memoization is banned — the React Compiler memoizes automatically (coding-style skill: styles/react.md §1). Keep it only for a useEffect dependency that must stay stable, a value passed to a non-React/third-party library that compares by reference, or measured-expensive work — then opt out with `// eslint-disable-next-line no-restricted-imports -- <reason>`. forwardRef is unnecessary in React 19: accept `ref` as a regular prop."
+          }
+        ]
+      }
+    ],
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/no-unstable-nested-components": "error",
+    "react/jsx-key": "error",
+    "react/no-array-index-key": "warn",
+    "react/no-children-prop": "error",
+    "react/no-direct-mutation-state": "error",
+    "react/no-this-in-sfc": "error",
+    "react/no-unknown-property": "error",
+    "react/void-dom-elements-no-children": "error",
+    "react/no-danger-with-children": "error",
+    "react/jsx-no-target-blank": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/no-unescaped-entities": "warn",
+    "react/self-closing-comp": "warn"
+  }
+}

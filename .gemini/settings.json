@@ -1,0 +1,36 @@
+{
+  "hooksConfig": {
+    "enabled": true,
+    "notifications": true
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "name": "vcs-session-isolation",
+            "type": "command",
+            "command": "bash \"$GEMINI_PROJECT_DIR/.agents/agents/vcs/scripts/gemini-hook.sh\" session-start",
+            "timeout": 60000,
+            "description": "Create or reuse a per-session VCS workspace and inject NEXT_CWD guidance."
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "matcher": "run_shell_command|write_file|replace",
+        "hooks": [
+          {
+            "name": "vcs-workspace-guard",
+            "type": "command",
+            "command": "bash \"$GEMINI_PROJECT_DIR/.agents/agents/vcs/scripts/gemini-hook.sh\" before-tool",
+            "timeout": 30000,
+            "description": "Block shared-checkout edits and raw VCS writes outside the owned workspace."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+# Jujutsu
+.jj/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100/
+.Trashes/
+.fseventsd/
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux desktop metadata
+.directory
+
+# Editor and local tool state
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Logs and caches
+*.log
+.cache/
+tmp/
+temp/
+
+# Claude Code local-only settings
+.claude/settings.local.json
+.claude/*.local.json
+CLAUDE.local.md
+.claude/cache/
+.claude/history/
+.claude/worktrees/
+
+# Codex local-only settings
+.codex/config.toml
+.codex/*.local.toml
+.codex/cache/
+.codex/logs/
+.codex/sessions/

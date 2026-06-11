@@ -1,0 +1,35 @@
+{
+  "rag_config_id": "rag-r",
+  "_note": "Default config the `setting-up-rag` skill applies to a doc set. Local-first: Qdrant + FastEmbed (CPU, no cloud). Heading-aware chunking with a min-merge floor (avoids the tiny-section chunk explosion), hybrid dense+sparse retrieval fused with RRF, then a local cross-encoder rerank. Validate and adjust against a held-out gold set per TUNING.md before trusting a change; never keep a knob that does not beat the baseline.",
+  "collection": "docs",
+  "embedding": {
+    "dense_model": "BAAI/bge-small-en-v1.5",
+    "dense_dim": 384,
+    "distance": "cosine",
+    "sparse_model": "Qdrant/bm25",
+    "_alt_dense": "BAAI/bge-base-en-v1.5 (768d, higher quality, slower) — re-index if changed",
+    "_alt_sparse": "prithivida/Splade_PP_en_v1 (learned sparse; better recall, larger/slower than bm25)"
+  },
+  "chunker": {
+    "strategy": "heading",
+    "size": 350,
+    "overlap": 40,
+    "min_words": 80,
+    "code_size": 120,
+    "code_overlap": 20,
+    "_note": "size/overlap/min_words in WORDS. min_words merges tiny heading sections so a heading-dense doc does not explode into hundreds of one-line chunks. code_* apply when --kind code."
+  },
+  "hybrid": {
+    "fusion": "rrf",
+    "prefetch": 60,
+    "_note": "Each arm (dense, sparse) fetches `prefetch` candidates; RRF fuses their rank lists. DBSF is the score-based alternative."
+  },
+  "rerank": {
+    "enabled": true,
+    "model": "Xenova/ms-marco-MiniLM-L-6-v2",
+    "top_n": 50,
+    "_note": "Cross-encoder re-scores the top_n fused candidates in-process, then top_k are returned. Disable for the lowest-latency/plain arm."
+  },
+  "top_k": 20,
+  "contextual_retrieval": false
+}
