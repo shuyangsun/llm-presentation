@@ -7,9 +7,9 @@ Sources: `transcribe_vtt.py`, `model_cache.py`, `media.py`, `cuda_env.py`, `runt
 
 ## Summary
 
-`src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio into `.vtt` subtitles and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
+`src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
 
-`uv run asr-vtt` defaults to the `whisperx` backend with `large-v3` because WhisperX adds wav2vec2 alignment for stronger word-level subtitle timing. The same CLI also supports `--backend faster-whisper` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
+`uv run asr-vtt` defaults to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. The same CLI also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
 
 ## Command Surface
 
@@ -17,6 +17,7 @@ Run the default high-quality WhisperX subtitle path:
 
 ```sh
 uv run asr-vtt input.mp4 --output output.vtt --language en --device cuda
+uv run asr-vtt input.flac --output output.vtt --language en --device cuda
 ```
 
 Select a backend explicitly:
@@ -34,7 +35,7 @@ uv run asr-download-model large-v3
 uv run asr-download-model parakeet
 ```
 
-The default model aliases are `large-v3` for `whisperx`, `large-v3` for `faster-whisper`, and `parakeet` for `parakeet`.
+The CLI default backend/model is `whisperx` with `large-v3`. Backend model aliases are `large-v3` for `whisperx`, `large-v3` for `faster-whisper`, and `parakeet` for `parakeet`.
 
 ## Source Map
 
@@ -42,7 +43,7 @@ The default model aliases are `large-v3` for `whisperx`, `large-v3` for `faster-
 
 `model_cache.py` owns the `asr-download-model` CLI, model aliases, Hugging Face snapshot downloads, NAS destination paths, and `.nemo` checkpoint discovery for Parakeet.
 
-`media.py` extracts the first audio stream as mono 16 kHz PCM WAV with `ffmpeg`. The WhisperX and Parakeet paths normalize input through this helper before model inference.
+`media.py` normalizes the first audio stream from either a video container or an audio-only file as mono 16 kHz PCM WAV with `ffmpeg`. All transcription backends use this helper before model inference, so formats such as `.mp4`, `.mkv`, `.wav`, `.mp3`, and `.flac` follow the same prepared-audio path.
 
 `cuda_env.py` exposes `uv`-installed `nvidia-cublas-cu12` and `nvidia-cudnn-cu12` shared libraries before importing CTranslate2-backed Whisper code.
 

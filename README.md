@@ -9,6 +9,7 @@ The package exposes `uv run asr-vtt` for transcription and
 ```sh
 uv sync
 uv run asr-vtt input.mp4 --output output.vtt --language en --device cuda
+uv run asr-vtt input.flac --output output.vtt --language en --device cuda
 uv run asr-download-model large-v3
 ```
 

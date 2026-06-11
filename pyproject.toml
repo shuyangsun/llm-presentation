@@ -1,7 +1,7 @@
 [project]
 name = "llm-presentation-asr"
 version = "0.1.0"
-description = "Local CUDA ASR pipeline for generating WebVTT subtitles from video files."
+description = "Local CUDA ASR pipeline for generating WebVTT subtitles from video or audio files."
 readme = "docs/research/2026-06-10/0000-open-source-asr-vtt-subtitles.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [

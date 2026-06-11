@@ -1,4 +1,4 @@
-"""Transcribe video or audio into WebVTT subtitles with faster-whisper on CUDA."""
+"""Transcribe video or audio into WebVTT subtitles with local ASR backends."""
 
 from __future__ import annotations
 
@@ -68,12 +68,10 @@ def transcribe_to_vtt(
     align_model: str | None = None,
 ) -> list[Cue]:
     model_name = model_name or DEFAULT_MODELS[backend]
-    prepared_input = input_path
-    if backend in {"whisperx", "parakeet"}:
-        prepared_input = extract_mono_16khz_wav(
-            input_path,
-            output_dir=download_dir / "audio",
-        )
+    prepared_input = extract_mono_16khz_wav(
+        input_path,
+        output_dir=download_dir / "audio",
+    )
 
     if backend == "faster-whisper":
         cues, note = transcribe_with_faster_whisper(

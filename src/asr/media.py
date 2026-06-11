@@ -14,7 +14,7 @@ def extract_mono_16khz_wav(
     ffmpeg: str = "ffmpeg",
     refresh: bool = False,
 ) -> Path:
-    """Extract the first audio stream as mono 16 kHz PCM WAV under output_dir."""
+    """Normalize the first audio stream from video or audio as mono 16 kHz PCM WAV."""
 
     output_dir.mkdir(parents=True, exist_ok=True)
     digest = hashlib.sha256(str(input_path.resolve()).encode("utf-8")).hexdigest()[:16]
