@@ -3,11 +3,11 @@
 Date: 2026-06-11
 Status: Current
 Area: `src/asr`, local CUDA ASR, WebVTT subtitles
-Sources: `transcribe_vtt.py`, `model_cache.py`, `media.py`, `cuda_env.py`, `runtime_env.py`, `pyproject.toml`
+Sources: `transcribe_vtt.py`, `speech_speed.py`, `model_cache.py`, `media.py`, `cuda_env.py`, `runtime_env.py`, `pyproject.toml`
 
 ## Summary
 
-`src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
+`src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles, `uv run asr-speech-speed` for estimating words-per-minute speech speed from `.vtt` transcripts, and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
 
 `uv run asr-vtt` defaults to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. The same CLI also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
 
@@ -35,11 +35,20 @@ uv run asr-download-model large-v3
 uv run asr-download-model parakeet
 ```
 
+Estimate speech speed from a WebVTT transcript:
+
+```sh
+uv run asr-speech-speed docs/archive/20260611/brain_dump_20260611.vtt
+uv run asr-speech-speed transcript.vtt --max-gap 1.5 --long-break-gap 8.0
+```
+
 The CLI default backend/model is `whisperx` with `large-v3`. Backend model aliases are `large-v3` for `whisperx`, `large-v3` for `faster-whisper`, and `parakeet` for `parakeet`.
 
 ## Source Map
 
 `transcribe_vtt.py` owns the `asr-vtt` CLI, backend selection, word-to-cue grouping, timestamp formatting, and WebVTT rendering.
+
+`speech_speed.py` owns the `asr-speech-speed` CLI, WebVTT cue parsing, word counting, pause-bounded speech-run grouping, long-break reporting, and auto comparison of gap profiles.
 
 `model_cache.py` owns the `asr-download-model` CLI, model aliases, Hugging Face snapshot downloads, NAS destination paths, and `.nemo` checkpoint discovery for Parakeet.
 
@@ -80,6 +89,12 @@ WhisperX auxiliary caches use `model_dir / "torch"` when populated, with downloa
 `cues_from_words()` groups word timestamps into subtitle cues by maximum text length, maximum cue duration, pause gaps, and sentence punctuation. The CLI defaults are `--max-line-width 42`, `--max-cue-chars 84`, `--max-cue-duration 6.0`, and `--max-gap 0.7`.
 
 `render_vtt()` always writes `WEBVTT`, formats timestamps as `HH:MM:SS.mmm`, guarantees each cue lasts at least 0.5 seconds, and wraps subtitle text without breaking long words.
+
+## Speech Speed Rules
+
+`asr-speech-speed` reports words per minute over pause-bounded speech runs. The key tuning flag is `--max-gap`: cue gaps at or below this many seconds count inside the same speech run, while larger gaps split runs and are excluded from the main speech-speed denominator. `--long-break-gap` controls which pauses are listed as long breaks, and `--min-run-words` / `--min-run-seconds` can ignore very small runs.
+
+When no tuning flag is passed, `asr-speech-speed` runs three default candidate profiles: `strict-pauses` (`--max-gap 0.75 --long-break-gap 4.0`), `balanced` (`--max-gap 1.5 --long-break-gap 8.0`), and `lenient-pauses` (`--max-gap 3.0 --long-break-gap 12.0`). If the candidates disagree materially, the CLI displays each parameter set and asks for a profile when running interactively; otherwise it defaults to `balanced` and prints how to rerun with explicit parameters.
 
 ## Related Documentation
 
