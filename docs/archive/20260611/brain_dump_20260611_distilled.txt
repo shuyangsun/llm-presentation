@@ -1,0 +1,167 @@
+Presentation title: Open and Closed Loops: The Economics of the LLMOS.
+
+Core thesis:
+Large language models should not be treated merely as tools or libraries that
+speed up an existing workflow. The more powerful frame is to treat them as an
+operating-system layer or framework for work. In that model, humans are extension
+points: they provide context, judgment, taste, insight, priorities, and the
+domain-specific value that the system cannot infer on its own.
+
+The common complaint that LLMs are "slop machines" is partly a workflow problem.
+Model quality has improved substantially, and the probability of low-quality
+output drops when models are guided with good prompts, reusable skills, and
+retrieval/RAG over relevant context. The important shift is not "do the same work
+with an LLM attached"; it is "redesign the workflow around persistent context,
+agents, iteration, and self-improving loops."
+
+Open and closed loops:
+A closed loop is a system that can keep improving itself without constant human
+intervention. When it hits a problem, the loop has a way to diagnose, repair, or
+iterate, often through a reusable skill or prompt that tells the model how to
+handle that class of failure. A closed loop should make progress cheaply and
+repeatedly.
+
+An open loop is where a human must step in. Open loops are expensive because
+humans are slower, less available, and often the least reliable part of a
+high-throughput system. Human intervention should therefore be reserved for
+moments where the human is adding real value, not merely because the human could
+do the task better in isolation.
+
+The economic point:
+This is an opportunity-cost and comparative-advantage argument. A human may have
+an absolute advantage over an LLM at a task, such as writing better code, making a
+better design choice, or producing better prose. That does not mean the human
+should do it manually. If the model is much cheaper, good enough, parallelizable,
+and able to iterate, the human's scarce attention should go where it has the
+highest leverage.
+
+The useful question is not "Can I do this better than the model?" The useful
+question is "Is this where my judgment, taste, context, or unique expertise
+creates the most value?" Only open the loop when the answer is yes.
+
+T-shaped people, teams, and companies:
+Every person, team, organization, startup, or company is a T-shaped organism. The
+vertical stroke of the T is depth: the specialty, taste, domain expertise, or
+strategic judgment that makes the person or organization distinctive. The
+horizontal stroke is breadth: general knowledge and the ability to operate across
+many areas.
+
+LLMs dramatically widen the horizontal stroke. Everyone can reach more generalist
+knowledge and production capacity than before. That makes the vertical stroke
+more important, not less important. Each team or company must decide what its
+vertical specialization is, then open the loop only there. Everything outside
+that vertical should be pushed toward closed-loop execution when possible.
+
+LLM OS as workflow:
+The reason to route work through an LLM layer is not that the model is always
+better at each individual step. The real reason is that the system records the
+journey: how a human reached a conclusion, what context mattered, what tradeoffs
+were considered, and what instructions or preferences shaped the output.
+
+That recorded path becomes reusable context. Conversations, meetings, decisions,
+code changes, reports, and even rough thoughts should flow through the LLM OS so
+the reasoning trail is available later. Without this context, later generations
+are much more likely to be generic or low-quality.
+
+A corporate example:
+Traditional reports and slide decks are static artifacts. The author chooses an
+audience, decides what that audience cares about, and produces one version at one
+point in time. In an LLM OS workflow, the system continuously collects context
+from the work itself. When someone needs a report, they ask the system. The system
+finds the relevant owners and source context, generates a report for the specific
+audience, sends it to the owner for approval, and then returns it to the
+requester.
+
+This changes reporting from a manual production workflow into a context-driven
+approval workflow.
+
+Meta presentation concept:
+The presentation itself should demonstrate the idea recursively. This brain dump
+was recorded as audio, transcribed with Whisper/WhisperX into WebVTT, and stored
+in the repository as context. It does not need to be polished or perfectly
+structured. Its value is that it captures raw thinking that can be fed to an LLM
+later.
+
+The next step is to use this transcript as context while collaborating with an
+LLM to create the actual presentation. The target presentation should be a
+polished five-to-seven-minute website-based presentation, not a static slide
+deck. It should probably not run ten minutes.
+
+The most important meta demo:
+Start from a talking-head video of the presenter explaining the topic and
+collaborating with Claude or another coding agent to make the same presentation
+live. Transcribe that video into timestamped subtitles. Because the transcript
+contains timestamps, the LLM can align what is being said in the video with
+specific website states, demos, visuals, and transitions.
+
+The presentation website should behave like a smooth timeline, not like page by
+page slides. A slider at the bottom should control both the video playback
+position and the website's visual state. Scrubbing the slider should move through
+the talking-head video and the synchronized website presentation together. The
+site should be visually polished, with smooth transitions between states.
+
+This is the closed-loop meta point: when context is preserved, doing the work can
+become as simple as saying the intent clearly and letting agents execute against
+the stored context.
+
+Coding session exports as context:
+The presenter already uses an "export coding session" skill to save transcripts
+from Claude, Codex, and other coding agents into the repository. Those exported
+sessions become durable context files. Future LLMs and sub-agents can be pointed
+at those files to understand prior decisions, workflows, code changes, and
+preferences.
+
+This repository-level memory is what enables many agents to work in parallel on a
+presentation or project without restarting from zero.
+
+Parallel agent math:
+Parallel agents change the probability model. If each agent has probability p of
+succeeding independently, and n agents try in parallel, the probability that at
+least one succeeds is:
+
+1 - (1 - p)^n
+
+For example, if each agent has only a 30% chance of solving a task and ten agents
+try, the chance that at least one succeeds is approximately:
+
+1 - 0.7^10 = 97.2%
+
+Even if the assumptions are imperfect, the point is to use parallelism and
+iteration to your advantage instead of judging the system as if only one attempt
+is allowed.
+
+Concrete projects to show in the presentation:
+
+1. AlphaZero project
+   A reinforcement learning framework with saved documentation and context. Use
+   it as an example of a project where agentic workflows and durable context can
+   support complex technical iteration.
+
+2. Power Monitor
+   A system that monitors computer power usage, GPU usage, and machine learning
+   training activity. It relates to ML training workloads such as AlphaZero. Show
+   screenshots, links, and possibly a live demo.
+
+3. Personal website and art workflow
+   The presenter has a personal website with a character/art system. Show that
+   the arm cutout and related asset work were done with Meta/Facebook's Sapiens
+   library, not manually. This demonstrates using models as production workflow
+   components.
+
+4. Coding-agent skills repository
+   Show self-improving coding-agent skills. The presenter prompts an LLM to write
+   a skill that improves another skill. When the loop has metrics and outcomes,
+   the system can keep trying, evaluating, and improving the skill. Improved
+   skills can then be copied into other repositories.
+
+Desired shape of the final talk:
+Condense the roughly twenty-minute raw brain dump into a polished five-minute
+version. The talk should combine the philosophy of LLMs as an operating-system
+layer, the economics of comparative advantage and cheap parallel agents, and the
+recursive demo of using transcripts, skills, and coding agents to build the
+presentation itself.
+
+The audience should leave with one main idea:
+Do not bolt LLMs onto the old workflow. Build the workflow so context is captured,
+closed loops can self-improve, and humans open the loop only where their judgment
+has real comparative advantage.

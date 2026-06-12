@@ -4,6 +4,10 @@
 
 - [Open-source ASR models for WebVTT subtitles](research/2026-06-10/0000-open-source-asr-vtt-subtitles.md) - compares free open-source/open-weight ASR options for video transcription with timestamps and `.vtt` subtitle output.
 
+## Archive
+
+- [June 11, 2026 presentation brain dump](archive/20260611/brain_dump_20260611_distilled.txt) - distilled context and raw WebVTT transcript for "Open and Closed Loops: The Economics of the LLMOS."
+
 ## Coding Sessions
 
 - [VCS guardrails session](coding-sessions/2026-06-10/0000-codex-vcs-guardrails.md) - records the setup of local VCS guardrail hooks and jj workflow checks.
@@ -12,3 +16,4 @@
 - [Source ASR docs session](coding-sessions/2026-06-11/0003-codex-src-asr-docs.md) - records the co-located `src/asr` documentation update, transcript export, and local commit workflow.
 - [Repository docs and skill symlink session](coding-sessions/2026-06-11/0004-codex-docs-session-export.md) - records the root `README.md`, `AGENTS.md`, and `CLAUDE.md` docs, the Claude skills symlink, transcript export, and local jj integration workflow.
 - [ASR audio and FLAC session](coding-sessions/2026-06-11/0005-codex-asr-audio-flac.md) - records the ASR media normalization update, `.flac` validation, WhisperX `large-v3` default check, Parakeet comparison, transcript export, and jj integration workflow.
+- [Presentation brain dump archive session](coding-sessions/2026-06-11/0006-codex-brain-dump-archive.md) - records the June 11, 2026 brain-dump VTT archive, distilled LLM context file, transcript export, and jj integration workflow.

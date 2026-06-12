@@ -1,0 +1,1049 @@
+WEBVTT
+
+NOTE Generated with backend=whisperx model=/mnt/nas/home/ml/model/huggingface/Systran/faster-whisper-large-v3 language=en
+
+00:00:02.282 --> 00:00:06.949
+All right, this is just my brain dump of
+all my thoughts about the presentation I'm
+
+00:00:07.009 --> 00:00:10.154
+about to do. Let me confirm the
+
+00:00:11.376 --> 00:00:14.721
+title first. I forgot what I set the title
+to.
+
+00:00:41.286 --> 00:00:42.266
+Ah, found the title.
+
+00:00:43.987 --> 00:00:49.630
+My presentation's title is called Open and
+Closed Loops, The
+
+00:00:50.510 --> 00:00:53.191
+Economics of the LLMOS.
+
+00:00:56.432 --> 00:01:00.234
+Okay, so there are a few things I want to
+talk about in this presentation.
+
+00:01:01.134 --> 00:01:04.936
+I noticed a lot of people when they say
+large language models don't work,
+
+00:01:05.976 --> 00:01:08.357
+it's because they're using it as a tool,
+right?
+
+00:01:08.377 --> 00:01:13.264
+So it's like a library. Whereas I'm going
+to follow my existing workflow, I'm just
+
+00:01:13.444 --> 00:01:17.407
+using large language models to speed
+things up.
+
+00:01:17.547 --> 00:01:21.991
+And their complaints are about, you know,
+this thing is just
+
+00:01:23.552 --> 00:01:25.133
+a slop machine and it
+
+00:01:26.414 --> 00:01:27.955
+just constantly produce slops.
+
+00:01:32.579 --> 00:01:36.962
+That has gotten a lot better in the past
+year or two, a lot better.
+
+00:01:38.346 --> 00:01:43.891
+And also, if you learn how to like, well,
+I shouldn't say if you learn.
+
+00:01:45.493 --> 00:01:50.737
+If you know how to tune them or guide them
+with the skills and prompts,
+
+00:01:52.099 --> 00:01:56.463
+the probability of them producing slop is
+much, much lower nowadays, right?
+
+00:01:56.643 --> 00:02:01.928
+And especially with technologies like RAG
+and other kind of retrieval
+
+00:02:03.109 --> 00:02:03.909
+sort of technology.
+
+00:02:05.662 --> 00:02:11.046
+I think what people are missing is that
+this technology fundamentally shifts
+
+00:02:12.027 --> 00:02:17.430
+how you can work. Instead of just saying,
+okay, I'm going to do exactly what I need
+
+00:02:17.450 --> 00:02:18.111
+to do today.
+
+00:02:18.131 --> 00:02:24.395
+Sorry,
+
+00:02:24.575 --> 00:02:28.838
+I lost my train of thought. Instead of
+saying, I'm going to do what I'm going to
+do
+
+00:02:28.898 --> 00:02:32.641
+today, but just with LLMs, I'm going to...
+
+00:02:34.366 --> 00:02:36.447
+completely changed my workflow, right?
+
+00:02:36.487 --> 00:02:39.568
+So that's the right way to work with large
+language models because
+
+00:02:40.628 --> 00:02:45.969
+with this, you know, intelligent or not,
+that's a philosophical question, but with
+
+00:02:46.009 --> 00:02:46.509
+this
+
+00:02:49.190 --> 00:02:50.951
+layer of technology,
+
+00:02:52.251 --> 00:02:53.712
+it can become the framework
+
+00:02:54.832 --> 00:02:57.513
+of your company. It's the operating
+system, right?
+
+00:02:57.933 --> 00:03:02.983
+So instead of treating them as a set of
+tools and a set of library, you treat them
+
+00:03:03.303 --> 00:03:07.305
+as frameworks, whereas you are the
+extension points.
+
+00:03:07.985 --> 00:03:13.308
+And to provide context and judgment and
+taste and
+
+00:03:13.448 --> 00:03:16.050
+insights, only a human can provide.
+
+00:03:17.031 --> 00:03:18.351
+A large language model cannot.
+
+00:03:19.212 --> 00:03:19.712
+So
+
+00:03:20.493 --> 00:03:22.794
+what does that mean exactly?
+
+00:03:22.974 --> 00:03:27.957
+So this is going to be very recursive
+
+00:03:28.977 --> 00:03:29.938
+and very meta.
+
+00:03:30.986 --> 00:03:35.927
+you're going to feel like you're living in
+the Inception movie because every single
+
+00:03:36.047 --> 00:03:38.268
+system should be self-improving, right?
+
+00:03:38.368 --> 00:03:41.489
+So what does it mean by open and closed
+loop?
+
+00:03:41.629 --> 00:03:46.610
+And what does it mean by the economics of
+the large language model OS?
+
+00:03:47.731 --> 00:03:49.791
+First is the open and closed loop, right?
+
+00:03:49.951 --> 00:03:55.173
+So if you have a closed loop, the system
+can just self-improve,
+
+00:03:55.773 --> 00:03:58.454
+right? Everything is self-improving.
+
+00:04:01.066 --> 00:04:01.666
+And
+
+00:04:02.667 --> 00:04:04.008
+yeah, everything is self-improving.
+
+00:04:05.209 --> 00:04:09.691
+It's an iterative system that just keeps
+improving itself.
+
+00:04:09.792 --> 00:04:12.473
+When it runs into a problem, it knows how
+to fix itself.
+
+00:04:12.753 --> 00:04:17.756
+Or you just write a skill to guide that
+large-angle model on how to fix itself.
+
+00:04:19.458 --> 00:04:21.059
+That's the closed loop, right?
+
+00:04:21.119 --> 00:04:26.582
+An open loop is where a human needs to be
+involved, right?
+
+00:04:28.242 --> 00:04:29.423
+I'm going to take a pause here.
+
+00:04:30.104 --> 00:04:31.825
+I need to do something else and I'll be
+right back.
+
+00:04:52.262 --> 00:04:52.863
+Okay, I'm back.
+
+00:04:58.998 --> 00:05:01.860
+Yeah, where were we? Open and closed loop.
+
+00:05:02.180 --> 00:05:05.803
+Okay. So yeah, so that's a closed loop.
+
+00:05:05.823 --> 00:05:09.065
+An open loop is where a human comes in and
+do something, right?
+
+00:05:09.085 --> 00:05:14.889
+So the thing is, if you have one open
+loop, that's extremely slow because human
+
+00:05:15.550 --> 00:05:17.131
+will always be the slowest
+
+00:05:18.532 --> 00:05:19.753
+and the most unreliable.
+
+00:05:21.794 --> 00:05:26.938
+So yeah, it just slows down everything and
+it just adds in many additional points of
+
+00:05:26.978 --> 00:05:27.478
+failure.
+
+00:05:28.714 --> 00:05:32.596
+Large language models may not be that much
+better than human today.
+
+00:05:32.636 --> 00:05:36.579
+I mean, in many tasks, they are already
+better than human, right?
+
+00:05:36.839 --> 00:05:37.339
+So
+
+00:05:38.260 --> 00:05:40.321
+only in some tasks, they're not better
+than human.
+
+00:05:42.502 --> 00:05:44.423
+But you know, they're extremely cheap.
+
+00:05:44.443 --> 00:05:46.224
+They're dirt cheap if you know how to use
+them.
+
+00:05:46.705 --> 00:05:48.886
+Be very efficient in your token usage.
+
+00:05:50.067 --> 00:05:50.567
+And
+
+00:05:52.208 --> 00:05:55.370
+yeah, they're just cheap. They're
+efficient.
+
+00:05:57.262 --> 00:06:00.885
+And if you can close the loop, they can
+just keep improving.
+
+00:06:02.166 --> 00:06:03.226
+But if you open the loop,
+
+00:06:04.687 --> 00:06:08.050
+you better make sure that as a human, you
+provide value.
+
+00:06:08.150 --> 00:06:12.413
+And this is where the, well, actually,
+before we talk about the opening loop and
+the
+
+00:06:12.653 --> 00:06:17.137
+providing value part in the presentation,
+here is what I want to show
+
+00:06:18.477 --> 00:06:20.959
+this kind of meta type of thinking closed
+loop, right?
+
+00:06:20.999 --> 00:06:21.499
+So
+
+00:06:22.520 --> 00:06:25.670
+this is right now, this transcript.
+
+00:06:25.850 --> 00:06:27.632
+The transcript of this is a
+
+00:06:29.052 --> 00:06:31.454
+markdown file of my brain dump, right?
+
+00:06:31.714 --> 00:06:36.957
+So it's audio recorded. It's going to be
+transferred, transcript by Whisper,
+
+00:06:37.058 --> 00:06:37.918
+OpenAI's Whisper.
+
+00:06:39.079 --> 00:06:43.702
+And it's just going to be stored there in
+the repository as additional context.
+
+00:06:43.942 --> 00:06:45.143
+It doesn't need to be structured.
+
+00:06:45.163 --> 00:06:47.044
+It doesn't need to be well thought out.
+
+00:06:47.144 --> 00:06:47.644
+It's just,
+
+00:06:48.665 --> 00:06:50.406
+you know, my brain dump.
+
+00:07:05.198 --> 00:07:10.922
+And this brain dump will be used as
+context for me to collaborate
+
+00:07:11.362 --> 00:07:16.466
+with large language models to actually
+make the presentation of
+
+00:07:18.747 --> 00:07:20.589
+my slides. It's gonna be a website, right?
+
+00:07:21.229 --> 00:07:21.729
+So,
+
+00:07:23.330 --> 00:07:23.830
+and
+
+00:07:25.312 --> 00:07:27.193
+think of this as like an interview, right?
+
+00:07:27.273 --> 00:07:29.855
+This is an interview of my thought about a
+subject.
+
+00:07:30.295 --> 00:07:36.286
+It can be anything. And later on, I will
+tell the large language model on based on
+
+00:07:36.326 --> 00:07:40.488
+the speech, my, my, my, my, uh, speed of
+speech, right.
+
+00:07:41.088 --> 00:07:41.588
+Limit.
+
+00:07:43.188 --> 00:07:48.350
+Uh, well, actually first collaborate with
+me on a few headlines, like big sections
+
+00:07:48.410 --> 00:07:49.310
+and talking points.
+
+00:07:50.330 --> 00:07:54.972
+And once that's done, I'm going to ask it
+to look at the trend, read the transcript
+
+00:07:55.032 --> 00:08:00.373
+and understand that my, the pace of my
+speech, how fast do I speak to time box
+the
+
+00:08:00.413 --> 00:08:03.514
+presentation into a certain amount of
+minutes.
+
+00:08:04.094 --> 00:08:07.597
+Right. Like I think in the end it's going
+to be like anywhere between five to seven
+
+00:08:07.637 --> 00:08:09.418
+minutes, definitely not 10. That's too
+long.
+
+00:08:09.639 --> 00:08:10.219
+Five to seven.
+
+00:08:11.800 --> 00:08:12.300
+Then
+
+00:08:13.842 --> 00:08:14.643
+after that,
+
+00:08:15.964 --> 00:08:21.548
+well, actually, uh, the speech speed, uh,
+it should be faster than this transcript
+
+00:08:21.649 --> 00:08:25.852
+because I will be more prepared instead of
+just pausing and doing brain dump.
+
+00:08:25.972 --> 00:08:26.472
+Right.
+
+00:08:27.493 --> 00:08:32.337
+Then the mega idea is that during the
+presentation, I will be showing many
+different
+
+00:08:32.377 --> 00:08:32.877
+projects.
+
+00:08:34.690 --> 00:08:37.553
+And as I'm showing these many different
+projects,
+
+00:08:39.094 --> 00:08:43.638
+I'm actually going to like on this
+presentation website, I'm actually going
+to
+
+00:08:44.658 --> 00:08:47.621
+start from a video of a talking head of me
+
+00:08:49.082 --> 00:08:54.907
+talking to Claude and make this exact
+presentation live, collaborating with
+
+00:08:54.947 --> 00:09:00.652
+it. So you can think of it as like a five
+to seven minute talking head into
+
+00:09:00.712 --> 00:09:03.274
+the camera. I record that video.
+
+00:09:04.654 --> 00:09:10.439
+then I transcribe it, then I feed it into
+Claude because the sub-titles
+
+00:09:10.799 --> 00:09:15.063
+have the timestamps, Claude can understand
+at
+
+00:09:18.025 --> 00:09:23.670
+what time what is being spoken and it can
+match the content on the website
+
+00:09:24.371 --> 00:09:26.933
+based on what's being said in the video,
+right?
+
+00:09:27.313 --> 00:09:28.454
+So that's the idea. So
+
+00:09:30.496 --> 00:09:32.277
+that's the beginning of this
+
+00:09:33.510 --> 00:09:36.152
+open and closing loop that's the starting
+the slideshow
+
+00:09:37.153 --> 00:09:40.955
+that's the most important meta point I
+want to give and the reason I can do this
+is
+
+00:09:41.015 --> 00:09:46.119
+because I have the skill called exporting
+export coding session where every time
+
+00:09:46.159 --> 00:09:48.781
+when I talk to quad or any other
+
+00:09:50.222 --> 00:09:54.745
+large language model I export the
+transcript afterwards right so all of
+these
+
+00:09:54.805 --> 00:10:00.649
+contexts are saved and I can just point
+the LLM into those context file and
+
+00:10:00.669 --> 00:10:04.343
+spin off a million sub-agents and make the
+slide show for me.
+
+00:10:05.565 --> 00:10:10.129
+All I gotta do to make a website, to make
+the website in sync with what I'm saying
+
+00:10:10.189 --> 00:10:15.694
+now, is just by looking at the camera and
+
+00:10:16.235 --> 00:10:18.076
+tell the audience that, hey,
+
+00:10:19.658 --> 00:10:25.183
+this is XYZ and Claude would know to pull
+out XYZ and make a
+
+00:10:25.403 --> 00:10:28.166
+really pretty award-winning website for
+it, right?
+
+00:10:29.306 --> 00:10:31.447
+And the whole website is like a slider.
+
+00:10:31.487 --> 00:10:35.129
+There's a slider at the bottom, just like
+video, except when they slide,
+
+00:10:36.449 --> 00:10:41.611
+that controls both the play time of my
+video, the progress of my video and the
+
+00:10:41.651 --> 00:10:45.393
+website itself, right? There's no static
+page by page slides.
+
+00:10:46.474 --> 00:10:51.436
+It's just a slider. It's a smooth
+transitioning between different states,
+right?
+
+00:10:51.516 --> 00:10:53.417
+And it has to look really, really pretty.
+
+00:10:53.917 --> 00:10:56.618
+So that's the meta point of closed loop.
+
+00:10:57.918 --> 00:11:03.843
+When every context is saved, doing the
+work is as easy as just saying
+
+00:11:03.923 --> 00:11:06.645
+it. And that's it. Agents execute.
+
+00:11:07.886 --> 00:11:08.386
+So that's
+
+00:11:09.287 --> 00:11:12.670
+a closed loop. Now, when it comes to open
+loop,
+
+00:11:14.031 --> 00:11:18.995
+if everything is open loop, then what's
+the point of a closed loop, right?
+
+00:11:19.035 --> 00:11:22.258
+Because then humans should not just not
+get involved.
+
+00:11:22.298 --> 00:11:23.899
+No, that's not true. Here's the thing.
+
+00:11:24.840 --> 00:11:26.061
+Every single person,
+
+00:11:27.182 --> 00:11:27.682
+team,
+
+00:11:28.786 --> 00:11:32.028
+organization, company, startup,
+
+00:11:33.049 --> 00:11:38.893
+is a T-shaped organism where you have your
+vertical, the vertical
+
+00:11:38.933 --> 00:11:44.077
+part of the T, that's your depth,
+something you or your team or your company
+really
+
+00:11:44.137 --> 00:11:45.838
+care about. This is your specialty.
+
+00:11:46.519 --> 00:11:47.760
+You are the expert on this.
+
+00:11:49.501 --> 00:11:55.045
+And the bar on the T is your breadth of
+information, being the generalist, right?
+
+00:11:56.226 --> 00:12:01.783
+Now, Large language models have been able
+to just like extend that bar, the
+
+00:12:01.823 --> 00:12:04.104
+generalist bar super, super wide.
+
+00:12:04.524 --> 00:12:09.305
+Everyone has access to a lot of things,
+which is great, but every company still
+need
+
+00:12:09.325 --> 00:12:12.066
+to choose what is your vertical shape?
+
+00:12:12.126 --> 00:12:17.828
+What is your T right? Well, what is that
+vertical on that T?
+
+00:12:17.848 --> 00:12:22.089
+So what does that mean? Well, that means
+you should only open the loop when you
+
+00:12:22.129 --> 00:12:23.029
+provide value.
+
+00:12:24.189 --> 00:12:25.530
+Okay. So, um,
+
+00:12:28.234 --> 00:12:33.819
+Yeah, so like when you provide value, you
+can't afford to slow down the system.
+
+00:12:33.939 --> 00:12:37.942
+If this is not something you care about,
+you shouldn't open the loop.
+
+00:12:38.002 --> 00:12:41.945
+Just let it self-iterate. And you may say,
+well, I can do a better job.
+
+00:12:42.466 --> 00:12:44.087
+This is the economy part of it.
+
+00:12:45.288 --> 00:12:50.772
+Econ 101, just because you're better at
+something, that's your absolute advantage,
+
+00:12:51.573 --> 00:12:56.217
+does not mean it is your comparable
+advantage, does not mean you should do it
+
+00:12:56.297 --> 00:13:01.331
+manually, right? Yes. If you say, I can
+write code better than large language
+
+00:13:01.371 --> 00:13:04.653
+models, I believe you. You are a smart
+engineer.
+
+00:13:05.673 --> 00:13:06.173
+But
+
+00:13:07.254 --> 00:13:11.155
+just because you can do it better doesn't
+mean it's worth your time to do it, right?
+
+00:13:11.876 --> 00:13:15.337
+Even though large language models can do a
+worse job, they're still so much cheaper
+
+00:13:15.377 --> 00:13:18.438
+than you, and nowadays models are so good.
+
+00:13:19.579 --> 00:13:22.240
+They can solve a lot of coding problems,
+right?
+
+00:13:24.521 --> 00:13:25.021
+So,
+
+00:13:25.962 --> 00:13:31.388
+yeah, like, Really think about what is the
+unique perspective you can get out of it
+
+00:13:31.908 --> 00:13:32.648
+as a human.
+
+00:13:33.829 --> 00:13:38.791
+Or sorry, now you can get out, you can
+provide as a human, right?
+
+00:13:39.171 --> 00:13:41.192
+I didn't sleep well last night, anyway.
+
+00:13:49.736 --> 00:13:52.557
+Yeah, only open the loop when you provide
+value, right?
+
+00:13:52.697 --> 00:13:58.272
+So that's kind of the basic concept and, I
+really want to hone in on this idea of
+
+00:13:58.372 --> 00:14:04.137
+this closed loop, using large language
+models as the operating system,
+
+00:14:04.278 --> 00:14:07.040
+right? Most people at corporations don't
+understand that.
+
+00:14:07.420 --> 00:14:12.645
+What does that even mean? That means every
+single decision has to go through this
+
+00:14:12.785 --> 00:14:17.169
+operating system layer. Every single
+conversation, every single meeting, every
+
+00:14:17.209 --> 00:14:22.854
+single, not just line of code, every
+single thought has to go through the
+system.
+
+00:14:24.358 --> 00:14:30.303
+The purpose of using large language model
+for everything is not because they
+
+00:14:30.423 --> 00:14:32.946
+are better at these things. It's not,
+right?
+
+00:14:33.186 --> 00:14:35.928
+Really, really emphasize this during the
+presentation.
+
+00:14:37.430 --> 00:14:41.013
+The real reason they are better at, well,
+sorry.
+
+00:14:41.253 --> 00:14:46.338
+The real reason we use them is so that we
+can record
+
+00:14:47.098 --> 00:14:50.481
+how we human reached a conclusion.
+
+00:14:50.581 --> 00:14:56.172
+What's the journey? The end path, the end
+goal does not matter where you land.
+
+00:14:56.212 --> 00:14:57.372
+It doesn't matter that much.
+
+00:14:58.113 --> 00:15:01.474
+How you get there, the journey to get
+there really matters.
+
+00:15:02.534 --> 00:15:08.197
+And that's why going through large
+language model layer is so important
+because you
+
+00:15:08.237 --> 00:15:09.938
+have to give it your context.
+
+00:15:10.338 --> 00:15:14.119
+Without that, you know, everything is just
+slop, right?
+
+00:15:15.260 --> 00:15:19.282
+So imagine, for example, in corporation,
+it's very common for people to write slide
+
+00:15:19.302 --> 00:15:20.162
+decks and reports.
+
+00:15:21.494 --> 00:15:22.795
+Why do we need to write reports?
+
+00:15:22.895 --> 00:15:27.478
+Because, well, you need to think about
+who's your audience and depending on who's
+
+00:15:27.658 --> 00:15:32.541
+the type of audience, you need to, you
+know, write different type of reports,
+right?
+
+00:15:32.721 --> 00:15:34.002
+They may care about different things.
+
+00:15:35.062 --> 00:15:39.185
+And that's a very static decision you have
+to make at the time when you produce
+
+00:15:39.265 --> 00:15:45.048
+content. However, if you use a large
+language system as the
+
+00:15:45.148 --> 00:15:47.850
+operating system, every single thing flow
+through there.
+
+00:15:48.870 --> 00:15:54.214
+Then what you can do is asking, let's say,
+five or ten agents to give you five or
+
+00:15:54.254 --> 00:15:59.377
+ten different versions of your
+documentation and reports and slides and
+show it to
+
+00:15:59.417 --> 00:16:03.400
+you. You just pick the one you think you
+like or feel you approve.
+
+00:16:04.080 --> 00:16:07.042
+When someone requests something, then send
+it over, right?
+
+00:16:07.343 --> 00:16:11.125
+So it becomes a passive system that's
+constantly collecting your context.
+
+00:16:12.106 --> 00:16:13.427
+You don't need to write a report.
+
+00:16:13.467 --> 00:16:16.729
+When someone wants to report, they can ask
+the system.
+
+00:16:17.449 --> 00:16:21.456
+The system... automatically finds the
+owner of these information
+
+00:16:22.517 --> 00:16:27.940
+and construct the report and send the
+report automatically to the owner for
+
+00:16:27.980 --> 00:16:28.480
+approval.
+
+00:16:29.641 --> 00:16:33.904
+And once that's done, it sends it to the
+person that requested these, right?
+
+00:16:33.944 --> 00:16:34.444
+So
+
+00:16:35.625 --> 00:16:41.009
+a lot of things can change in this world,
+but people are not thinking in that way
+
+00:16:41.449 --> 00:16:45.612
+because people see large language models
+as the tool, as the library, not as a
+
+00:16:45.832 --> 00:16:47.393
+framework, right?
+
+00:16:48.838 --> 00:16:50.540
+So yeah, you know,
+
+00:16:51.821 --> 00:16:57.526
+if we want to use these tools to their
+fullest extent, you have to fundamentally
+
+00:16:57.606 --> 00:16:59.507
+change your workflow, right?
+
+00:17:02.810 --> 00:17:07.814
+Okay, and that's my brain dump about the
+philosophy part of it and the economy part
+
+00:17:07.855 --> 00:17:11.037
+of it. Oh, another very important thing we
+have to highlight
+
+00:17:12.078 --> 00:17:13.219
+is that the math of it,
+
+00:17:14.420 --> 00:17:15.441
+the probability of
+
+00:17:17.874 --> 00:17:23.497
+agents succeed goes down exponentially as
+you spin up multiple parallel agents,
+
+00:17:23.858 --> 00:17:25.499
+right? So what does that mean?
+
+00:17:25.539 --> 00:17:29.861
+Well, even if each agent only have a 30%
+of chance to
+
+00:17:31.702 --> 00:17:33.023
+be successful at a task,
+
+00:17:35.325 --> 00:17:41.108
+if you spin up 10 agents, the probability
+of success is one minus 0.7, powered by
+
+00:17:41.188 --> 00:17:41.688
+10.
+
+00:17:45.702 --> 00:17:48.805
+And that number is 97%, right?
+
+00:17:48.825 --> 00:17:51.847
+Which is insane. That's a very, very high
+percentage.
+
+00:17:53.008 --> 00:17:57.833
+Now you may argue that each agent may not
+have 30% of the chance of succeeding, then
+
+00:17:58.033 --> 00:17:58.653
+that's fair.
+
+00:18:00.115 --> 00:18:01.276
+But you know, the math is there.
+
+00:18:02.056 --> 00:18:02.556
+So
+
+00:18:04.258 --> 00:18:07.021
+yeah, use math to your advantage, right?
+
+00:18:07.061 --> 00:18:08.322
+Don't work against it.
+
+00:18:10.910 --> 00:18:13.471
+Okay, so that's my brain dump, mostly.
+
+00:18:14.352 --> 00:18:16.513
+This is another part of the presentation.
+
+00:18:16.533 --> 00:18:21.315
+When we show these closed loops, we need
+to find a few repositories inside the
+
+00:18:21.335 --> 00:18:25.196
+projects. The first one is the AlphaZero
+project.
+
+00:18:25.356 --> 00:18:28.078
+That's the reinforcement learning
+framework I've been working on.
+
+00:18:28.458 --> 00:18:31.319
+A lot of context and documentation are
+saved, so that's good.
+
+00:18:32.320 --> 00:18:37.582
+The other one is the Power Monitor, which
+monitors my,
+
+00:18:38.882 --> 00:18:44.124
+you know computers power power usage to
+for machine learning training right like
+
+00:18:44.244 --> 00:18:44.765
+alpha zero
+
+00:18:46.646 --> 00:18:51.648
+and it also monitors GPU usage and also
+has machine learning training information
+I
+
+00:18:51.668 --> 00:18:57.270
+will show some screenshots of these on the
+slides and also link to it and maybe a
+
+00:18:57.310 --> 00:19:01.052
+live demo I'm not sure yet okay and also
+
+00:19:02.292 --> 00:19:07.707
+my own website my personal website with
+the art with like my own character in my
+
+00:19:07.867 --> 00:19:12.550
+art, right? And I want to show the
+audience that the arm cutout and all of
+that is
+
+00:19:12.630 --> 00:19:16.652
+done by the Sapiens, Facebook's Sapiens
+library, right?
+
+00:19:17.153 --> 00:19:20.395
+It's not done manually, right?
+
+00:19:20.415 --> 00:19:24.418
+Then another self-improving system I want
+to show off is the
+
+00:19:25.498 --> 00:19:29.081
+coding agent's skills, right?
+
+00:19:29.441 --> 00:19:32.743
+Or coding agent skills repository, which
+
+00:19:34.224 --> 00:19:36.646
+have a lot of skills that's
+
+00:19:38.222 --> 00:19:43.584
+written by large language model first I
+prompt the language model to write
+
+00:19:44.264 --> 00:19:50.105
+a skill that improves another skill right
+so this is the open closed loop
+
+00:19:50.125 --> 00:19:50.625
+part
+
+00:19:51.426 --> 00:19:57.227
+if you close the loop and define metric
+and outcome right the skill that improves
+
+00:19:57.287 --> 00:20:00.908
+other skill can just keep trying keep
+trying keep iterating the skill
+
+00:20:01.989 --> 00:20:06.350
+so that the skill gets better and better
+and I can just copy paste that skill into
+
+00:20:06.390 --> 00:20:07.150
+other repositories
+
+00:20:10.266 --> 00:20:12.508
+Okay, well, that's a lot. That was 20
+minutes.
+
+00:20:13.589 --> 00:20:19.014
+We need to condense this into a five
+minute version, polished slides, right?
+
+00:20:20.154 --> 00:20:22.036
+This is the first wave of brain dump.
+
+00:20:22.356 --> 00:20:23.637
+I may present more.
+
+00:20:24.758 --> 00:20:26.580
+I may ask you to summarize it later
+
+00:20:28.021 --> 00:20:29.342
+to a more distilled version.
+
+00:20:29.402 --> 00:20:33.566
+We'll see. But yeah, this is the first
+draft.
