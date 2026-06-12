@@ -1,6 +1,6 @@
 # llm-presentation ASR
 
-Local CUDA ASR tooling for generating WebVTT subtitles from video or audio files.
+Local CUDA ASR tooling for generating WebVTT subtitles and plain text transcripts from video or audio files.
 The package exposes `uv run asr-vtt` for transcription and
 `uv run asr-download-model` for warming model caches.
 
@@ -12,6 +12,8 @@ uv run asr-vtt input.mp4 --output output.vtt --language en --device cuda
 uv run asr-vtt input.flac --output output.vtt --language en --device cuda
 uv run asr-download-model large-v3
 ```
+
+Each `asr-vtt` run writes the requested `.vtt` file plus a sibling timestamp-free `.txt` transcript.
 
 ## Documentation
 

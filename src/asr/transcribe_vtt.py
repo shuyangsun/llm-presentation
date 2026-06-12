@@ -1,4 +1,4 @@
-"""Transcribe video or audio into WebVTT subtitles with local ASR backends."""
+"""Transcribe video or audio into WebVTT subtitles and plain text."""
 
 from __future__ import annotations
 
@@ -129,6 +129,7 @@ def transcribe_to_vtt(
         render_vtt(cues, max_line_width=max_line_width, note=note),
         encoding="utf-8",
     )
+    transcript_output_path(output_path).write_text(render_txt(cues), encoding="utf-8")
     return cues
 
 
@@ -498,6 +499,15 @@ def render_vtt(cues: list[Cue], *, max_line_width: int, note: str | None = None)
     return "\n".join(lines)
 
 
+def render_txt(cues: list[Cue]) -> str:
+    lines = [cue.text for cue in cues if cue.text]
+    return "\n".join(lines) + ("\n" if lines else "")
+
+
+def transcript_output_path(output_path: Path) -> Path:
+    return output_path.with_suffix(".txt")
+
+
 def format_vtt_timestamp(seconds: float) -> str:
     milliseconds = max(0, int(round(seconds * 1000)))
     hours, remainder = divmod(milliseconds, 3_600_000)
@@ -522,7 +532,13 @@ def clean_text(text: str) -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="Input video or audio file.")
-    parser.add_argument("-o", "--output", type=Path, required=True, help="Output .vtt path.")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        required=True,
+        help="Output .vtt path. A timestamp-free .txt transcript is written beside it.",
+    )
     parser.add_argument(
         "--backend",
         choices=["faster-whisper", "whisperx", "parakeet"],
@@ -599,7 +615,7 @@ def main() -> None:
         vad_method=args.vad_method,
         align_model=args.align_model,
     )
-    print(f"Wrote {len(cues)} cues to {args.output}")
+    print(f"Wrote {len(cues)} cues to {args.output} and {transcript_output_path(args.output)}")
 
 
 def _should_flush_before_word(

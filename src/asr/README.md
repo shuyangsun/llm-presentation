@@ -1,13 +1,13 @@
-# ASR WebVTT Pipeline
+# ASR WebVTT and Transcript Pipeline
 
 Date: 2026-06-11
 Status: Current
-Area: `src/asr`, local CUDA ASR, WebVTT subtitles
+Area: `src/asr`, local CUDA ASR, WebVTT subtitles, plain text transcripts
 Sources: `transcribe_vtt.py`, `model_cache.py`, `media.py`, `cuda_env.py`, `runtime_env.py`, `pyproject.toml`
 
 ## Summary
 
-`src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
+`src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles plus a sibling timestamp-free `.txt` transcript, and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
 
 `uv run asr-vtt` defaults to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. The same CLI also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
 
@@ -19,6 +19,8 @@ Run the default high-quality WhisperX subtitle path:
 uv run asr-vtt input.mp4 --output output.vtt --language en --device cuda
 uv run asr-vtt input.flac --output output.vtt --language en --device cuda
 ```
+
+Each `asr-vtt` run writes the requested `.vtt` file and a plain transcript beside it by replacing the output suffix with `.txt`, such as `output.txt`.
 
 Select a backend explicitly:
 
@@ -39,7 +41,7 @@ The CLI default backend/model is `whisperx` with `large-v3`. Backend model alias
 
 ## Source Map
 
-`transcribe_vtt.py` owns the `asr-vtt` CLI, backend selection, word-to-cue grouping, timestamp formatting, and WebVTT rendering.
+`transcribe_vtt.py` owns the `asr-vtt` CLI, backend selection, word-to-cue grouping, timestamp formatting, WebVTT rendering, and timestamp-free `.txt` transcript rendering.
 
 `model_cache.py` owns the `asr-download-model` CLI, model aliases, Hugging Face snapshot downloads, NAS destination paths, and `.nemo` checkpoint discovery for Parakeet.
 
@@ -79,7 +81,7 @@ WhisperX auxiliary caches use `model_dir / "torch"` when populated, with downloa
 
 `cues_from_words()` groups word timestamps into subtitle cues by maximum text length, maximum cue duration, pause gaps, and sentence punctuation. The CLI defaults are `--max-line-width 42`, `--max-cue-chars 84`, `--max-cue-duration 6.0`, and `--max-gap 0.7`.
 
-`render_vtt()` always writes `WEBVTT`, formats timestamps as `HH:MM:SS.mmm`, guarantees each cue lasts at least 0.5 seconds, and wraps subtitle text without breaking long words.
+`render_vtt()` always writes `WEBVTT`, formats timestamps as `HH:MM:SS.mmm`, guarantees each cue lasts at least 0.5 seconds, and wraps subtitle text without breaking long words. `render_txt()` writes the same cue text without timestamps, one cue per line.
 
 ## Related Documentation
 
