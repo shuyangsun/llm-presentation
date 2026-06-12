@@ -58,3 +58,7 @@ CLAUDE.local.md
 .codex/cache/
 .codex/logs/
 .codex/sessions/
+
+# Agy local-only settings
+.agy/cache/
+.agy/sessions/
