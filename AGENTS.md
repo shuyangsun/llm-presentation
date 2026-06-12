@@ -1,25 +1,26 @@
 # Agent Guide
 
-Date: 2026-06-11
+Date: 2026-06-12
 Status: Current
 Area: repository workflow, agent skills, jj workspaces
 
 ## Summary
 
-This repo uses Jujutsu (`jj`) plus per-agent workspace guardrails. Work from the
-assigned isolated workspace, keep `.agents/skills` as the source of truth for
-skills, and link new documentation from [docs/README.md](docs/README.md).
+Work from the assigned isolated workspace. This repo uses Jujutsu (`jj`),
+repo-local skills, and durable documentation as project memory.
 
-## Workflow
+## Required References
 
-- Load `.agents/skills/vcs/SKILL.md` before editing, committing, integrating, or
-  cleaning up workspaces/bookmarks. Use the helper scripts; do not push unless the
-  user explicitly asks.
-- Load `.agents/skills/updating-docs/SKILL.md` before writing docs. Search first,
-  update existing docs when possible, and keep new docs discoverable from an index.
-- Export requested session transcripts with
-  `.agents/skills/export-coding-session/SKILL.md` into `docs/coding-sessions/`.
-- Treat `.claude/skills` as a symlink to `.agents/skills`; edit only the
-  `.agents/skills` source tree.
-- For docs-only changes, verify by reading the rendered links, running the
-  transcript redaction scan when applicable, and checking `jj status`.
+- Project context: [README.md](README.md) and [docs/README.md](docs/README.md).
+- Presentation source material:
+  [brain dump](docs/archive/20260611/brain_dump_20260611_distilled.txt) and
+  [five-minute outline](docs/archive/20260611/llmos_5_minute_outline.md).
+- VCS workflow: load `.agents/skills/vcs/SKILL.md` before edits, commits,
+  integration, cleanup, or publishing. Use the helper scripts; do not publish
+  unless the user explicitly asks.
+- Documentation workflow: load `.agents/skills/updating-docs/SKILL.md` before
+  writing docs. Search first and keep docs linked from an index.
+- Session exports: use `.agents/skills/export-coding-session/SKILL.md` only when
+  requested; write transcripts under `docs/coding-sessions/`.
+- Skills source of truth: edit `.agents/skills`, not `.claude/skills`.
+- Docs-only verification: check linked files and `jj status`.
