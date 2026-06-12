@@ -19,7 +19,14 @@ from pathlib import Path
 from typing import TypeVar
 
 from asr.media import extract_mono_16khz_wav
-from asr.model_cache import DEFAULT_DOWNLOAD_DIR, DEFAULT_MODEL_DIR, ensure_model_cached
+from asr.model_cache import (
+    DEFAULT_DOWNLOAD_DIR,
+    DEFAULT_MODEL_DIR,
+    DEFAULT_RUNTIME_MODEL_DIR,
+    ensure_model_cached,
+    runtime_model_destination,
+    stage_model_for_runtime,
+)
 from asr.runtime_env import restart_with_system_media_libraries
 from asr.transcribe_vtt import (
     DEFAULT_MODELS,
@@ -223,6 +230,18 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_DOWNLOAD_DIR,
         help=f"Temporary download root. Default: {DEFAULT_DOWNLOAD_DIR}",
     )
+    parser.add_argument(
+        "--runtime-model-dir",
+        type=Path,
+        default=DEFAULT_RUNTIME_MODEL_DIR,
+        help=f"Local runtime model mirror directory. Default: {DEFAULT_RUNTIME_MODEL_DIR}",
+    )
+    parser.add_argument(
+        "--no-stage-model",
+        dest="stage_model",
+        action="store_false",
+        help="Load NAS-backed models directly instead of first mirroring them locally.",
+    )
     parser.add_argument("--device", default="cuda", choices=["cuda", "cpu", "auto"])
     parser.add_argument("--device-index", type=int, default=0)
     parser.add_argument("--compute-type", default="float16")
@@ -253,7 +272,8 @@ def main() -> None:
     input_path = args.input.expanduser()
     args.model_dir = args.model_dir.expanduser()
     args.download_dir = args.download_dir.expanduser()
-    output_path = (args.output.expanduser() if args.output else input_path.with_suffix(".vtt"))
+    args.runtime_model_dir = args.runtime_model_dir.expanduser()
+    output_path = args.output.expanduser() if args.output else input_path.with_suffix(".vtt")
     write_result = curses.wrapper(run_tui, args, input_path, output_path)
     if write_result is not None:
         print(
@@ -278,6 +298,13 @@ def run_tui(
         model_cache_detail(args),
         lambda: resolve_model_load_plan(args),
     )
+    if should_stage_model_for_runtime(model_plan.model_path, args):
+        model_plan = run_with_progress(
+            stdscr,
+            "Staging ASR model locally",
+            runtime_stage_detail(model_plan, args),
+            lambda: stage_model_load_plan(model_plan, args),
+        )
     session = run_with_progress(
         stdscr,
         "Loading ASR model",
@@ -740,7 +767,7 @@ def resample_peaks(peaks: list[float], columns: int) -> list[float]:
     for column in range(columns):
         start = int(column * scale)
         end = max(start + 1, int((column + 1) * scale))
-        sampled.append(max(peaks[start:min(end, len(peaks))], default=0.0))
+        sampled.append(max(peaks[start : min(end, len(peaks))], default=0.0))
     return sampled
 
 
@@ -764,6 +791,35 @@ def resolve_model_load_plan(args: argparse.Namespace) -> ModelLoadPlan:
         model_name=model_name,
         model_path=model_path,
         cache_label=model_cache_label(model_path, args.model_dir),
+    )
+
+
+def should_stage_model_for_runtime(model_path: Path, args: argparse.Namespace) -> bool:
+    if not args.stage_model or not model_path.is_dir():
+        return False
+
+    resolved_model_path = model_path.resolve()
+    runtime_dir = args.runtime_model_dir.resolve()
+    if resolved_model_path == runtime_dir or resolved_model_path.is_relative_to(runtime_dir):
+        return False
+
+    return resolved_model_path.is_relative_to(args.model_dir.resolve())
+
+
+def runtime_stage_detail(model_plan: ModelLoadPlan, args: argparse.Namespace) -> str:
+    destination = runtime_model_destination(model_plan.model_path, args.runtime_model_dir)
+    return f"{model_plan.model_path} -> {destination}"
+
+
+def stage_model_load_plan(model_plan: ModelLoadPlan, args: argparse.Namespace) -> ModelLoadPlan:
+    staged_path = stage_model_for_runtime(
+        model_plan.model_path,
+        runtime_dir=args.runtime_model_dir,
+    )
+    return ModelLoadPlan(
+        model_name=model_plan.model_name,
+        model_path=staged_path,
+        cache_label=f"runtime stage of {model_plan.cache_label}",
     )
 
 

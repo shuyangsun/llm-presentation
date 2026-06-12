@@ -9,7 +9,7 @@ Sources: `interactive_tui.py`, `transcribe_vtt.py`, `speech_speed.py`, `model_ca
 
 `src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles plus a sibling timestamp-free `.txt` transcript; `uv run asr-tui` for interactively playing audio, viewing a terminal waveform, tuning `--max-gap`, and confirming the final `.vtt` and `.txt` outputs; `uv run asr-speech-speed` for estimating words-per-minute speech speed from `.vtt` transcripts; and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
 
-`uv run asr-vtt` and `uv run asr-tui` default to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. `asr-tui` resolves and displays the concrete cached model path before WhisperX starts loading, so the startup screen distinguishes NAS cache resolution from WhisperX pipeline initialization. The same backend surface also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
+`uv run asr-vtt` and `uv run asr-tui` default to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. `asr-tui` resolves and displays the concrete cached model path, mirrors NAS-backed model snapshots into `/tmp/asr-model-downloads/runtime-models`, and then loads WhisperX from that local runtime mirror. That startup sequence avoids slow demand-loaded reads from the NAS model cache during interactive TUI startup. The same backend surface also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
 
 ## Command Surface
 
@@ -29,7 +29,7 @@ uv run asr-tui input.flac --output output.vtt --language en --device cuda
 uv run asr-tui input.mp4 --output output.vtt --language en --device cuda
 ```
 
-`asr-tui` first resolves the selected model through `ensure_model_cached()` and displays the concrete cache path, such as `/mnt/nas/home/ml/model/huggingface/Systran/faster-whisper-large-v3`, before loading the WhisperX model with an animated elapsed-time progress bar. It then prepares the first audio stream as a mono 16 kHz WAV, shows a terminal waveform for audio or video inputs, plays audio through `ffplay`, displays the active subtitle under the waveform, and writes the final `.vtt` plus sibling `.txt` only after confirmation. Use Space to play or pause, Left/Right to seek, click the bottom slider when terminal mouse events are available, press `g` to enter a new `max_gap`, press Enter to confirm writing outputs, or press `q` to exit without writing.
+`asr-tui` first resolves the selected model through `ensure_model_cached()` and displays the concrete cache path, such as `/mnt/nas/home/ml/model/huggingface/Systran/faster-whisper-large-v3`. If that path is under `--model-dir`, the TUI mirrors it into `--runtime-model-dir` before loading the WhisperX model with an animated elapsed-time progress bar. Use `--no-stage-model` to load directly from the NAS cache instead. After the model is loaded, `asr-tui` prepares the first audio stream as a mono 16 kHz WAV, shows a terminal waveform for audio or video inputs, plays audio through `ffplay`, displays the active subtitle under the waveform, and writes the final `.vtt` plus sibling `.txt` only after confirmation. Use Space to play or pause, Left/Right to seek, click the bottom slider when terminal mouse events are available, press `g` to enter a new `max_gap`, press Enter to confirm writing outputs, or press `q` to exit without writing.
 
 Select a backend explicitly:
 
@@ -58,13 +58,13 @@ The `asr-vtt` and `asr-tui` default backend/model is `whisperx` with `large-v3`.
 
 ## Source Map
 
-`interactive_tui.py` owns the `asr-tui` CLI, explicit model cache resolution, curses rendering, animated model-load/transcription progress bars, terminal waveform drawing, `ffplay` audio playback, clickable bottom slider handling, keyboard playback controls, subtitle preview, `g`-driven `max_gap` updates, and confirmed `.vtt`/`.txt` writing.
+`interactive_tui.py` owns the `asr-tui` CLI, explicit model cache resolution, local runtime model staging, curses rendering, animated model-load/transcription progress bars, terminal waveform drawing, `ffplay` audio playback, clickable bottom slider handling, keyboard playback controls, subtitle preview, `g`-driven `max_gap` updates, and confirmed `.vtt`/`.txt` writing.
 
 `transcribe_vtt.py` owns the `asr-vtt` CLI, reusable backend session classes, backend selection, word-to-cue grouping, timestamp formatting, WebVTT rendering, and timestamp-free `.txt` transcript rendering. `asr-tui` reuses these session classes so the selected model stays alive for the lifetime of the interactive terminal session.
 
 `speech_speed.py` owns the `asr-speech-speed` CLI, WebVTT cue parsing, word counting, pause-bounded speech-run grouping, long-break reporting, and auto comparison of gap profiles.
 
-`model_cache.py` owns the `asr-download-model` CLI, model aliases, Hugging Face snapshot downloads, NAS destination paths, and `.nemo` checkpoint discovery for Parakeet.
+`model_cache.py` owns the `asr-download-model` CLI, model aliases, Hugging Face snapshot downloads, NAS destination paths, local runtime model mirrors, and `.nemo` checkpoint discovery for Parakeet.
 
 `media.py` normalizes the first audio stream from either a video container or an audio-only file as mono 16 kHz PCM WAV with `ffmpeg`. All transcription backends and `asr-tui` use this helper before model inference, so formats such as `.mp4`, `.mkv`, `.wav`, `.mp3`, and `.flac` follow the same prepared-audio path.
 
@@ -93,6 +93,14 @@ Downloads are staged under:
 ```text
 /tmp/asr-model-downloads
 ```
+
+`asr-tui` mirrors NAS-backed model snapshots into:
+
+```text
+/tmp/asr-model-downloads/runtime-models
+```
+
+Runtime mirror directories include a hash of the resolved NAS model path, so repeated TUI launches reuse the same local copy until it is removed from `/tmp`.
 
 `ensure_model_cached()` reuses a model directory when it contains `config.json` plus a recognized weight file or `.nemo` checkpoint. If a destination exists but does not look complete, pass `--refresh` to replace it.
 

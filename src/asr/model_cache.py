@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import inspect
 import os
 import shutil
@@ -12,6 +13,7 @@ from huggingface_hub import snapshot_download
 
 DEFAULT_MODEL_DIR = Path("/mnt/nas/home/ml/model")
 DEFAULT_DOWNLOAD_DIR = Path("/tmp/asr-model-downloads")
+DEFAULT_RUNTIME_MODEL_DIR = DEFAULT_DOWNLOAD_DIR / "runtime-models"
 
 MODEL_ALIASES = {
     "parakeet": "nvidia/parakeet-tdt-0.6b-v3",
@@ -86,6 +88,52 @@ def ensure_model_cached(
             shutil.rmtree(temp_local)
 
     return destination
+
+
+def stage_model_for_runtime(
+    model_path: Path,
+    *,
+    runtime_dir: Path = DEFAULT_RUNTIME_MODEL_DIR,
+    refresh: bool = False,
+) -> Path:
+    """Return a local runtime copy of a cached model directory."""
+
+    source = model_path.expanduser().resolve()
+    runtime_root = runtime_dir.expanduser().resolve()
+    if not source.is_dir() or source == runtime_root or source.is_relative_to(runtime_root):
+        return source
+
+    destination = runtime_model_destination(source, runtime_root)
+    if refresh and destination.exists():
+        shutil.rmtree(destination)
+    if is_complete_model_dir(destination):
+        return destination
+    if destination.exists():
+        shutil.rmtree(destination)
+
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    staging = destination.with_name(f"{destination.name}.tmp-{os.getpid()}")
+    if staging.exists():
+        shutil.rmtree(staging)
+
+    try:
+        shutil.copytree(source, staging)
+        if not is_complete_model_dir(staging):
+            raise RuntimeError(f"Runtime model stage does not look complete: {staging}")
+        os.replace(staging, destination)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging)
+
+    return destination
+
+
+def runtime_model_destination(
+    model_path: Path, runtime_dir: Path = DEFAULT_RUNTIME_MODEL_DIR
+) -> Path:
+    resolved = model_path.expanduser().resolve()
+    digest = hashlib.sha256(str(resolved).encode("utf-8")).hexdigest()[:16]
+    return runtime_dir.expanduser() / f"{resolved.name}-{digest}"
 
 
 def resolve_model_repo(model: str) -> str:

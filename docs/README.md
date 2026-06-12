@@ -22,3 +22,4 @@
 - [ASR TXT transcript session](coding-sessions/2026-06-11/0007-codex-asr-txt-transcript.md) - records the ASR `.txt` transcript output update, documentation refresh, transcript export, and jj integration workflow.
 - [Five-minute LLMOS outline session](coding-sessions/2026-06-11/0008-codex-five-minute-llmos-outline.md) - records the archived five-minute presentation outline, WPM measurement, transcript export, and jj integration workflow.
 - [ASR interactive TUI session](coding-sessions/2026-06-11/0010-codex-asr-interactive-tui.md) - records the `asr-tui` waveform playback UI, live model-session refactor, max-gap tuning workflow, validation, documentation, and jj integration workflow.
+- [ASR TUI runtime model staging session](coding-sessions/2026-06-11/0011-codex-asr-tui-runtime-model-staging.md) - records the `asr-tui` NAS model loading diagnosis, local runtime model staging fix, validation, transcript export, and jj integration workflow.
