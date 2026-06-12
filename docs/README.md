@@ -21,3 +21,4 @@
 - [ASR speech speed session](coding-sessions/2026-06-11/0007-codex-asr-speech-speed.md) - records the `asr-speech-speed` CLI, WebVTT gap-profile analysis, sample transcript validation, transcript export, and jj integration workflow.
 - [ASR TXT transcript session](coding-sessions/2026-06-11/0007-codex-asr-txt-transcript.md) - records the ASR `.txt` transcript output update, documentation refresh, transcript export, and jj integration workflow.
 - [Five-minute LLMOS outline session](coding-sessions/2026-06-11/0008-codex-five-minute-llmos-outline.md) - records the archived five-minute presentation outline, WPM measurement, transcript export, and jj integration workflow.
+- [ASR interactive TUI session](coding-sessions/2026-06-11/0010-codex-asr-interactive-tui.md) - records the `asr-tui` waveform playback UI, live model-session refactor, max-gap tuning workflow, validation, documentation, and jj integration workflow.

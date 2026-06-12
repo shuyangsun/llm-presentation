@@ -29,9 +29,10 @@ The main source context is:
 ## Local Tooling
 
 `src/asr` provides CUDA ASR commands for turning video or audio into WebVTT
-subtitles and timestamp-free plain text transcripts. This supports the
-presentation workflow by converting recorded brain dumps and talking-head video
-into durable context.
+subtitles and timestamp-free plain text transcripts, plus an interactive
+terminal UI for tuning subtitle pause gaps against a playable waveform. This
+supports the presentation workflow by converting recorded brain dumps and
+talking-head video into durable context.
 
 ## Quick Start
 
@@ -39,12 +40,15 @@ into durable context.
 uv sync
 uv run asr-vtt input.mp4 --output output.vtt --language en --device cuda
 uv run asr-vtt input.flac --output output.vtt --language en --device cuda
+uv run asr-tui input.flac --output output.vtt --language en --device cuda
 uv run asr-speech-speed output.vtt
 uv run asr-download-model large-v3
 ```
 
 Each `asr-vtt` run writes the requested `.vtt` file plus a sibling
 timestamp-free `.txt` transcript.
+Use `asr-tui` when you want to view the waveform, play the audio, adjust
+`max_gap`, and confirm the final `.vtt` and `.txt` outputs interactively.
 
 ## Documentation
 

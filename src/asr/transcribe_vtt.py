@@ -43,6 +43,364 @@ class Cue:
     text: str
 
 
+@dataclass(frozen=True)
+class TranscriptionResult:
+    cues: list[Cue]
+    note: str
+    words: list[Word]
+
+
+class FasterWhisperSession:
+    backend: Backend = "faster-whisper"
+
+    def __init__(
+        self,
+        *,
+        model_name: str,
+        model_dir: Path,
+        download_dir: Path,
+        device: str,
+        device_index: int,
+        compute_type: str,
+    ) -> None:
+        self.model_path = ensure_model_cached(
+            model_name,
+            model_dir=model_dir,
+            download_dir=download_dir,
+        )
+        self.model_name = model_name
+
+        if device in {"cuda", "auto"}:
+            configure_cuda_shared_libraries()
+
+        from faster_whisper import WhisperModel
+
+        self._model = WhisperModel(
+            str(self.model_path),
+            device=device,
+            device_index=device_index,
+            compute_type=compute_type,
+            local_files_only=True,
+        )
+
+    @property
+    def model_label(self) -> str:
+        return f"{self.backend}:{self.model_path}"
+
+    def transcribe(
+        self,
+        input_path: Path,
+        *,
+        language: str | None,
+        task: str,
+        beam_size: int,
+        vad_filter: bool,
+        condition_on_previous_text: bool,
+        batch_size: int,
+        align_model: str | None,
+        max_cue_chars: int,
+        max_cue_duration: float,
+        max_gap: float,
+    ) -> TranscriptionResult:
+        del batch_size, align_model
+
+        segments, info = self._model.transcribe(
+            str(input_path),
+            beam_size=beam_size,
+            word_timestamps=True,
+            vad_filter=vad_filter,
+            language=language,
+            task=task,
+            condition_on_previous_text=condition_on_previous_text,
+        )
+        segment_list = list(segments)
+        words = words_from_segments(segment_list)
+        if words:
+            cues = cues_from_words(
+                words,
+                max_cue_chars=max_cue_chars,
+                max_cue_duration=max_cue_duration,
+                max_gap=max_gap,
+            )
+        else:
+            cues = cues_from_segments(
+                segment_list,
+                max_cue_chars=max_cue_chars,
+                max_cue_duration=max_cue_duration,
+                max_gap=max_gap,
+            )
+
+        note = format_note(
+            backend=self.backend,
+            model=str(self.model_path),
+            language=info.language,
+            probability=info.language_probability,
+        )
+        return TranscriptionResult(cues=cues, note=note, words=words)
+
+
+class WhisperXSession:
+    backend: Backend = "whisperx"
+
+    def __init__(
+        self,
+        *,
+        model_name: str,
+        model_dir: Path,
+        download_dir: Path,
+        device: str,
+        device_index: int,
+        compute_type: str,
+        language: str | None,
+        task: str,
+        vad_method: str,
+    ) -> None:
+        self.model_path = ensure_model_cached(
+            model_name,
+            model_dir=model_dir,
+            download_dir=download_dir,
+        )
+        self.model_name = model_name
+        self.model_dir = model_dir
+        self.download_dir = download_dir
+        self.device_index = device_index
+        self._aligners: dict[tuple[str, str | None], tuple[object, object]] = {}
+        whisper_device, torch_device = resolve_devices(device, device_index)
+        self._torch_device = torch_device
+        if whisper_device == "cuda":
+            configure_cuda_shared_libraries()
+
+        import torch
+        import whisperx
+
+        self._whisperx = whisperx
+
+        hub_cache_dir, use_final_hub_cache = select_cache_dir(
+            model_dir / "torch" / "hub",
+            download_dir / "torch-hub",
+        )
+        torch.hub.set_dir(str(hub_cache_dir))
+
+        self._model = whisperx.load_model(
+            str(self.model_path),
+            whisper_device,
+            device_index=device_index,
+            compute_type=compute_type,
+            language=language,
+            task=task,
+            download_root=str(download_dir / "whisperx"),
+            local_files_only=True,
+            vad_method=vad_method,
+        )
+        if not use_final_hub_cache:
+            move_directory_contents(hub_cache_dir, model_dir / "torch" / "hub")
+
+    @property
+    def model_label(self) -> str:
+        return f"{self.backend}:{self.model_path}"
+
+    def transcribe(
+        self,
+        input_path: Path,
+        *,
+        language: str | None,
+        task: str,
+        beam_size: int,
+        vad_filter: bool,
+        condition_on_previous_text: bool,
+        batch_size: int,
+        align_model: str | None,
+        max_cue_chars: int,
+        max_cue_duration: float,
+        max_gap: float,
+    ) -> TranscriptionResult:
+        del task, beam_size, vad_filter, condition_on_previous_text
+
+        audio = self._whisperx.load_audio(str(input_path))
+        result = self._model.transcribe(audio, batch_size=batch_size)
+        detected_language = str(result.get("language") or language or "en")
+        aligner, metadata = self._aligner(detected_language, align_model)
+        aligned = self._whisperx.align(
+            result["segments"],
+            aligner,
+            metadata,
+            audio,
+            self._torch_device,
+            return_char_alignments=False,
+        )
+
+        words = words_from_whisperx(aligned.get("word_segments", []))
+        if words:
+            cues = cues_from_words(
+                words,
+                max_cue_chars=max_cue_chars,
+                max_cue_duration=max_cue_duration,
+                max_gap=max_gap,
+            )
+        else:
+            cues = cues_from_whisperx_segments(aligned.get("segments", []))
+
+        note = format_note(
+            backend=self.backend,
+            model=str(self.model_path),
+            language=detected_language,
+            probability=None,
+        )
+        return TranscriptionResult(cues=cues, note=note, words=words)
+
+    def _aligner(self, language: str, align_model: str | None) -> tuple[object, object]:
+        key = (language, align_model)
+        cached = self._aligners.get(key)
+        if cached is not None:
+            return cached
+
+        align_dir, use_final_align_cache = select_cache_dir(
+            self.model_dir / "torch" / "whisperx-align",
+            self.download_dir / "whisperx-align",
+        )
+        aligner, metadata = self._whisperx.load_align_model(
+            language_code=language,
+            device=self._torch_device,
+            model_name=align_model,
+            model_dir=str(align_dir),
+            model_cache_only=use_final_align_cache,
+        )
+        if not use_final_align_cache:
+            move_directory_contents(align_dir, self.model_dir / "torch" / "whisperx-align")
+
+        cached = (aligner, metadata)
+        self._aligners[key] = cached
+        return cached
+
+
+class ParakeetSession:
+    backend: Backend = "parakeet"
+
+    def __init__(
+        self,
+        *,
+        model_name: str,
+        model_dir: Path,
+        download_dir: Path,
+        device: str,
+        device_index: int,
+    ) -> None:
+        model_path = ensure_model_cached(
+            model_name,
+            model_dir=model_dir,
+            download_dir=download_dir,
+        )
+        self.nemo_path = find_nemo_checkpoint(model_path)
+        self.model_name = model_name
+        _, torch_device = resolve_devices(device, device_index)
+        self._torch_device = torch_device
+
+        import torch
+        from nemo.collections.asr.models import ASRModel
+
+        self._torch = torch
+        self._asr_model = ASRModel.restore_from(
+            str(self.nemo_path),
+            map_location=torch.device(torch_device),
+        )
+        self._asr_model.to(torch_device)
+        self._asr_model.eval()
+
+    @property
+    def model_label(self) -> str:
+        return f"{self.backend}:{self.nemo_path}"
+
+    def transcribe(
+        self,
+        input_path: Path,
+        *,
+        language: str | None,
+        task: str,
+        beam_size: int,
+        vad_filter: bool,
+        condition_on_previous_text: bool,
+        batch_size: int,
+        align_model: str | None,
+        max_cue_chars: int,
+        max_cue_duration: float,
+        max_gap: float,
+    ) -> TranscriptionResult:
+        del language, task, beam_size, vad_filter, condition_on_previous_text
+        del batch_size, align_model
+
+        with self._torch.inference_mode():
+            output = self._asr_model.transcribe([str(input_path)], timestamps=True)
+
+        transcript = output[0]
+        words = words_from_parakeet(transcript)
+        if words:
+            cues = cues_from_words(
+                words,
+                max_cue_chars=max_cue_chars,
+                max_cue_duration=max_cue_duration,
+                max_gap=max_gap,
+            )
+        else:
+            cues = cues_from_parakeet_segments(transcript)
+
+        note = format_note(
+            backend=self.backend,
+            model=str(self.nemo_path),
+            language=None,
+            probability=None,
+        )
+        return TranscriptionResult(cues=cues, note=note, words=words)
+
+
+TranscriptionSession = FasterWhisperSession | WhisperXSession | ParakeetSession
+
+
+def load_transcription_session(
+    *,
+    backend: Backend,
+    model_name: str | None,
+    model_dir: Path,
+    download_dir: Path,
+    device: str,
+    device_index: int,
+    compute_type: str,
+    language: str | None,
+    task: str,
+    vad_method: str,
+) -> TranscriptionSession:
+    resolved_model_name = model_name or DEFAULT_MODELS[backend]
+    if backend == "faster-whisper":
+        return FasterWhisperSession(
+            model_name=resolved_model_name,
+            model_dir=model_dir,
+            download_dir=download_dir,
+            device=device,
+            device_index=device_index,
+            compute_type=compute_type,
+        )
+    if backend == "whisperx":
+        return WhisperXSession(
+            model_name=resolved_model_name,
+            model_dir=model_dir,
+            download_dir=download_dir,
+            device=device,
+            device_index=device_index,
+            compute_type=compute_type,
+            language=language,
+            task=task,
+            vad_method=vad_method,
+        )
+    if backend == "parakeet":
+        return ParakeetSession(
+            model_name=resolved_model_name,
+            model_dir=model_dir,
+            download_dir=download_dir,
+            device=device,
+            device_index=device_index,
+        )
+    assert_never(backend)
+
+
 def transcribe_to_vtt(
     input_path: Path,
     output_path: Path,
@@ -67,70 +425,43 @@ def transcribe_to_vtt(
     vad_method: str = "silero",
     align_model: str | None = None,
 ) -> list[Cue]:
-    model_name = model_name or DEFAULT_MODELS[backend]
     prepared_input = extract_mono_16khz_wav(
         input_path,
         output_dir=download_dir / "audio",
     )
-
-    if backend == "faster-whisper":
-        cues, note = transcribe_with_faster_whisper(
-            prepared_input,
-            model_name=model_name,
-            model_dir=model_dir,
-            download_dir=download_dir,
-            device=device,
-            device_index=device_index,
-            compute_type=compute_type,
-            language=language,
-            task=task,
-            beam_size=beam_size,
-            vad_filter=vad_filter,
-            condition_on_previous_text=condition_on_previous_text,
-            max_cue_chars=max_cue_chars,
-            max_cue_duration=max_cue_duration,
-            max_gap=max_gap,
-        )
-    elif backend == "whisperx":
-        cues, note = transcribe_with_whisperx(
-            prepared_input,
-            model_name=model_name,
-            model_dir=model_dir,
-            download_dir=download_dir,
-            device=device,
-            device_index=device_index,
-            compute_type=compute_type,
-            language=language,
-            task=task,
-            batch_size=batch_size,
-            vad_method=vad_method,
-            align_model=align_model,
-            max_cue_chars=max_cue_chars,
-            max_cue_duration=max_cue_duration,
-            max_gap=max_gap,
-        )
-    elif backend == "parakeet":
-        cues, note = transcribe_with_parakeet(
-            prepared_input,
-            model_name=model_name,
-            model_dir=model_dir,
-            download_dir=download_dir,
-            device=device,
-            device_index=device_index,
-            max_cue_chars=max_cue_chars,
-            max_cue_duration=max_cue_duration,
-            max_gap=max_gap,
-        )
-    else:
-        assert_never(backend)
+    session = load_transcription_session(
+        backend=backend,
+        model_name=model_name,
+        model_dir=model_dir,
+        download_dir=download_dir,
+        device=device,
+        device_index=device_index,
+        compute_type=compute_type,
+        language=language,
+        task=task,
+        vad_method=vad_method,
+    )
+    result = session.transcribe(
+        prepared_input,
+        language=language,
+        task=task,
+        beam_size=beam_size,
+        vad_filter=vad_filter,
+        condition_on_previous_text=condition_on_previous_text,
+        batch_size=batch_size,
+        align_model=align_model,
+        max_cue_chars=max_cue_chars,
+        max_cue_duration=max_cue_duration,
+        max_gap=max_gap,
+    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
-        render_vtt(cues, max_line_width=max_line_width, note=note),
+        render_vtt(result.cues, max_line_width=max_line_width, note=result.note),
         encoding="utf-8",
     )
-    transcript_output_path(output_path).write_text(render_txt(cues), encoding="utf-8")
-    return cues
+    transcript_output_path(output_path).write_text(render_txt(result.cues), encoding="utf-8")
+    return result.cues
 
 
 def transcribe_with_faster_whisper(
@@ -151,48 +482,28 @@ def transcribe_with_faster_whisper(
     max_cue_duration: float,
     max_gap: float,
 ) -> tuple[list[Cue], str]:
-    model_path = ensure_model_cached(
-        model_name,
+    session = FasterWhisperSession(
+        model_name=model_name,
         model_dir=model_dir,
         download_dir=download_dir,
-    )
-
-    if device in {"cuda", "auto"}:
-        configure_cuda_shared_libraries()
-
-    from faster_whisper import WhisperModel
-
-    model = WhisperModel(
-        str(model_path),
         device=device,
         device_index=device_index,
         compute_type=compute_type,
-        local_files_only=True,
     )
-    segments, info = model.transcribe(
-        str(input_path),
-        beam_size=beam_size,
-        word_timestamps=True,
-        vad_filter=vad_filter,
+    result = session.transcribe(
+        input_path,
         language=language,
         task=task,
+        beam_size=beam_size,
+        vad_filter=vad_filter,
         condition_on_previous_text=condition_on_previous_text,
-    )
-    segment_list = list(segments)
-    cues = cues_from_segments(
-        segment_list,
+        batch_size=1,
+        align_model=None,
         max_cue_chars=max_cue_chars,
         max_cue_duration=max_cue_duration,
         max_gap=max_gap,
     )
-
-    note = format_note(
-        backend="faster-whisper",
-        model=str(model_path),
-        language=info.language,
-        probability=info.language_probability,
-    )
-    return cues, note
+    return result.cues, result.note
 
 
 def transcribe_with_whisperx(
@@ -213,83 +524,31 @@ def transcribe_with_whisperx(
     max_cue_duration: float,
     max_gap: float,
 ) -> tuple[list[Cue], str]:
-    model_path = ensure_model_cached(
-        model_name,
+    session = WhisperXSession(
+        model_name=model_name,
         model_dir=model_dir,
         download_dir=download_dir,
-    )
-    whisper_device, torch_device = resolve_devices(device, device_index)
-    if whisper_device == "cuda":
-        configure_cuda_shared_libraries()
-
-    import torch
-    import whisperx
-
-    hub_cache_dir, use_final_hub_cache = select_cache_dir(
-        model_dir / "torch" / "hub",
-        download_dir / "torch-hub",
-    )
-    torch.hub.set_dir(str(hub_cache_dir))
-
-    audio = whisperx.load_audio(str(input_path))
-    model = whisperx.load_model(
-        str(model_path),
-        whisper_device,
+        device=device,
         device_index=device_index,
         compute_type=compute_type,
         language=language,
         task=task,
-        download_root=str(download_dir / "whisperx"),
-        local_files_only=True,
         vad_method=vad_method,
     )
-    result = model.transcribe(audio, batch_size=batch_size)
-    detected_language = str(result.get("language") or language or "en")
-
-    align_dir, use_final_align_cache = select_cache_dir(
-        model_dir / "torch" / "whisperx-align",
-        download_dir / "whisperx-align",
+    result = session.transcribe(
+        input_path,
+        language=language,
+        task=task,
+        beam_size=1,
+        vad_filter=True,
+        condition_on_previous_text=False,
+        batch_size=batch_size,
+        align_model=align_model,
+        max_cue_chars=max_cue_chars,
+        max_cue_duration=max_cue_duration,
+        max_gap=max_gap,
     )
-
-    aligner, metadata = whisperx.load_align_model(
-        language_code=detected_language,
-        device=torch_device,
-        model_name=align_model,
-        model_dir=str(align_dir),
-        model_cache_only=use_final_align_cache,
-    )
-    aligned = whisperx.align(
-        result["segments"],
-        aligner,
-        metadata,
-        audio,
-        torch_device,
-        return_char_alignments=False,
-    )
-
-    if not use_final_align_cache:
-        move_directory_contents(align_dir, model_dir / "torch" / "whisperx-align")
-    if not use_final_hub_cache:
-        move_directory_contents(hub_cache_dir, model_dir / "torch" / "hub")
-
-    words = words_from_whisperx(aligned.get("word_segments", []))
-    if words:
-        cues = cues_from_words(
-            words,
-            max_cue_chars=max_cue_chars,
-            max_cue_duration=max_cue_duration,
-            max_gap=max_gap,
-        )
-    else:
-        cues = cues_from_whisperx_segments(aligned.get("segments", []))
-
-    note = format_note(
-        backend="whisperx",
-        model=str(model_path),
-        language=detected_language,
-        probability=None,
-    )
-    return cues, note
+    return result.cues, result.note
 
 
 def transcribe_with_parakeet(
@@ -304,46 +563,27 @@ def transcribe_with_parakeet(
     max_cue_duration: float,
     max_gap: float,
 ) -> tuple[list[Cue], str]:
-    model_path = ensure_model_cached(
-        model_name,
+    session = ParakeetSession(
+        model_name=model_name,
         model_dir=model_dir,
         download_dir=download_dir,
+        device=device,
+        device_index=device_index,
     )
-    nemo_path = find_nemo_checkpoint(model_path)
-    _, torch_device = resolve_devices(device, device_index)
-
-    import torch
-    from nemo.collections.asr.models import ASRModel
-
-    asr_model = ASRModel.restore_from(
-        str(nemo_path),
-        map_location=torch.device(torch_device),
-    )
-    asr_model.to(torch_device)
-    asr_model.eval()
-
-    with torch.inference_mode():
-        output = asr_model.transcribe([str(input_path)], timestamps=True)
-
-    transcript = output[0]
-    words = words_from_parakeet(transcript)
-    if words:
-        cues = cues_from_words(
-            words,
-            max_cue_chars=max_cue_chars,
-            max_cue_duration=max_cue_duration,
-            max_gap=max_gap,
-        )
-    else:
-        cues = cues_from_parakeet_segments(transcript)
-
-    note = format_note(
-        backend="parakeet",
-        model=str(nemo_path),
+    result = session.transcribe(
+        input_path,
         language=None,
-        probability=None,
+        task="transcribe",
+        beam_size=1,
+        vad_filter=True,
+        condition_on_previous_text=False,
+        batch_size=1,
+        align_model=None,
+        max_cue_chars=max_cue_chars,
+        max_cue_duration=max_cue_duration,
+        max_gap=max_gap,
     )
-    return cues, note
+    return result.cues, result.note
 
 
 def cues_from_segments(

@@ -16,6 +16,7 @@ dependencies = [
 [project.scripts]
 asr-download-model = "asr.model_cache:main"
 asr-speech-speed = "asr.speech_speed:main"
+asr-tui = "asr.interactive_tui:main"
 asr-vtt = "asr.transcribe_vtt:main"
 
 [dependency-groups]
