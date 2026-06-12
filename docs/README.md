@@ -7,6 +7,7 @@
 ## Archive
 
 - [June 11, 2026 presentation brain dump](archive/20260611/brain_dump_20260611_distilled.txt) - distilled context and raw WebVTT transcript for "Open and Closed Loops: The Economics of the LLMOS."
+- [Five-minute LLMOS presentation outline](archive/20260611/llmos_5_minute_outline.md) - talking-head reference outline with WPM budget, key concepts, and marked examples for the compressed presentation.
 
 ## Coding Sessions
 
@@ -19,3 +20,4 @@
 - [Presentation brain dump archive session](coding-sessions/2026-06-11/0006-codex-brain-dump-archive.md) - records the June 11, 2026 brain-dump VTT archive, distilled LLM context file, transcript export, and jj integration workflow.
 - [ASR speech speed session](coding-sessions/2026-06-11/0007-codex-asr-speech-speed.md) - records the `asr-speech-speed` CLI, WebVTT gap-profile analysis, sample transcript validation, transcript export, and jj integration workflow.
 - [ASR TXT transcript session](coding-sessions/2026-06-11/0007-codex-asr-txt-transcript.md) - records the ASR `.txt` transcript output update, documentation refresh, transcript export, and jj integration workflow.
+- [Five-minute LLMOS outline session](coding-sessions/2026-06-11/0008-codex-five-minute-llmos-outline.md) - records the archived five-minute presentation outline, WPM measurement, transcript export, and jj integration workflow.
