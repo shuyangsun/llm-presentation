@@ -19,9 +19,10 @@ from pathlib import Path
 from typing import TypeVar
 
 from asr.media import extract_mono_16khz_wav
-from asr.model_cache import DEFAULT_DOWNLOAD_DIR, DEFAULT_MODEL_DIR
+from asr.model_cache import DEFAULT_DOWNLOAD_DIR, DEFAULT_MODEL_DIR, ensure_model_cached
 from asr.runtime_env import restart_with_system_media_libraries
 from asr.transcribe_vtt import (
+    DEFAULT_MODELS,
     Cue,
     TranscriptionResult,
     TranscriptionSession,
@@ -34,6 +35,7 @@ from asr.transcribe_vtt import (
 )
 
 T = TypeVar("T")
+DEFAULT_TUI_BACKEND = "whisperx"
 
 
 @dataclass(frozen=True)
@@ -68,6 +70,17 @@ class SliderGeometry:
     y: int
     start_x: int
     end_x: int
+
+
+@dataclass(frozen=True)
+class ModelLoadPlan:
+    model_name: str
+    model_path: Path
+    cache_label: str
+
+    @property
+    def progress_detail(self) -> str:
+        return f"{self.model_name} from {self.cache_label}: {self.model_path}"
 
 
 class AudioPlayer:
@@ -194,8 +207,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--backend",
         choices=["faster-whisper", "whisperx", "parakeet"],
-        default="whisperx",
-        help="ASR backend. Default: whisperx.",
+        default=DEFAULT_TUI_BACKEND,
+        help=f"ASR backend. Default: {DEFAULT_TUI_BACKEND}.",
     )
     parser.add_argument("--model", help="Model alias, Hugging Face repo id, or local path.")
     parser.add_argument(
@@ -238,6 +251,8 @@ def main() -> None:
     restart_with_system_media_libraries()
     args = build_parser().parse_args()
     input_path = args.input.expanduser()
+    args.model_dir = args.model_dir.expanduser()
+    args.download_dir = args.download_dir.expanduser()
     output_path = (args.output.expanduser() if args.output else input_path.with_suffix(".vtt"))
     write_result = curses.wrapper(run_tui, args, input_path, output_path)
     if write_result is not None:
@@ -257,13 +272,19 @@ def run_tui(
 ) -> WriteResult | None:
     configure_curses(stdscr)
     backend = args.backend
+    model_plan = run_with_progress(
+        stdscr,
+        "Resolving ASR model cache",
+        model_cache_detail(args),
+        lambda: resolve_model_load_plan(args),
+    )
     session = run_with_progress(
         stdscr,
         "Loading ASR model",
-        model_detail(args),
+        model_plan.progress_detail,
         lambda: load_transcription_session(
             backend=backend,
-            model_name=args.model,
+            model_name=str(model_plan.model_path),
             model_dir=args.model_dir,
             download_dir=args.download_dir,
             device=args.device,
@@ -403,6 +424,7 @@ def run_with_progress(
     func: Callable[[], T],
 ) -> T:
     result: dict[str, T | BaseException | str] = {}
+    started_at = time.monotonic()
 
     def worker() -> None:
         try:
@@ -415,7 +437,7 @@ def run_with_progress(
     thread.start()
     frame = 0
     while thread.is_alive():
-        draw_progress(stdscr, title, detail, frame)
+        draw_progress(stdscr, title, detail, frame, elapsed=time.monotonic() - started_at)
         frame += 1
         curses.napms(90)
 
@@ -428,12 +450,20 @@ def run_with_progress(
     return result["value"]  # type: ignore[return-value]
 
 
-def draw_progress(stdscr: curses.window, title: str, detail: str, frame: int) -> None:
+def draw_progress(
+    stdscr: curses.window,
+    title: str,
+    detail: str,
+    frame: int,
+    *,
+    elapsed: float,
+) -> None:
     stdscr.erase()
     height, width = stdscr.getmaxyx()
     center_y = max(0, height // 2 - 2)
     add_centered(stdscr, center_y, title)
     add_centered(stdscr, center_y + 1, detail)
+    add_centered(stdscr, center_y + 2, f"elapsed {elapsed:.1f}s")
 
     bar_width = max(10, min(48, width - 8))
     offset = frame % bar_width
@@ -443,7 +473,7 @@ def draw_progress(stdscr: curses.window, title: str, detail: str, frame: int) ->
         chars[(offset + index) % bar_width] = "#"
 
     bar = "[" + "".join(chars) + "]"
-    add_centered(stdscr, center_y + 3, bar)
+    add_centered(stdscr, center_y + 4, bar)
     stdscr.refresh()
 
 
@@ -723,9 +753,31 @@ def active_cue(cues: list[Cue], position: float) -> Cue | None:
     return None
 
 
-def model_detail(args: argparse.Namespace) -> str:
-    model = args.model or "default"
-    return f"backend={args.backend} model={model} device={args.device}:{args.device_index}"
+def resolve_model_load_plan(args: argparse.Namespace) -> ModelLoadPlan:
+    model_name = args.model or DEFAULT_MODELS[args.backend]
+    model_path = ensure_model_cached(
+        model_name,
+        model_dir=args.model_dir,
+        download_dir=args.download_dir,
+    )
+    return ModelLoadPlan(
+        model_name=model_name,
+        model_path=model_path,
+        cache_label=model_cache_label(model_path, args.model_dir),
+    )
+
+
+def model_cache_detail(args: argparse.Namespace) -> str:
+    model_name = args.model or DEFAULT_MODELS[args.backend]
+    return f"backend={args.backend} model={model_name} model-dir={args.model_dir}"
+
+
+def model_cache_label(model_path: Path, model_dir: Path) -> str:
+    try:
+        model_path.resolve().relative_to(model_dir.resolve())
+    except ValueError:
+        return "local path"
+    return "model-dir"
 
 
 def format_clock(seconds: float) -> str:

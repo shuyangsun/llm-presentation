@@ -6,7 +6,7 @@ Date: 2026-06-12
 Repo: llm-presentation, jj workspace `codex-asr-interactive-tui`, change `xolvtnztsoownupxxtutrpvpznpylwxz`
 Author: Shuyang Sun <shuyangsun10@gmail.com>
 Agent: Codex (GPT-5.5, reasoning: xhigh)
-Summary: Implemented `uv run asr-tui` for interactive ASR subtitle tuning, refactored ASR backends into reusable live model sessions, documented the command, validated it with the sample brain-dump audio, and prepared the jj workspace for integration.
+Summary: Implemented `uv run asr-tui` for interactive ASR subtitle tuning, refactored ASR backends into reusable live model sessions, documented the command, validated it with the sample brain-dump audio, and recorded the follow-up fix that resolves and displays the NAS model path before WhisperX loading.
 
 ## User
 
@@ -107,3 +107,31 @@ Validation performed:
 - A thread-load smoke test matched the TUI model-loading pattern: a WhisperX session loaded on a worker thread, then transcribed an 8-second sample from the main thread and produced 18 words in 2 cues.
 
 Noted environment behavior: bare `ffplay` failed in the original shell because stale media library paths hid Ubuntu FFmpeg libraries, but `asr-tui` calls the same runtime restart helper as `asr-vtt`, so the `ffplay` child inherits the corrected `LD_LIBRARY_PATH`.
+
+## User
+
+I tried it, the TUI was stuck on the model loading screen for a while, and it wasn't loading from the NAS. Fix it.
+
+## Assistant
+
+Started a follow-up jj workspace named `codex-fix-asr-tui-nas-loading`, inspected the `asr-tui` startup path, and identified that the model-loading progress screen did not distinguish cache resolution from the expensive WhisperX pipeline construction. Added an explicit `ModelLoadPlan` in `src/asr/interactive_tui.py`: `asr-tui` now calls `ensure_model_cached()` before loading the backend session, displays the concrete cached path from `[REDACTED_NAS_MODEL_PATH]/...`, passes that resolved local path into `load_transcription_session()`, expands `--model-dir` / `--download-dir`, and shows elapsed time during progress screens.
+
+Validated the cache-resolution helper directly. The default `large-v3` model resolved to `[REDACTED_NAS_MODEL_PATH]/huggingface/Systran/faster-whisper-large-v3` with cache label `model-dir` before any WhisperX import or model initialization.
+
+## User
+
+The model is only 2.88 G, and it's been loading for 80 seconds, I don't even see network traffic in my system.
+
+## Assistant
+
+Measured model-loading stages locally to separate cache lookup, CUDA library setup, faster-whisper model construction, and WhisperX pipeline/VAD initialization. Cache resolution completed in about 0.003 seconds, CUDA shared library setup in about 0.058 seconds, importing `faster_whisper` in about 1.586 seconds, direct `WhisperModel` construction in about 5.355 seconds, and direct `whisperx.load_model(...)` in about 11.211 seconds in the smoke test. Also observed that a direct WhisperX load can invoke Torch Hub/Silero VAD setup, which explains a local startup pause even when no Hugging Face model download or NAS read is active.
+
+Temporarily changed the `asr-tui` default backend to `faster-whisper` and validated a 7.06-second default model load plus an 8-second sample transcription, but did not integrate that temporary default change after the user clarified the desired default.
+
+## User
+
+Change the default backend back to the larger whisperx. Update existing session transcript, then integrate.
+
+## Assistant
+
+Changed `asr-tui` back to default `whisperx` while keeping the follow-up fix that resolves and displays the NAS cache path before backend loading. Updated `src/asr/README.md` to document that `asr-vtt` and `asr-tui` both default to WhisperX `large-v3`, and that `asr-tui` now distinguishes NAS cache resolution from WhisperX pipeline initialization on its startup progress screens.

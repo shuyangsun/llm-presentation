@@ -9,7 +9,7 @@ Sources: `interactive_tui.py`, `transcribe_vtt.py`, `speech_speed.py`, `model_ca
 
 `src/asr` implements the repo's local CUDA speech-to-subtitle pipeline. The user-facing commands are `uv run asr-vtt` for transcribing video or audio, including `.flac` audio files, into `.vtt` subtitles plus a sibling timestamp-free `.txt` transcript; `uv run asr-tui` for interactively playing audio, viewing a terminal waveform, tuning `--max-gap`, and confirming the final `.vtt` and `.txt` outputs; `uv run asr-speech-speed` for estimating words-per-minute speech speed from `.vtt` transcripts; and `uv run asr-download-model` for staging Hugging Face model downloads through `/tmp/asr-model-downloads` before storing completed snapshots under `/mnt/nas/home/ml/model`.
 
-`uv run asr-vtt` and `uv run asr-tui` default to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. The same backend surface also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
+`uv run asr-vtt` and `uv run asr-tui` default to the `whisperx` backend with the full `large-v3` model because it is the strongest reliable subtitle default currently implemented in this package. `asr-tui` resolves and displays the concrete cached model path before WhisperX starts loading, so the startup screen distinguishes NAS cache resolution from WhisperX pipeline initialization. The same backend surface also supports `--backend faster-whisper --model large-v3` for direct CTranslate2 Whisper transcription and `--backend parakeet` for NVIDIA Parakeet TDT 0.6B v3 through NeMo.
 
 ## Command Surface
 
@@ -29,7 +29,7 @@ uv run asr-tui input.flac --output output.vtt --language en --device cuda
 uv run asr-tui input.mp4 --output output.vtt --language en --device cuda
 ```
 
-`asr-tui` loads the selected model at startup with an animated progress bar, prepares the first audio stream as a mono 16 kHz WAV, shows a terminal waveform for audio or video inputs, plays audio through `ffplay`, displays the active subtitle under the waveform, and writes the final `.vtt` plus sibling `.txt` only after confirmation. Use Space to play or pause, Left/Right to seek, click the bottom slider when terminal mouse events are available, press `g` to enter a new `max_gap`, press Enter to confirm writing outputs, or press `q` to exit without writing.
+`asr-tui` first resolves the selected model through `ensure_model_cached()` and displays the concrete cache path, such as `/mnt/nas/home/ml/model/huggingface/Systran/faster-whisper-large-v3`, before loading the WhisperX model with an animated elapsed-time progress bar. It then prepares the first audio stream as a mono 16 kHz WAV, shows a terminal waveform for audio or video inputs, plays audio through `ffplay`, displays the active subtitle under the waveform, and writes the final `.vtt` plus sibling `.txt` only after confirmation. Use Space to play or pause, Left/Right to seek, click the bottom slider when terminal mouse events are available, press `g` to enter a new `max_gap`, press Enter to confirm writing outputs, or press `q` to exit without writing.
 
 Select a backend explicitly:
 
@@ -54,11 +54,11 @@ uv run asr-speech-speed docs/archive/20260611/brain_dump_20260611.vtt
 uv run asr-speech-speed transcript.vtt --max-gap 1.5 --long-break-gap 8.0
 ```
 
-The CLI default backend/model is `whisperx` with `large-v3`. Backend model aliases are `large-v3` for `whisperx`, `large-v3` for `faster-whisper`, and `parakeet` for `parakeet`.
+The `asr-vtt` and `asr-tui` default backend/model is `whisperx` with `large-v3`. Backend model aliases are `large-v3` for `whisperx`, `large-v3` for `faster-whisper`, and `parakeet` for `parakeet`.
 
 ## Source Map
 
-`interactive_tui.py` owns the `asr-tui` CLI, curses rendering, animated model-load/transcription progress bars, terminal waveform drawing, `ffplay` audio playback, clickable bottom slider handling, keyboard playback controls, subtitle preview, `g`-driven `max_gap` updates, and confirmed `.vtt`/`.txt` writing.
+`interactive_tui.py` owns the `asr-tui` CLI, explicit model cache resolution, curses rendering, animated model-load/transcription progress bars, terminal waveform drawing, `ffplay` audio playback, clickable bottom slider handling, keyboard playback controls, subtitle preview, `g`-driven `max_gap` updates, and confirmed `.vtt`/`.txt` writing.
 
 `transcribe_vtt.py` owns the `asr-vtt` CLI, reusable backend session classes, backend selection, word-to-cue grouping, timestamp formatting, WebVTT rendering, and timestamp-free `.txt` transcript rendering. `asr-tui` reuses these session classes so the selected model stays alive for the lifetime of the interactive terminal session.
 
