@@ -21,6 +21,6 @@ repo-local skills, and durable documentation as project memory.
 - Documentation workflow: load `.agents/skills/updating-docs/SKILL.md` before
   writing docs. Search first and keep docs linked from an index.
 - Session exports: use `.agents/skills/export-transcript/SKILL.md` only when
-  requested; write transcripts under `docs/coding-sessions/`.
+  requested; write transcripts under `docs/transcripts/`.
 - Skills source of truth: edit `.agents/skills`, not `.claude/skills`.
 - Docs-only verification: check linked files and `jj status`.

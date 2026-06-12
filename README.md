@@ -23,7 +23,7 @@ The main source context is:
   LLMOS workflow notes, and example projects.
 - [Five-minute outline](docs/archive/20260611/llmos_5_minute_outline.md) -
   compressed talking-head reference with key concepts and marked examples.
-- [Coding-session transcripts](docs/README.md#coding-sessions) - durable context
+- [Coding-session transcripts](docs/README.md#transcripts) - durable context
   for prior agent decisions, workflows, and implementation changes.
 
 ## Local Tooling
