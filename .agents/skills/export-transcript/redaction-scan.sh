@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scan an exported session transcript for data that commonly needs redaction:
 # emails, phone numbers, IPv4/IPv6 addresses, and common secret/token formats.
-# Bundled with the export-coding-session skill as a REVIEW AID, not a guarantee:
+# Bundled with the export-transcript skill as a REVIEW AID, not a guarantee:
 # the regexes are best-effort and will miss novel or obfuscated secrets, so the
 # agent must still read the transcript itself before committing.
 # Portable across GNU (Linux) and BSD (macOS) grep — ERE only, no -P / \b.

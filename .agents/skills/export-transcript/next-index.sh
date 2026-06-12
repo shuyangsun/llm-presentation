@@ -4,7 +4,7 @@
 #   dir:   today's dated folder (local-time YYYY-MM-DD), created if missing
 #   index: next zero-padded number = (max existing + 1), scanned across ALL date
 #          folders so session numbers are globally unique and strictly increasing
-# Bundled with the export-coding-session skill; resolves the repo root from the
+# Bundled with the export-transcript skill; resolves the repo root from the
 # current working directory (Git or Jujutsu), so it works from any agent and any
 # working directory, and creates every directory it needs.
 set -euo pipefail
