@@ -326,6 +326,7 @@ vcs_session_owns_isolated_workspace() {
       source "$f" 2>/dev/null || exit 1
       [[ "${session_id:-}" == "$sid" ]] || exit 1
       [[ -n "${workspace_name:-}" && "${workspace_name}" != "default" ]] || exit 1
+      vcs_agent_workspace_name "${workspace_name:-}" || exit 1
       [[ -n "${workspace_root:-}" && -d "${workspace_root}" ]] || exit 1
       exit 0
     ); then
@@ -333,6 +334,47 @@ vcs_session_owns_isolated_workspace() {
     fi
   done
   return 1
+}
+
+# Return 0 when the name looks like a coding-agent workspace/worktree. Agents
+# use these names for isolated work; non-agent names may be user branches.
+vcs_agent_workspace_name() {
+  case "$1" in
+    claude-* | cursor-* | codex-* | agy-* | gemini-* | agent-* | composer-* | aider-* | copilot-*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Print the current session's single owned non-default workspace root. If the
+# session owns zero or multiple live workspaces, return non-zero so callers do
+# not guess which cwd to use.
+vcs_session_owned_workspace_root() {
+  local sid dir f count=0 found_root=""
+  sid="$(vcs_session_id)"
+  [[ -n "$sid" ]] || return 1
+  case "$sid" in local-*) return 1 ;; esac
+  dir="$(vcs_state_dir 2>/dev/null)" || return 1
+  [[ -d "$dir" ]] || return 1
+  for f in "$dir"/*.env; do
+    [[ -f "$f" ]] || continue
+    if (
+      # shellcheck disable=SC1090
+      source "$f" 2>/dev/null || exit 1
+      [[ "${session_id:-}" == "$sid" ]] || exit 1
+      [[ -n "${workspace_name:-}" && "${workspace_name}" != "default" ]] || exit 1
+      vcs_agent_workspace_name "${workspace_name:-}" || exit 1
+      [[ -n "${workspace_root:-}" && -d "${workspace_root}" ]] || exit 1
+      exit 0
+    ); then
+      local workspace_root
+      # shellcheck disable=SC1090
+      source "$f" 2>/dev/null || continue
+      count=$((count + 1))
+      found_root="$workspace_root"
+    fi
+  done
+  [[ "$count" -eq 1 && -n "$found_root" ]] || return 1
+  printf '%s\n' "$found_root"
 }
 
 # Return 0 when the current hook/session id owns the named workspace or work ref.

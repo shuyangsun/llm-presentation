@@ -62,7 +62,11 @@ bash <skill-dir>/scripts/rename-work.sh <ide>-<work>
 The marker is local admin state (`.git/agent-sessions/` when a Git admin dir is
 available, otherwise XDG state for non-colocated jj). It is not tracked and is
 used only by guards to reject edits or publishes from a shared checkout or a
-workspace this session does not own.
+workspace this session does not own. If an agent runtime forgets to include the
+tool cwd, the guard may use this marker to evaluate relative actions from the
+session's single live, agent-named workspace/worktree instead of requiring every
+shell command to spell out `cd <workspace> && ...`. Explicit default-checkout
+writes are still blocked.
 
 ## Fast path: let the helper decide whether to isolate
 

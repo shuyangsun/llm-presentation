@@ -146,6 +146,38 @@ ensure_owner_marker() {
   }
 }
 
+shared_workspace_clean_on_main() {
+  local mode current state branch status
+  mode="$(current_mode)"
+  case "$mode" in
+    jj)
+      current="$(vcs_jj_workspace_name 2>/dev/null || true)"
+      [[ "$current" == "default" ]] || return 1
+      state="$(jj log --no-graph -r @ \
+        -T 'if(empty,"empty","nonempty") ++ "\t" ++ if(description,"described","undescribed") ++ "\n"' 2>/dev/null | head -1)" || return 1
+      [[ "$state" == $'empty\tundescribed' ]] || return 1
+      jj log --no-graph -r "(@ | @-) & $main_ref" -T 'commit_id ++ "\n"' 2>/dev/null | grep -q .
+      ;;
+    git)
+      vcs_git_is_linked_worktree && return 1
+      branch="$(git branch --show-current 2>/dev/null || true)"
+      [[ "$branch" == "$main_ref" ]] || return 1
+      status="$(git status --porcelain 2>/dev/null)" || return 1
+      [[ -z "$status" ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+maybe_chdir_owned_workspace_for_hook() {
+  local root
+  current_shared_reason >/dev/null 2>&1 || return 1
+  root="$(vcs_session_owned_workspace_root 2>/dev/null)" || return 1
+  cd "$root" 2>/dev/null || return 1
+}
+
 is_helper_name() {
   case "$1" in
     isolate | integrate | session-start | rename-work) return 0 ;;
@@ -363,6 +395,7 @@ is_owned_safe_jj_cleanup_command() {
         return $?
       fi
       jj_bookmark_remote_backed "$target" && return 1
+      vcs_agent_workspace_name "$target" || return 1
       jj_ref_is_ancestor_of_main "$target"
       ;;
     "workspace forget")
@@ -371,6 +404,7 @@ is_owned_safe_jj_cleanup_command() {
         jj_ref_is_safe_for_shared_cleanup "${target}@"
         return $?
       fi
+      vcs_agent_workspace_name "$target" || return 1
       jj_ref_is_ancestor_of_main "${target}@"
       ;;
     *)
@@ -430,9 +464,177 @@ is_vetted_helper_command() {
 
 is_read_only_command() {
   local c="$1"
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$c" <<'PYREADONLY'
+import os
+import shlex
+import sys
+
+command = sys.argv[1]
+try:
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    tokens = list(lexer)
+except ValueError:
+    sys.exit(1)
+
+if not tokens:
+    sys.exit(0)
+
+segments = []
+current = []
+for token in tokens:
+    if token in {"&&", "||", ";", "|"}:
+        if current:
+            segments.append(current)
+            current = []
+        continue
+    if token and set(token) <= set("&;|<>"):
+        sys.exit(1)
+    current.append(token)
+if current:
+    segments.append(current)
+
+simple = {
+    "cat",
+    "cut",
+    "date",
+    "df",
+    "du",
+    "echo",
+    "false",
+    "free",
+    "head",
+    "hostname",
+    "id",
+    "ls",
+    "lsof",
+    "nl",
+    "nvidia-smi",
+    "pgrep",
+    "printf",
+    "ps",
+    "pwd",
+    "rg",
+    "sort",
+    "tail",
+    "true",
+    "uname",
+    "uniq",
+    "wc",
+    "which",
+    "whoami",
+}
+
+
+def strip_safe_redirs(words):
+    out = []
+    i = 0
+    while i < len(words):
+        token = words[i]
+        if token.isdigit() and i + 2 < len(words) and words[i + 1] in {">", ">>"} and words[i + 2] == "/dev/null":
+            i += 3
+            continue
+        if token in {">", ">>"} and i + 1 < len(words) and words[i + 1] == "/dev/null":
+            i += 2
+            continue
+        if token in {"2>/dev/null", "1>/dev/null", ">/dev/null", "2>&1"}:
+            i += 1
+            continue
+        if any(ch in token for ch in "<>"):
+            return None
+        out.append(token)
+        i += 1
+    return out
+
+
+def strip_env(words):
+    words = list(words)
+    while words:
+        first = words[0]
+        if first == "env":
+            words = words[1:]
+            continue
+        if "=" in first and not first.startswith("-"):
+            words = words[1:]
+            continue
+        break
+    return words
+
+
+def has_dangerous_expansion(words):
+    return any("$(" in word or "`" in word for word in words)
+
+
+def read_only_segment(words):
+    words = strip_safe_redirs(words)
+    if words is None or has_dangerous_expansion(words):
+        return False
+    words = strip_env(words)
+    if not words:
+        return True
+
+    cmd = os.path.basename(words[0])
+    args = words[1:]
+
+    if cmd == "cd":
+        return len(args) <= 1
+    if cmd in simple:
+        return True
+    if cmd == "find":
+        return not any(arg in {"-delete", "-exec", "-execdir", "-ok", "-okdir"} for arg in args)
+    if cmd in {"grep", "egrep", "fgrep"}:
+        return True
+    if cmd == "sed":
+        return not any(arg == "-i" or arg.startswith("-i") for arg in args)
+    if cmd == "command":
+        return not args or args[0] in {"-v", "-V"}
+    if cmd == "type":
+        return all(arg in {"-a", "-p", "-P", "-t"} or not arg.startswith("-") for arg in args)
+    if cmd in {"curl", "wget"}:
+        write_flags = {"-o", "--output", "-O", "--remote-name", "--upload-file", "-T", "--post-file"}
+        return not any(arg in write_flags or arg.startswith("--output=") for arg in args)
+    if cmd in {"bash", "sh"}:
+        return "-c" not in args and any(arg in {"-n", "--help", "-h"} for arg in args)
+    if cmd == "git":
+        if not args:
+            return False
+        if args[0] == "--version":
+            return True
+        if args[0] in {"status", "log", "diff", "show", "rev-parse"}:
+            return True
+        if args[0] == "branch":
+            return all(arg in {"--show-current", "-v", "-vv", "--list"} or not arg.startswith("-") for arg in args[1:])
+        if args[0] == "remote":
+            return len(args) >= 2 and args[1] in {"-v", "show", "get-url"}
+        if args[0] == "worktree":
+            return len(args) >= 2 and args[1] == "list"
+        return False
+    if cmd == "jj":
+        if not args:
+            return False
+        if args[0] in {"--version", "version", "root", "status", "st", "log", "diff", "show"}:
+            return True
+        if len(args) >= 2 and args[0] == "workspace" and args[1] in {"list", "update-stale"}:
+            return True
+        if len(args) >= 2 and args[0] == "bookmark" and args[1] == "list":
+            return True
+        if len(args) >= 2 and args[0] == "resolve" and args[1] == "--list":
+            return True
+        if len(args) >= 3 and args[0] == "git" and args[1] == "remote" and args[2] == "list":
+            return True
+        return False
+    return False
+
+sys.exit(0 if all(read_only_segment(segment) for segment in segments) else 1)
+PYREADONLY
+    return $?
+  fi
+
   c="${c#"${c%%[![:space:]]*}"}"
   case "$c" in
-    "" | pwd | "pwd "* | date | "date "* | true | "true "* | false | "false "*)
+    "" | pwd | "pwd "* | date | "date "* | true | "true "* | false | "false "* | "git --version"* | "jj --version"*)
       return 0
       ;;
     ls | "ls "* | rg | "rg "* | grep | "grep "* | "sed -n "* | cat | "cat "* | head | "head "* | tail | "tail "* | wc | "wc "* | find | "find "*)
@@ -453,6 +655,7 @@ is_read_only_command() {
   esac
   return 1
 }
+
 
 is_publish_command() {
   local c="$1"
@@ -479,6 +682,7 @@ is_file_mutating_command() {
     "$c" =~ (^|[[:space:];|&])tee([[:space:]]|$) ||
     "$c" =~ (^|[[:space:];|&])sed[[:space:]]+-i ||
     "$c" =~ (^|[[:space:];|&])perl[[:space:]]+-pi ||
+    "$c" =~ (^|[[:space:];|&])find[[:space:]].*[[:space:]]-(delete|exec|execdir|ok|okdir)([[:space:]]|$) ||
     "$c" == *" --write"* ||
     "$c" == *" run format"* ]]
 }
@@ -573,12 +777,8 @@ check_hook() {
   [[ -n "$command" ]] || command="$(json_field "$input" toolCall.args.CommandLine)"
   tool_cwd="$(json_field "$input" tool_input.cwd)"
   [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" tool_input.Cwd)"
-  [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" tool_input.dir_path)"
-  [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" tool_input.dirPath)"
   [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" toolCall.args.cwd)"
   [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" toolCall.args.Cwd)"
-  [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" toolCall.args.dir_path)"
-  [[ -n "$tool_cwd" ]] || tool_cwd="$(json_field "$input" toolCall.args.dirPath)"
   target_file="$(json_field "$input" toolCall.args.AbsolutePath)"
   [[ -n "$target_file" ]] || target_file="$(json_field "$input" toolCall.args.TargetFile)"
   [[ -n "$file_path" ]] || file_path="$target_file"
@@ -588,6 +788,8 @@ check_hook() {
   fi
   if [[ -n "$tool_cwd" && -d "$tool_cwd" ]]; then
     cd "$tool_cwd" 2>/dev/null || true
+  elif [[ -z "$tool_cwd" ]]; then
+    maybe_chdir_owned_workspace_for_hook || true
   fi
 
   case "$event" in
@@ -599,11 +801,11 @@ check_hook() {
   esac
 
   case "$tool" in
-    apply_patch | Edit | Write | MultiEdit | NotebookEdit | write_file | replace | write_to_file | replace_file_content | multi_replace_file_content)
+    apply_patch | Edit | Write | MultiEdit | NotebookEdit | write_to_file | replace_file_content | multi_replace_file_content)
       check_pre_edit "$file_path"
       return 0
       ;;
-    Bash | run_command | run_shell_command)
+    Bash | run_command)
       # Honor a leading `cd <dir> &&|;` (or a bare `cd <dir>`): evaluate the rest
       # of the command from <dir>, the directory it will actually run in.
       if maybe_chdir_leading_cd "$command"; then
@@ -622,7 +824,11 @@ check_hook() {
         check_pre_publish "$command"
         return 0
       fi
-      if is_vcs_mutating_command "$command" || is_file_mutating_command "$command" || current_shared_reason >/dev/null 2>&1; then
+      if is_vcs_mutating_command "$command" || is_file_mutating_command "$command"; then
+        check_pre_vcs_write "$command"
+        return 0
+      fi
+      if current_shared_reason >/dev/null 2>&1 && ! shared_workspace_clean_on_main; then
         check_pre_vcs_write "$command"
         return 0
       fi

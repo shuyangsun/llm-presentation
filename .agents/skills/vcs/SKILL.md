@@ -91,8 +91,14 @@ from the shared checkout; bundling it (`… && jj git push …`) makes the guard
 reject it.
 
 Direct file edits, raw VCS writes, and raw publishes may also be guarded by
-`vcs-check.sh` through agent hooks. Treat a guard denial as a cwd/ownership bug:
-move to the workspace you own or use the helper it names.
+`vcs-check.sh` through agent hooks. The guard is session-aware: when an agent
+runtime omits a tool cwd but the session owns exactly one live, agent-named
+workspace/worktree (`claude-*`, `codex-*`, `cursor-*`, `agy-*`, `gemini-*`, ...),
+relative shell/file actions are evaluated from that owned workspace instead of
+forcing a long `cd <workspace> && ...` prefix on every command. Explicit writes
+whose cwd or target is the shared `default`/primary checkout are still refused.
+After integration retires the isolated work, use the shared `default`/primary
+checkout only when it is clean and parked on `main`.
 
 ## 3. Conflict etiquette
 
