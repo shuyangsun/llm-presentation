@@ -14,6 +14,36 @@
    ============================================================================ */
 
 import { STRINGS, SKILLS, type Lang } from "../data/timeline";
+import { parseVtt, activeCueIndex, type Cue } from "./vtt";
+import enVtt from "../data/en.vtt?raw";
+import zhVtt from "../data/zh.vtt?raw";
+
+const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* The 3D ASR scene renders the *real* transcript text as particles. Parse the
+   same cues the teleprompter uses so the words on the supporting art match the
+   audio, then expose the active cue (text + start) at any playhead time. */
+const ASR_CUES: Record<Lang, Cue[]> = { en: parseVtt(enVtt), zh: parseVtt(zhVtt) };
+function makeGetCue(lang: Lang) {
+  const cues = ASR_CUES[lang];
+  return (t: number): { text: string; start: number } | null => {
+    const i = activeCueIndex(cues, t);
+    return i >= 0 ? { text: cues[i].text, start: cues[i].start } : null;
+  };
+}
+
+/** WebGL probe (no three.js import, so it stays out of the cold-open bundle). */
+let _webgl: boolean | null = null;
+function webglAvailable(): boolean {
+  if (_webgl !== null) return _webgl;
+  try {
+    const c = document.createElement("canvas");
+    _webgl = !!(c.getContext("webgl2") || c.getContext("webgl"));
+  } catch {
+    _webgl = false;
+  }
+  return _webgl;
+}
 
 function el(tag: string, cls?: string, html?: string): HTMLElement {
   const node = document.createElement(tag);
@@ -44,11 +74,21 @@ export interface SceneDef {
   build(lang: Lang): HTMLElement;
 }
 
+/** A built scene root may attach optional lifecycle hooks the director (main.ts)
+ *  calls: `__tick(t)` every frame so a GPU scene can drive its own phases from
+ *  the playhead (reversible under scrubbing), and `__cleanup()` right before the
+ *  node is detached so it can release its WebGL context / rAF loop. */
+export type SceneNode = HTMLElement & {
+  __tick?: (t: number) => void;
+  __cleanup?: () => void;
+};
+
 /* ---- individual scenes -------------------------------------------------- */
 
-function asrScene(lang: Lang): HTMLElement {
+function asrScene2D(lang: Lang): HTMLElement {
   // "show this teleprompter ... the .VTT file that's transcribed from this
   // video" — audio becomes a transcript, drawn from the top down.
+  // (The shipped 2D fallback, used when WebGL is unavailable or motion is reduced.)
   const root = el("div", "scene scene--asr");
   let bars = "";
   for (let i = 0; i < 22; i++) bars += `<span style="--i:${i}"></span>`;
@@ -58,6 +98,45 @@ function asrScene(lang: Lang): HTMLElement {
   lines.append(el("span", "ln w1"), el("span", "ln w2"), el("span", "ln w3"));
   root.append(reveal(lines, 144));
   root.append(cap(lang, "audio → transcript", "语音 → 字幕", 145.5));
+  return root;
+}
+
+function asrScene(lang: Lang): HTMLElement {
+  // Same beat as the 2D scene, but the waveform → transcript is rendered as an
+  // interactive 3D frosted-glass field (see asr3d.ts). The caption stays in the
+  // DOM so it keeps the crisp type + the standard reveal/blur entrance, and the
+  // canvas container is the scene's single [data-reveal] (base 142.75) so it
+  // fades in on the beat and back out on a reverse scrub. The internal
+  // waveform/flow/lines/burst phases are GPU-driven from the playhead via __tick.
+  if (REDUCE_MOTION || !webglAvailable()) return asrScene2D(lang);
+
+  const root = el("div", "scene scene--asr scene--asr3d") as SceneNode;
+  const stage = reveal(el("div", "asr3d-canvas")); // base 142.75 (no data-at)
+  root.append(stage);
+  root.append(cap(lang, "audio → transcript", "语音 → 字幕", 145.5));
+
+  // three.js (~160KB gz) is only needed once this scene appears, ~2:22 in — so
+  // load it on demand. The root returns synchronously; the canvas mounts when
+  // the chunk resolves. If the scene is scrubbed away first, `cancelled` keeps
+  // us from mounting an orphan renderer (and disposes one that slipped in).
+  let ctrl: { tick(t: number): void; dispose(): void } | null = null;
+  let cancelled = false;
+  const getCue = makeGetCue(lang);
+  import("./asr3d")
+    .then(({ mountAsr3D }) => {
+      if (cancelled) return;
+      ctrl = mountAsr3D(stage, getCue);
+    })
+    .catch(() => {
+      /* WebGL/import failure: the DOM caption still carries the beat */
+    });
+
+  root.__tick = (t: number) => ctrl?.tick(t); // driven each frame by main.ts
+  root.__cleanup = () => {
+    cancelled = true;
+    ctrl?.dispose(); // GL context released on removal
+    ctrl = null;
+  };
   return root;
 }
 

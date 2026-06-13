@@ -466,6 +466,23 @@ body.deck-on .wordmark {
 /* ============================================================
    Scene: ASR (audio → transcript)
    ============================================================ */
+/* 3D variant — a WebGL canvas fills the scene's hero area; the caption below it
+   stays DOM. The 2D rules further down only apply to the plain .scene--asr. */
+.scene--asr3d {
+  justify-content: stretch;
+}
+.scene--asr3d .asr3d-canvas {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 160px;
+  /* the WebGL canvas is sized to this box via ResizeObserver */
+}
+.scene--asr3d .asr3d-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .scene--asr .asr-wave {
   display: flex;
   align-items: center;

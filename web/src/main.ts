@@ -11,7 +11,7 @@
 import "./style.css";
 import { gsap } from "gsap";
 import { parseVtt, activeCueIndex, type Cue } from "./engine/vtt";
-import { SCENES, activeSceneIndex } from "./engine/scenes";
+import { SCENES, activeSceneIndex, type SceneNode } from "./engine/scenes";
 import { BEATS, CROP_DURATION, CHAPTERS, STRINGS, type Lang } from "./data/timeline";
 import enVtt from "./data/en.vtt?raw";
 import zhVtt from "./data/zh.vtt?raw";
@@ -245,6 +245,9 @@ function hideReveal(node: HTMLElement) {
 function updateSceneReveals(t: number) {
   const node = sceneStage.lastElementChild as HTMLElement | null;
   if (!node || sceneIndex < 0) return;
+  // GPU-driven scenes (e.g. the 3D ASR canvas) drive their own internal phases
+  // from the playhead each frame — fully reversible under scrubbing.
+  (node as SceneNode).__tick?.(t);
   const base = SCENES[sceneIndex].t;
   const toShow: HTMLElement[] = [];
   node.querySelectorAll<HTMLElement>("[data-reveal]").forEach((part) => {
@@ -272,13 +275,17 @@ function swapScene(i: number, force = false) {
   const old = existing.pop() ?? null;
   existing.forEach((c) => {
     gsap.killTweensOf(c);
+    (c as SceneNode).__cleanup?.(); // release any WebGL context before detaching
     c.remove();
   });
   if (old) {
     gsap.killTweensOf(old);
     gsap.to(old, { autoAlpha: 0, y: -14, filter: "blur(6px)", duration: REDUCE_MOTION ? 0.001 : 0.36, ease: "power2.in" });
     // remove on a wall-clock timer so it never lingers if the tween is throttled
-    window.setTimeout(() => old.remove(), 420);
+    window.setTimeout(() => {
+      (old as SceneNode).__cleanup?.();
+      old.remove();
+    }, 420);
   }
 
   if (i < 0) return;

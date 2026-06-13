@@ -3,6 +3,13 @@
 ## Research
 
 - [Open-source ASR models for WebVTT subtitles](research/2026-06-10/0000-open-source-asr-vtt-subtitles.md) - compares free open-source/open-weight ASR options for video transcription with timestamps, `.vtt` subtitle output, and timestamp-free `.txt` transcript output.
+- [igloo.inc 3D animation techniques](research/2026-06-13/0000-igloo-inc-3d-animation-techniques.md) - concrete, reproducible techniques behind igloo.inc's frosted-ice hover effect and closing particle effect (fresnel/refraction, mouse damping, GPU particles), for warm-palette supporting art.
+- [Performant Three.js glass + GPU particles on a light background](research/2026-06-13/0001-threejs-performant-glass-and-particles.md) - code-level patterns for instanced frosted-glass slabs, stateless `uProgress`-driven GPU particles, mouse damping, and full WebGL lifecycle/disposal in a no-framework Vite app.
+- [3D ASR scene integration spec](research/2026-06-13/0002-asr-3d-scene-integration-spec.md) - line-accurate spec for wiring a WebGL scene into the presentation engine: scene lifecycle hooks (`__tick`/`__cleanup`), reveal mechanics, design tokens, container sizing, and fallbacks.
+
+## Design
+
+- [ASR scene → 3D frosted-glass waveform](design/2026-06-13/0000-asr-3d-frosted-glass-waveform.md) - the synthesized implementation plan that turns the 2D `audio → transcript` supporting art into an interactive 3D frosted-glass waveform that crystallizes into transcript lines; reconciles the three 2026-06-13 research briefs.
 
 ## Subtitles
 
