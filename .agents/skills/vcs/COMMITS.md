@@ -19,7 +19,7 @@ Co-Authored-By: <Model Name> <noreply-email>
 - **scope**: short area tag matching the codebase (`picker`, `consent`, `langfuse`, `setup`, `plan`, …). Skip parens if no natural scope.
 - **subject**: imperative ("add", "fix", "route"), lowercase after the colon, no period.
 - **body**: present only when it adds signal a reader can't get from the diff (motivation, constraint, follow-up). Never restate the file list.
-- **session transcripts**: a change often ships with an exported `docs/coding-sessions/` transcript — describe the substantive change in the subject/scope/body and ignore the transcript, which accompanies nearly every change and is noise in the message. Prefer committing the transcript as its own `docs(coding-sessions): …` change.
+- **session transcripts**: a change often ships with an exported `docs/transcripts/` transcript — describe the substantive change in the subject/scope/body and ignore the transcript, which accompanies nearly every change and is noise in the message. Prefer committing the transcript as its own `docs(transcripts): …` change.
 
 ## Author and Co-Authored-By trailers
 

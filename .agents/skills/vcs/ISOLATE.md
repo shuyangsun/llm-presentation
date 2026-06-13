@@ -48,10 +48,11 @@ works in place; in a Git primary checkout it creates a temporary worktree. If
 hooks for the same session reuse the existing temporary workspace instead of
 creating another one.
 
-Cursor project hooks can create the same temporary workspace and block risky
-shell/file actions from a shared checkout, but they cannot change the folder the
-Cursor window has open. If Cursor reports `NEXT_CWD`, continue the task from
-that path before using file-edit tools or publishing.
+Cursor project hooks are guard-only and do not create this temporary workspace
+automatically, because Cursor sessions are often used for read-only questions.
+When using Cursor for implementation work, run isolation manually once the task
+is clear, then continue from the printed workspace path before using file-edit
+tools or publishing.
 
 When the task is clear, rename the temporary owner to the normal convention:
 

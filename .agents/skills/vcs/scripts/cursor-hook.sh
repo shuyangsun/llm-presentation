@@ -17,8 +17,9 @@ usage() {
 usage: cursor-hook.sh <sessionStart|beforeShellExecution|preToolUse|afterFileEdit>
 
 Reads a Cursor hook JSON payload on stdin. For permission hooks, emits Cursor
-JSON with permission=allow or permission=deny. For sessionStart, runs the vcs
-session bootstrap with --ide cursor and returns its output as an agent message.
+JSON with permission=allow or permission=deny. sessionStart is a no-op because
+Cursor sessions are often used for read-only questions and should not
+automatically create jj workspaces.
 EOF
 }
 
@@ -46,23 +47,6 @@ PY
 
 compact_message() {
   awk 'NF { lines[++n] = $0 } END { for (i = 1; i <= n; i++) { print lines[i] } }'
-}
-
-run_session_start() {
-  local out err status message
-  out="$(mktemp)"
-  err="$(mktemp)"
-  if printf '%s' "$payload" | bash "$script_dir/session-start.sh" --hook cursor --ide cursor >"$out" 2>"$err"; then
-    message="$(cat "$out" "$err" | compact_message)"
-    rm -f "$out" "$err"
-    emit_json "" "$message"
-    return 0
-  fi
-  status=$?
-  message="$(cat "$err" "$out" | compact_message)"
-  rm -f "$out" "$err"
-  [[ -n "$message" ]] || message="vcs session-start hook failed with status $status"
-  emit_json "deny" "$message"
 }
 
 generic_payload() {
@@ -197,7 +181,7 @@ run_guard() {
 
 case "$event" in
   sessionStart)
-    run_session_start
+    emit_json "" ""
     ;;
   beforeShellExecution | preToolUse | afterFileEdit)
     run_guard

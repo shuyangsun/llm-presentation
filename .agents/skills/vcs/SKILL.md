@@ -40,11 +40,13 @@ detect the mode and run the standard Git/jj mechanics. Use prose judgment only
 when a helper stops for semantic conflict resolution or reports an unexpected
 condition.
 
-- **Agent session startup:** local project hooks may run
+- **Agent session startup:** local Claude, Codex, or Antigravity project hooks may run
   `bash <skill-dir>/scripts/session-start.sh --hook <agent> --ide <ide>` before
   you know the task name (`<agent>` is the hook dialect, such as `codex`,
-  `claude`, or `agy`). If it prints `NEXT_CWD=...`, `cd` there before edits or
-  VCS writes. When the task slug is clear, run
+  `claude`, or `agy`). Cursor project hooks intentionally do **not** run this
+  helper on session start; when using Cursor for implementation work, start
+  isolation manually once the task is clear. If the helper prints `NEXT_CWD=...`,
+  `cd` there before edits or VCS writes. When the task slug is clear, run
   `bash <skill-dir>/scripts/rename-work.sh <ide>-<work>` from that temporary
   workspace. These helpers record local session ownership outside the tracked
   tree so later guards can reject writes from the shared checkout.
