@@ -466,7 +466,10 @@ def run_with_progress(
     while thread.is_alive():
         draw_progress(stdscr, title, detail, frame, elapsed=time.monotonic() - started_at)
         frame += 1
-        curses.napms(90)
+        # Use time.sleep, not curses.napms: napms holds the GIL while it sleeps,
+        # starving the worker thread doing GIL-bound work (heavy imports and model
+        # loading) so the progress screen would otherwise hang indefinitely.
+        time.sleep(0.09)
 
     thread.join()
     error = result.get("error")
