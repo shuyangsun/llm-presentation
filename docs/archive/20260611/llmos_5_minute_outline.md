@@ -3,7 +3,7 @@
 Date: 2026-06-12
 Status: Current
 Area: presentation outline, LLMOS, talking-head video
-Sources: `brain_dump_20260611_distilled.txt`, `brain_dump_20260611.vtt`, `src/asr/speech_speed.py`
+Sources: `brain_dump_20260611_distilled.txt`, `docs/subtitles/brain_dump_20260611.vtt`, `src/asr/speech_speed.py`
 
 ## Summary
 

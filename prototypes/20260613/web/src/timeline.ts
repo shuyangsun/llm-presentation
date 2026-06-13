@@ -2,7 +2,7 @@
    timeline.ts — the presentation, generated from the transcript.
 
    The talking-head video IS the prompt. Every beat below is anchored to a real
-   timestamp in docs/archive/20260613/presentation_test.vtt, and the director
+   timestamp in docs/subtitles/presentation_test.vtt, and the director
    (main.ts) drives the interface from the video's playback position. Scrubbing
    the video scrubs the deck; the two are the same timeline.
    ============================================================================ */

@@ -2,7 +2,7 @@
 
 A talking-head presentation where **the video is the prompt**. The interface is
 generated, beat by beat, from the video's transcript
-([`docs/archive/20260613/presentation_test.vtt`](../../../docs/archive/20260613/presentation_test.vtt))
+([`docs/subtitles/presentation_test.vtt`](../../../docs/subtitles/presentation_test.vtt))
 and driven by the video's playback position. Scrubbing the video scrubs the
 whole deck — they are one timeline, not a video next to slides.
 

@@ -9,7 +9,7 @@ Area: interactive talking-head presentation, "Open & Closed Loops: The Economics
 The first working prototype of the website presentation, in
 [`web/`](web/README.md). The talking-head video is the prompt; the interface is
 generated from the transcript
-([`docs/archive/20260613/presentation_test.vtt`](../../docs/archive/20260613/presentation_test.vtt))
+([`docs/subtitles/presentation_test.vtt`](../../docs/subtitles/presentation_test.vtt))
 and driven by video playback position. Built with Vite + TypeScript + GSAP.
 Verified end-to-end in a headless browser across every transcript beat.
 

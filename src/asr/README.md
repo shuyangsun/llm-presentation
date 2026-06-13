@@ -50,7 +50,7 @@ uv run asr-download-model parakeet
 Estimate speech speed from a WebVTT transcript:
 
 ```sh
-uv run asr-speech-speed docs/archive/20260611/brain_dump_20260611.vtt
+uv run asr-speech-speed docs/subtitles/brain_dump_20260611.vtt
 uv run asr-speech-speed transcript.vtt --max-gap 1.5 --long-break-gap 8.0
 ```
 
