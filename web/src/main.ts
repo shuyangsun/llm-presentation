@@ -1,0 +1,640 @@
+/* ============================================================================
+   main.ts — the director.
+
+   The talking-head video is the prompt. Its playback position drives the whole
+   interface: the two-step reveal, the teleprompter, the auto-translation, the
+   illustrative scenes, the on-demand controls. Scrubbing the bar scrubs the
+   video AND the site — they are one timeline. Nothing appears before the
+   presenter asks for it.
+   ============================================================================ */
+
+import "./style.css";
+import { gsap } from "gsap";
+import { parseVtt, activeCueIndex, type Cue } from "./engine/vtt";
+import { SCENES, activeSceneIndex } from "./engine/scenes";
+import { BEATS, CHAPTERS, STRINGS, type Lang } from "./data/timeline";
+import enVtt from "./data/en.vtt?raw";
+import zhVtt from "./data/zh.vtt?raw";
+
+/* --- transcript ---------------------------------------------------------- */
+const CUES: Record<Lang, Cue[]> = { en: parseVtt(enVtt), zh: parseVtt(zhVtt) };
+let lang: Lang = "en";
+let manualLang: Lang | null = null; // set once the viewer picks a language
+const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* --- tiny DOM helper ----------------------------------------------------- */
+function h<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  attrs: Record<string, string> = {},
+  ...kids: (Node | string)[]
+): HTMLElementTagNameMap[K] {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  for (const kid of kids) el.append(kid);
+  return el;
+}
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h3.5v14H6zM14.5 5H18v14h-3.5z"/></svg>',
+  vol: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4 4 0 0 0-2.5-3.7v7.4A4 4 0 0 0 16.5 12z"/></svg>',
+  mute: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm18.3-1.3-1.4-1.4L17 9.2 14.1 6.3l-1.4 1.4L15.6 10.6 12.7 13.5l1.4 1.4L17 12l2.9 2.9 1.4-1.4L18.4 10.6z"/></svg>',
+  fsIn: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z"/></svg>',
+  fsOut: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 9H4V4h5v2H6v3zm9-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg>',
+  loop: '<svg class="loop" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" stroke-dasharray="58 18"/></svg>',
+};
+
+/* ============================================================================
+   Build the scaffold
+   ============================================================================ */
+const app = document.getElementById("app")!;
+
+const aura = h("div", { class: "aura" });
+
+const video = document.createElement("video");
+video.playsInline = true;
+// Only the metadata up front (duration → chapter dots); the full download
+// starts on the play gesture in begin(), so the cold open is instant.
+video.preload = "metadata";
+video.setAttribute("playsinline", "");
+video.poster = "/media/intro.poster.jpg";
+video.append(
+  Object.assign(document.createElement("source"), { src: "/media/intro.webm", type: "video/webm" }),
+  Object.assign(document.createElement("source"), { src: "/media/intro.mp4", type: "video/mp4" }),
+);
+
+const recText = h("span", { class: "rec-text" });
+recText.textContent = STRINGS.rec[lang];
+const rec = h("div", { class: "rec" }, h("span", { class: "rec-dot" }), recText);
+const stage = h("div", { class: "stage" }, video, rec);
+
+/* deck — wordmark · illustrative scene · compact transcript */
+const wmTitle = h("span", { class: "title" });
+const wmSub = h("span", { class: "sub" });
+const wordmark = h("div", { class: "wordmark interactive" });
+wordmark.innerHTML = ICON.loop;
+wordmark.append(h("div", {}, wmTitle, h("br"), wmSub));
+
+const sceneStage = h("div", { class: "scene-stage" });
+
+const ptText = h("span", { class: "pt-text" });
+const prompterTag = h("div", { class: "prompter-tag" }, h("span", { class: "live-dot" }), ptText);
+const plPrev = h("div", { class: "pl prev" });
+const plCur = h("div", { class: "pl current" });
+const plNext = h("div", { class: "pl next" });
+const prompterLines = h("div", { class: "prompter-lines" }, plPrev, plCur, plNext);
+const prompter = h("div", { class: "prompter" }, prompterTag, prompterLines);
+
+const deck = h("div", { class: "deck" }, wordmark, sceneStage, prompter);
+
+/* bottom chrome */
+const barRail = h("div", { class: "bar-rail" });
+const barFill = h("div", { class: "bar-fill" });
+barRail.append(barFill);
+const barDots = h("div", { class: "bar-dots" });
+const barHead = h("div", { class: "bar-head" });
+const tipThumb = h("img", { class: "tip-thumb", alt: "" });
+const tipTime = h("span", { class: "tip-time" });
+const tipChapter = h("span", { class: "tip-chapter" });
+const barTip = h("div", { class: "bar-tip" }, tipThumb, h("div", { class: "tip-meta" }, tipTime, tipChapter));
+const bar = h(
+  "div",
+  { class: "bar", role: "slider", "aria-label": "Seek", tabindex: "0", "aria-valuemin": "0" },
+  barRail,
+  barDots,
+  barHead,
+  barTip,
+);
+
+const playBtn = h("button", { class: "btn", "aria-label": "Play / pause" });
+playBtn.innerHTML = ICON.play;
+const muteBtn = h("button", { class: "btn", "aria-label": "Mute" });
+muteBtn.innerHTML = ICON.vol;
+const timeEl = h("div", { class: "time" });
+const fsBtn = h("button", { class: "btn", "aria-label": "Fullscreen" });
+fsBtn.innerHTML = ICON.fsIn;
+const ctrl = h(
+  "div",
+  { class: "ctrl" },
+  h("div", { class: "ctrl-left" }, playBtn, muteBtn, timeEl),
+  h("div", { class: "ctrl-right" }, fsBtn),
+);
+const chrome = h("div", { class: "chrome" }, h("div", { class: "chrome-scrim" }), bar, ctrl);
+
+/* language picker — floats near the playhead, shown with the chrome */
+const langEn = h("button", { type: "button" });
+langEn.textContent = "EN";
+const langZh = h("button", { type: "button" });
+langZh.textContent = "中文";
+const langPick = h("div", { class: "lang" }, langEn, langZh);
+const langWrap = h("div", { class: "langwrap" }, langPick);
+
+/* cold-open gate */
+const gatePlay = h("button", { class: "gate-play", "aria-label": "Play" });
+gatePlay.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+const gateHint = h("div", { class: "gate-hint" });
+const gate = h("div", { class: "gate" }, gatePlay, gateHint);
+
+const spinner = h("div", { class: "spinner" }, h("i", {}));
+
+const helpCard = h("div", { class: "help-card" });
+helpCard.innerHTML = `
+  <h3>Keyboard</h3>
+  <div class="help-row"><span>Play / pause</span><span><kbd>space</kbd> <kbd>k</kbd></span></div>
+  <div class="help-row"><span>Seek ±5s / ±10s</span><span><kbd>←</kbd> <kbd>→</kbd> · <kbd>j</kbd> <kbd>l</kbd></span></div>
+  <div class="help-row"><span>Jump to 0–90%</span><span><kbd>0</kbd> … <kbd>9</kbd></span></div>
+  <div class="help-row"><span>Volume / mute</span><span><kbd>↑</kbd> <kbd>↓</kbd> · <kbd>m</kbd></span></div>
+  <div class="help-row"><span>Fullscreen</span><span><kbd>f</kbd></span></div>
+  <div class="help-row"><span>Close</span><span><kbd>esc</kbd> <kbd>?</kbd></span></div>`;
+const help = h(
+  "div",
+  { class: "help", role: "dialog", "aria-modal": "true", "aria-label": "Keyboard shortcuts", tabindex: "-1" },
+  helpCard,
+);
+const helpHint = h("div", { class: "helphint" });
+helpHint.textContent = "? shortcuts";
+
+app.append(aura, stage, deck, langWrap, chrome, helpHint, help, spinner, gate);
+
+/* ============================================================================
+   Layout — full-bleed → centered portrait (crop) → docked (reposition)
+   ============================================================================ */
+type StageState = "full" | "center" | "dock";
+let currentStage: StageState = "full";
+
+function isNarrow(): boolean {
+  return window.innerWidth < 820 || (window.matchMedia("(orientation: portrait)").matches && window.innerWidth <= 1024);
+}
+
+function geomFor(state: StageState) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  if (state === "full") return { x: 0, y: 0, w: vw, h: vh, r: 0 };
+
+  if (isNarrow()) {
+    if (state === "center") {
+      const hh = Math.round(vh * 0.6);
+      const w = Math.round((hh * 9) / 16);
+      return { x: Math.round((vw - w) / 2), y: Math.round((vh - hh) * 0.42), w, h: hh, r: 18 };
+    }
+    // dock — horizontal strip at the top
+    const w = vw;
+    const hh = Math.round((w * 9) / 16);
+    return { x: 0, y: 0, w, h: hh, r: 0 };
+  }
+
+  // desktop: step 1 crops to a centered portrait, step 2 slides it left
+  const hh = Math.round(vh * 0.8);
+  const w = Math.round((hh * 9) / 16);
+  const y = Math.round((vh - hh) / 2);
+  const x = state === "center" ? Math.round((vw - w) / 2) : Math.round(vw * 0.055);
+  return { x, y, w, h: hh, r: 22 };
+}
+
+function writeVideoVars(g: { x: number; y: number; w: number; h: number }) {
+  const s = document.documentElement.style;
+  s.setProperty("--video-x", `${g.x}px`);
+  s.setProperty("--video-y", `${g.y}px`);
+  s.setProperty("--video-w", `${g.w}px`);
+  s.setProperty("--video-h", `${g.h}px`);
+}
+
+function applyStage(state: StageState, animate: boolean) {
+  currentStage = state;
+  const g = geomFor(state);
+  stage.classList.toggle("docked", state !== "full");
+  writeVideoVars(g);
+  const props = { x: g.x, y: g.y, width: g.w, height: g.h, borderRadius: g.r };
+  if (animate && !REDUCE_MOTION) gsap.to(stage, { ...props, duration: 1.3, ease: "power3.inOut" });
+  else gsap.set(stage, props);
+}
+applyStage("full", false);
+
+/* ============================================================================
+   Illustrative scenes
+   ============================================================================ */
+let sceneIndex = -2;
+
+function revealIn(root: HTMLElement, delay = 0.1) {
+  const targets = root.querySelectorAll<HTMLElement>("[data-reveal]");
+  if (REDUCE_MOTION) {
+    gsap.set(targets, { autoAlpha: 1, y: 0, filter: "blur(0px)" });
+    return;
+  }
+  gsap.fromTo(
+    targets,
+    { y: 22, autoAlpha: 0, filter: "blur(8px)" },
+    { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out", stagger: 0.08, delay },
+  );
+}
+
+function swapScene(i: number, force = false) {
+  if (i === sceneIndex && !force) return;
+  sceneIndex = i;
+
+  // Crossfade: keep only the most recent outgoing scene to fade; drop any
+  // stragglers immediately (robust against fast scrubbing and rAF throttling).
+  const existing = Array.from(sceneStage.children) as HTMLElement[];
+  const old = existing.pop() ?? null;
+  existing.forEach((c) => {
+    gsap.killTweensOf(c);
+    c.remove();
+  });
+  if (old) {
+    gsap.killTweensOf(old);
+    gsap.to(old, { autoAlpha: 0, y: -14, filter: "blur(6px)", duration: REDUCE_MOTION ? 0.001 : 0.36, ease: "power2.in" });
+    // remove on a wall-clock timer so it never lingers if the tween is throttled
+    window.setTimeout(() => old.remove(), 420);
+  }
+
+  if (i < 0) return;
+  const node = SCENES[i].build(lang);
+  sceneStage.append(node);
+  revealIn(node, 0.12);
+}
+
+/* ============================================================================
+   Teleprompter
+   ============================================================================ */
+let lastCueIdx = -2;
+
+function renderPrompter(t: number, force = false) {
+  const cues = CUES[lang];
+  const idx = activeCueIndex(cues, t);
+  if (idx === lastCueIdx && !force) return;
+  lastCueIdx = idx;
+  if (idx < 0) {
+    plPrev.textContent = "";
+    plCur.textContent = "";
+    plNext.textContent = cues[0]?.text ?? "";
+    return;
+  }
+  plPrev.textContent = idx - 1 >= 0 ? cues[idx - 1].text : "";
+  plCur.textContent = cues[idx].text;
+  plNext.textContent = idx + 1 < cues.length ? cues[idx + 1].text : "";
+  if (!REDUCE_MOTION) gsap.fromTo(plCur, { y: 6, opacity: 0.6 }, { y: 0, opacity: 1, duration: 0.5, ease: "power2.out" });
+}
+
+/* ============================================================================
+   Progress bar + chapter dots (with frame thumbnails)
+   ============================================================================ */
+let duration = 0;
+
+function fmt(t: number): string {
+  if (!isFinite(t)) t = 0;
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function buildDots() {
+  barDots.innerHTML = "";
+  for (const c of CHAPTERS) {
+    const dot = h("div", { class: "bar-dot" });
+    dot.style.left = `${(c.t / duration) * 100}%`;
+    dot.dataset.t = String(c.t);
+    barDots.append(dot);
+  }
+}
+
+function chapterIndexAt(t: number): number {
+  let idx = 0;
+  for (let i = 0; i < CHAPTERS.length; i++) if (t >= CHAPTERS[i].t) idx = i;
+  return idx;
+}
+
+function updateBar(t: number) {
+  if (!duration) return;
+  const pct = Math.min(100, (t / duration) * 100);
+  barFill.style.width = `${pct}%`;
+  barHead.style.left = `${pct}%`;
+  bar.setAttribute("aria-valuemax", String(Math.round(duration)));
+  bar.setAttribute("aria-valuenow", String(Math.round(t)));
+  bar.setAttribute("aria-valuetext", `${fmt(t)} of ${fmt(duration)}`);
+  timeEl.innerHTML = `<b>${fmt(t)}</b>&nbsp;/&nbsp;${fmt(duration)}`;
+  barDots.querySelectorAll<HTMLElement>(".bar-dot").forEach((dot) => {
+    const tt = Number(dot.dataset.t);
+    const isPast = t >= tt;
+    const next = CHAPTERS.find((c) => c.t > tt)?.t ?? Infinity;
+    dot.classList.toggle("past", isPast);
+    dot.classList.toggle("current", isPast && next > t);
+  });
+}
+
+/* ============================================================================
+   Beats — flip body classes by time, so scrubbing is reversible & synced
+   ============================================================================ */
+function setFlag(name: string, on: boolean) {
+  document.body.classList.toggle(name, on);
+}
+
+let pickerDemoed = false;
+let progressDemoed = false;
+
+function applyBeats(t: number) {
+  let wantStage: StageState = "full";
+  if (t >= BEATS.dock) wantStage = "dock";
+  else if (t >= BEATS.crop) wantStage = "center";
+  if (wantStage !== currentStage) applyStage(wantStage, true);
+
+  setFlag("revealed", t >= BEATS.crop);
+  setFlag("deck-on", t >= BEATS.deck);
+  setFlag("picker-on", t >= BEATS.picker);
+
+  // scripted language flip — unless the viewer has taken manual control
+  if (manualLang === null) {
+    const scripted: Lang = t >= BEATS.translate ? "zh" : "en";
+    if (scripted !== lang) setLangInternal(scripted);
+  }
+
+  // the controls are on-demand, but their first appearances are scripted moments
+  if (!video.paused) {
+    if (!pickerDemoed && t >= BEATS.picker && t < BEATS.picker + 6) {
+      pickerDemoed = true;
+      showChrome();
+    }
+    if (!progressDemoed && t >= BEATS.progress && t < BEATS.progress + 6) {
+      progressDemoed = true;
+      showChrome();
+    }
+  }
+
+  swapScene(t >= BEATS.deck ? activeSceneIndex(t) : -1);
+}
+
+/* ============================================================================
+   i18n — swap all UI copy + teleprompter + active scene
+   ============================================================================ */
+function applyLang() {
+  document.documentElement.setAttribute("data-lang", lang);
+  prompter.setAttribute("data-lang", lang);
+  wmTitle.textContent = STRINGS.brand[lang];
+  wmSub.textContent = STRINGS.brandSub[lang];
+  ptText.textContent = STRINGS.transcriptLabel[lang];
+  recText.textContent = STRINGS.rec[lang];
+  gateHint.textContent = STRINGS.playHint[lang];
+  langEn.setAttribute("aria-pressed", String(lang === "en"));
+  langZh.setAttribute("aria-pressed", String(lang === "zh"));
+  renderPrompter(video.currentTime || 0, true);
+  if (sceneIndex >= 0) swapScene(sceneIndex, true);
+}
+
+function setLangInternal(next: Lang) {
+  if (next === lang) return;
+  lang = next;
+  applyLang();
+}
+function setLang(next: Lang) {
+  manualLang = next;
+  if (next === lang) return;
+  lang = next;
+  applyLang();
+  langPick.classList.remove("flash");
+  void langPick.offsetWidth;
+  langPick.classList.add("flash");
+}
+langEn.addEventListener("click", () => setLang("en"));
+langZh.addEventListener("click", () => setLang("zh"));
+
+/* ============================================================================
+   Transport: play/pause, mute, fullscreen, scrubbing, keyboard
+   ============================================================================ */
+function setPaused(paused: boolean) {
+  setFlag("paused", paused);
+  playBtn.innerHTML = paused ? ICON.play : ICON.pause;
+  if (paused) showChrome();
+}
+function togglePlay() {
+  if (video.paused) video.play().catch(() => {});
+  else video.pause();
+}
+playBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  togglePlay();
+});
+video.addEventListener("play", () => setPaused(false));
+video.addEventListener("pause", () => setPaused(true));
+video.addEventListener("ended", () => setPaused(true));
+
+// click (desktop) toggles; tap (touch) just reveals the controls
+stage.addEventListener("pointerup", (e) => {
+  if (!hasBegun) return;
+  if (e.pointerType === "touch") showChrome();
+  else togglePlay();
+});
+
+function setMuted(m: boolean) {
+  video.muted = m;
+  muteBtn.innerHTML = m || video.volume === 0 ? ICON.mute : ICON.vol;
+}
+muteBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setMuted(!video.muted);
+});
+video.addEventListener("volumechange", () => {
+  muteBtn.innerHTML = video.muted || video.volume === 0 ? ICON.mute : ICON.vol;
+});
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+fsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleFullscreen();
+});
+document.addEventListener("fullscreenchange", () => {
+  fsBtn.innerHTML = document.fullscreenElement ? ICON.fsOut : ICON.fsIn;
+});
+
+/* scrubbing */
+function seekFromClientX(clientX: number) {
+  if (!duration) return;
+  const rect = bar.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  video.currentTime = ratio * duration;
+}
+let dragging = false;
+bar.addEventListener("pointerdown", (e) => {
+  dragging = true;
+  bar.setPointerCapture(e.pointerId);
+  seekFromClientX(e.clientX);
+});
+bar.addEventListener("pointermove", (e) => {
+  if (duration) {
+    bar.classList.add("tipping");
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    const t = ratio * duration;
+    const ci = chapterIndexAt(t);
+    barTip.style.left = `${ratio * 100}%`;
+    tipThumb.src = `/media/thumbs/thumb_${CHAPTERS[ci].thumb}.jpg`;
+    tipTime.textContent = fmt(t);
+    tipChapter.textContent = CHAPTERS[ci].label[lang];
+  }
+  if (dragging) seekFromClientX(e.clientX);
+});
+function endDrag(e: PointerEvent) {
+  dragging = false;
+  try {
+    bar.releasePointerCapture(e.pointerId);
+  } catch {
+    /* capture may already be gone */
+  }
+}
+bar.addEventListener("pointerup", endDrag);
+bar.addEventListener("pointercancel", endDrag);
+bar.addEventListener("lostpointercapture", endDrag);
+bar.addEventListener("click", (e) => e.stopPropagation());
+// tooltip + thumbnail: driven by JS so it also works on touch (no :hover there)
+bar.addEventListener("pointerenter", () => bar.classList.add("tipping"));
+bar.addEventListener("pointerdown", () => bar.classList.add("tipping"));
+bar.addEventListener("pointerleave", () => bar.classList.remove("tipping"));
+
+/* keyboard — YouTube-like */
+let hasBegun = false;
+
+function seekBy(d: number) {
+  video.currentTime = Math.min(duration || Infinity, Math.max(0, video.currentTime + d));
+  showChrome();
+}
+
+let helpReturnFocus: HTMLElement | null = null;
+function openHelp() {
+  helpReturnFocus = document.activeElement as HTMLElement | null;
+  help.classList.add("on");
+  help.focus();
+}
+function closeHelp() {
+  if (!help.classList.contains("on")) return;
+  help.classList.remove("on");
+  helpReturnFocus?.focus?.();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  // Cold open: zero GUI. The first meaningful key *is* the play gesture.
+  if (!hasBegun) {
+    if (e.code === "Space" || e.key === "k" || e.key === "Enter") {
+      e.preventDefault();
+      begin();
+    }
+    return;
+  }
+
+  // Let a focused control handle its own activation key (no double-toggle).
+  const ae = document.activeElement;
+  const onControl = ae instanceof HTMLButtonElement || ae instanceof HTMLAnchorElement;
+  if (onControl && (e.code === "Space" || e.key === "Enter")) return;
+
+  if (e.code === "Space" || e.key === "k") {
+    e.preventDefault();
+    togglePlay();
+  } else if (e.key === "ArrowRight") {
+    seekBy(5);
+  } else if (e.key === "ArrowLeft") {
+    seekBy(-5);
+  } else if (e.key === "l") {
+    seekBy(10);
+  } else if (e.key === "j") {
+    seekBy(-10);
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    video.volume = Math.min(1, video.volume + 0.1);
+    setMuted(false);
+  } else if (e.key === "ArrowDown") {
+    e.preventDefault();
+    video.volume = Math.max(0, video.volume - 0.1);
+  } else if (e.key === "m") {
+    setMuted(!video.muted);
+  } else if (e.key === "f") {
+    toggleFullscreen();
+  } else if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+    if (help.classList.contains("on")) closeHelp();
+    else if (document.body.classList.contains("revealed")) openHelp();
+  } else if (e.key === "Escape") {
+    closeHelp();
+  } else if (/^[0-9]$/.test(e.key) && duration) {
+    video.currentTime = (Number(e.key) / 10) * duration;
+    showChrome();
+  }
+});
+help.addEventListener("click", (e) => {
+  if (e.target === help) closeHelp();
+});
+
+/* ============================================================================
+   On-demand chrome (YouTube-style): hidden by default, shown near the bottom
+   edge / on tap / when paused, auto-hides while playing.
+   ============================================================================ */
+let hideTimer = 0;
+function showChrome() {
+  setFlag("chrome-active", true);
+  window.clearTimeout(hideTimer);
+  if (!video.paused) hideTimer = window.setTimeout(() => setFlag("chrome-active", false), 2800);
+}
+window.addEventListener(
+  "pointermove",
+  (e) => {
+    if (e.clientY >= window.innerHeight - 150) showChrome();
+  },
+  { passive: true },
+);
+window.addEventListener("pointerdown", () => showChrome(), { passive: true });
+chrome.addEventListener("pointerenter", () => {
+  window.clearTimeout(hideTimer);
+  setFlag("chrome-active", true);
+});
+langWrap.addEventListener("pointerenter", () => {
+  window.clearTimeout(hideTimer);
+  setFlag("chrome-active", true);
+});
+
+/* ============================================================================
+   Cold open + buffering
+   ============================================================================ */
+function begin() {
+  if (hasBegun) return;
+  hasBegun = true;
+  setMuted(false);
+  video.preload = "auto"; // pull the full media, after the user gesture
+  video.play().catch(() => {});
+  gate.classList.add("gone");
+  showChrome();
+  window.setTimeout(() => gate.remove(), 900);
+}
+gate.addEventListener("click", begin);
+
+video.addEventListener("waiting", () => spinner.classList.add("on"));
+video.addEventListener("stalled", () => spinner.classList.add("on"));
+["playing", "canplay", "seeked"].forEach((ev) =>
+  video.addEventListener(ev, () => spinner.classList.remove("on")),
+);
+
+/* ============================================================================
+   Render loop + boot
+   ============================================================================ */
+function tick() {
+  const t = video.currentTime;
+  updateBar(t);
+  renderPrompter(t);
+  applyBeats(t);
+  requestAnimationFrame(tick);
+}
+
+video.addEventListener("loadedmetadata", () => {
+  duration = video.duration;
+  buildDots();
+  updateBar(0);
+});
+
+applyLang();
+setPaused(true);
+applyBeats(0);
+requestAnimationFrame(tick);
+
+window.addEventListener("resize", () => {
+  // retarget an in-flight dock tween instead of snapping
+  applyStage(currentStage, gsap.isTweening(stage));
+});

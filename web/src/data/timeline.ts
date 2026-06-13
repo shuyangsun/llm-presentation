@@ -1,0 +1,84 @@
+/* ============================================================================
+   timeline.ts — the director's score.
+
+   The talking-head video is the prompt. Every UI element is *generated from the
+   transcript* and revealed at the timestamp where the presenter asks for it.
+
+   Philosophy (from the recording): "When people read, they can't listen; when
+   they listen, they can't read." The video carries the words; the deck shows a
+   compact transcript beside a fun, illustrative visual for whatever is being
+   said right now.
+   ============================================================================ */
+
+export type Lang = "en" | "zh";
+
+/** Beat thresholds (seconds into the video) where the interface changes. */
+export const BEATS = {
+  // The reveal is TWO steps, each matched to the words:
+  crop: 120.2, // "you should start cropping ... into a vertical aspect ratio"
+  dock: 131.6, // "then place the frame at the left side of the screen"
+  deck: 134, // the generated content beside the video animates in
+  translate: 165.5, // "My native tongue is Mandarin Chinese, so translate it" → auto-switch to 中文
+  picker: 176, // "show a language picker somewhere on the UI" (defaults to 中文)
+  progress: 205, // "So display that progress bar" — a one-time auto-reveal
+} as const;
+
+export interface Chapter {
+  t: number;
+  thumb: number; // index into /media/thumbs/thumb_<n>.jpg
+  label: Record<Lang, string>;
+}
+
+/** Section markers — the dots on the progress bar, each with a frame thumbnail. */
+export const CHAPTERS: Chapter[] = [
+  { t: 0, thumb: 0, label: { en: "Cold open", zh: "开场" } },
+  { t: 71.2, thumb: 1, label: { en: "Library, or OS?", zh: "是库，还是操作系统？" } },
+  { t: 88, thumb: 2, label: { en: "A demo — this", zh: "演示——就是这个" } },
+  { t: 120, thumb: 3, label: { en: "The reveal", zh: "揭幕" } },
+  { t: 165, thumb: 4, label: { en: "Two languages", zh: "两种语言" } },
+  { t: 205, thumb: 5, label: { en: "Interactive", zh: "可交互" } },
+  { t: 263, thumb: 6, label: { en: "Be a director", zh: "像导演一样" } },
+  { t: 298, thumb: 7, label: { en: "Which model?", zh: "哪个模型？" } },
+  { t: 335, thumb: 8, label: { en: "Open the loop", zh: "打开这个环" } },
+];
+
+/** All translatable UI copy lives here so the language picker can swap it. */
+export const STRINGS = {
+  brand: { en: "Open & Closed Loops", zh: "开环与闭环" },
+  brandSub: { en: "The economics of the LLM OS", zh: "LLM 操作系统的经济学" },
+  playHint: { en: "play · sound on", zh: "播放 · 打开声音" },
+  rec: { en: "REC", zh: "录制中" },
+  transcriptLabel: { en: "live transcript", zh: "实时字幕" },
+  contextKicker: { en: "retrieved via RAG", zh: "由 RAG 检索得到" },
+  contextLead: { en: "Who transcribed this?", zh: "是谁转写了这段视频？" },
+  modelName: { en: "WhisperX · large-v3", zh: "WhisperX · large-v3" },
+  modelNote: { en: "run locally, on-device (CUDA)", zh: "在本地设备上运行（CUDA）" },
+} as const;
+
+/** Open-source artifacts the recording asks us to surface + link. */
+export interface SkillRef {
+  name: string;
+  href: string | null;
+  blurb: Record<Lang, string>;
+}
+
+export const SKILLS_REPO = "https://github.com/shuyangsun/coding-agent-skills";
+
+export const SKILLS: SkillRef[] = [
+  {
+    name: "/retrieving-context",
+    href: `${SKILLS_REPO}/tree/main/.agents/skills/retrieving-context`,
+    blurb: {
+      en: "Find prior context with RAG, not blind grep.",
+      zh: "用 RAG 检索过往上下文，而不是盲目 grep。",
+    },
+  },
+  {
+    name: "/export-transcript",
+    href: `${SKILLS_REPO}/tree/main/.agents/skills/export-transcript`,
+    blurb: {
+      en: "Save every agent conversation as durable context.",
+      zh: "把每次与智能体的对话都存为可复用的上下文。",
+    },
+  },
+];

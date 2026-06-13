@@ -67,5 +67,7 @@ CLAUDE.local.md
 **/public/*.webm
 **/public/*.mp4
 **/public/*.m4s
+**/public/media/
 **/node_modules/
 **/dist/
+**/.vite/

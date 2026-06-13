@@ -16,14 +16,21 @@ presentation, not a static slide deck. The planned demo pairs a talking-head
 video with a synchronized website timeline: scrubbing the video also moves the
 site through matching visual states, examples, and transitions.
 
-Prototypes of that artifact live under [`prototypes/`](prototypes), dated by
-iteration. The first is
-[`prototypes/20260613/web/`](prototypes/20260613/web/README.md): an interactive
-Vite + GSAP site where the talking-head video is the prompt and the interface is
-generated from the video's transcript, anchored to its timestamps. See
-[`prototypes/20260613/web/src/timeline.ts`](prototypes/20260613/web/src/timeline.ts)
-for the transcript-aligned beats, and the prototype's
-[NOTES](prototypes/20260613/NOTES.md) for review feedback driving the next pass.
+The production site lives in [`web/`](web/README.md) — an interactive
+Vite + TypeScript + GSAP build where the talking-head video **is the prompt**:
+its playback time drives every UI beat (the reveal, teleprompter, language
+picker, progress bar, model card), and scrubbing the bar scrubs the video and
+the site as one timeline. It ports the warm "Paper" design system from the
+[`website`](https://github.com/shuyangsun/website) project. The first version
+covers the introduction, aligned to
+[`docs/subtitles/0001_intro.vtt`](docs/subtitles/0001_intro.vtt); see
+[`web/src/data/timeline.ts`](web/src/data/timeline.ts) for the transcript-aligned
+beats. Run it with `cd web && npm install && npm run dev`.
+
+Earlier prototypes live under [`prototypes/`](prototypes), dated by iteration —
+[`prototypes/20260613/web/`](prototypes/20260613/web/README.md) was the first,
+and its [NOTES](prototypes/20260613/NOTES.md) captured the review feedback that
+shaped this production pass.
 
 The main source context is:
 
