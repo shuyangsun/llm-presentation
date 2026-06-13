@@ -129,6 +129,11 @@ This is the rule that most often decides whether a doc is found:
 - **Mirror table-only facts in prose.** Tables are good for scanning, but each
   critical row needs a sentence that repeats the value, what it measures, and the
   entity it belongs to.
+- **For image-backed workflows, name the asset and the project role.** A screenshot
+  or generated image is not enough. State the real image path, what the image is
+  used for, which code/docs/scripts consume or derive from it, and what must be
+  regenerated when it changes. If the visual is only supporting evidence, say what
+  primary source file or session note states the behavior.
 
 ## 6. Write for advanced retrieval without bloat
 
@@ -136,7 +141,7 @@ Do the work once in the doc, not once per chunk:
 
 - **Use a compact context capsule.** A good top block is usually `Date`, `Status`,
   `Area`, `Sources`, then `## Summary`. `Sources` should list primary files,
-  commands, issue IDs, benchmark data, or session transcript paths. Keep it short:
+  commands, issue IDs, benchmark data, or `docs/transcripts/` session transcript paths. Keep it short:
   a retriever needs anchors, not a second abstract.
 - **Preserve relationship edges.** Say what the doc implements, supersedes,
   depends on, tests, or explains, and link those docs/code paths. Graph-style
@@ -144,6 +149,11 @@ Do the work once in the doc, not once per chunk:
 - **Prefer stable names over clever prose.** Use exact API names, config keys,
   file paths, commands, error strings, task IDs, benchmark IDs, and model/version
   names alongside natural-language descriptions.
+- **Give image assets a compact source map.** For a small asset family, one
+  indexed doc can list each image path, its purpose, its generated/derived
+  siblings, the primary code that reads it, and the transcript or plan that
+  explains why it exists. Keep this separate from eval questions and expected
+  answers so retrieval benchmarks cannot find their own labels.
 - **For long transcripts or generated logs, add a human-authored lead summary.**
   Keep the transcript/log faithful, but put the high-signal facts, changed files,
   commands, and outcome near the top so retrieval does not have to mine thousands
