@@ -16,6 +16,15 @@ presentation, not a static slide deck. The planned demo pairs a talking-head
 video with a synchronized website timeline: scrubbing the video also moves the
 site through matching visual states, examples, and transitions.
 
+Prototypes of that artifact live under [`prototypes/`](prototypes), dated by
+iteration. The first is
+[`prototypes/20260613/web/`](prototypes/20260613/web/README.md): an interactive
+Vite + GSAP site where the talking-head video is the prompt and the interface is
+generated from the video's transcript, anchored to its timestamps. See
+[`prototypes/20260613/web/src/timeline.ts`](prototypes/20260613/web/src/timeline.ts)
+for the transcript-aligned beats, and the prototype's
+[NOTES](prototypes/20260613/NOTES.md) for review feedback driving the next pass.
+
 The main source context is:
 
 - [Distilled brain dump](docs/archive/20260611/brain_dump_20260611_distilled.txt)

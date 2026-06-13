@@ -1,0 +1,882 @@
+/* ============================================================================
+   Open & Closed Loops — The Economics of the LLMOS
+   A talking-head presentation where the video is the prompt and the interface
+   is generated, beat by beat, from the transcript timeline.
+   Aesthetic: deep-ink editorial OS. Fraunces display, Hanken body, JetBrains
+   mono. Two semantic loop colors — mint (closed/self-iterating) and coral
+   (open/human) — over near-black with a slow living aurora and film grain.
+   ============================================================================ */
+
+:root {
+  --ink: #07080b;
+  --ink-soft: #0d0f15;
+  --ink-card: #111420;
+  --bone: #f3ede1;
+  --bone-dim: rgba(243, 237, 225, 0.56);
+  --bone-faint: rgba(243, 237, 225, 0.14);
+  --line: rgba(243, 237, 225, 0.1);
+
+  --mint: #74f2c8; /* closed loop — self-iterating, cheap, repeatable */
+  --mint-deep: #1f7d62;
+  --coral: #ff8a5b; /* open loop — human, expensive, scarce */
+  --coral-deep: #b8482a;
+  --accent: var(--mint);
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --ease-cinematic: cubic-bezier(0.7, 0, 0.16, 1);
+  --dock-w: 30vw;
+  --shadow-video: 0 40px 120px -30px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(243, 237, 225, 0.06);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-body);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* --- Atmosphere: living aurora + film grain ------------------------------ */
+.aurora {
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+  filter: blur(80px) saturate(120%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.aurora span {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.aurora .a1 {
+  width: 50vw;
+  height: 50vw;
+  left: -8vw;
+  top: 8vh;
+  background: radial-gradient(circle at 30% 30%, rgba(116, 242, 200, 0.5), transparent 62%);
+  animation: drift1 26s var(--ease-cinematic) infinite alternate;
+}
+.aurora .a2 {
+  width: 46vw;
+  height: 46vw;
+  right: -6vw;
+  bottom: -6vh;
+  background: radial-gradient(circle at 60% 40%, rgba(255, 138, 91, 0.42), transparent 62%);
+  animation: drift2 32s var(--ease-cinematic) infinite alternate;
+}
+.aurora .a3 {
+  width: 38vw;
+  height: 38vw;
+  left: 40vw;
+  top: -10vh;
+  background: radial-gradient(circle at 50% 50%, rgba(120, 150, 255, 0.26), transparent 60%);
+  animation: drift1 38s ease-in-out infinite alternate;
+}
+@keyframes drift1 {
+  to {
+    transform: translate3d(8vw, 6vh, 0) scale(1.18);
+  }
+}
+@keyframes drift2 {
+  to {
+    transform: translate3d(-7vw, -5vh, 0) scale(1.12);
+  }
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 42%, transparent 52%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* --- Video stage --------------------------------------------------------- */
+.video-stage {
+  position: fixed;
+  z-index: 20;
+  overflow: hidden;
+  background: #000;
+  will-change: width, height, transform, border-radius;
+  box-shadow: var(--shadow-video);
+}
+.video-stage.is-full {
+  box-shadow: none;
+}
+.video-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 32%;
+  display: block;
+}
+/* faint live ring while playing, breathing when docked */
+.video-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(243, 237, 225, 0.08);
+}
+
+/* REC-style live tag pinned to the video */
+.live-tag {
+  position: fixed;
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--bone);
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+}
+.live-tag .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 12px var(--coral);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.live-tag.paused .dot {
+  background: var(--bone-dim);
+  box-shadow: none;
+  animation: none;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
+/* --- Content layer (the generated UI, left of the docked video) ---------- */
+.content-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  padding: clamp(28px, 6vw, 92px);
+  padding-right: 38vw;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+.panel {
+  position: absolute;
+  left: clamp(28px, 6vw, 92px);
+  right: 38vw;
+  max-width: 760px;
+  pointer-events: auto;
+}
+.panel.detached {
+  pointer-events: none;
+}
+
+/* --- Typography kit ------------------------------------------------------ */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1vw, 13px);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--mint);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.kicker::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--mint);
+  display: inline-block;
+}
+.kicker.coral {
+  color: var(--coral);
+}
+.kicker.coral::before {
+  background: var(--coral);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 360;
+  font-optical-sizing: auto;
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+}
+.display em {
+  font-style: italic;
+  font-weight: 460;
+}
+.t-hero {
+  font-size: clamp(48px, 8vw, 128px);
+}
+.t-xl {
+  font-size: clamp(40px, 6vw, 92px);
+}
+.t-lg {
+  font-size: clamp(32px, 4.4vw, 64px);
+}
+.lead {
+  font-size: clamp(17px, 1.5vw, 23px);
+  line-height: 1.5;
+  color: var(--bone-dim);
+  font-weight: 400;
+  max-width: 46ch;
+}
+.lead strong {
+  color: var(--bone);
+  font-weight: 600;
+}
+.lead .mint {
+  color: var(--mint);
+  font-weight: 600;
+}
+.lead .coral {
+  color: var(--coral);
+  font-weight: 600;
+}
+
+/* word-by-word reveal target */
+.word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* --- Fullscreen overlay title (cold open) -------------------------------- */
+.fs-overlay {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: clamp(32px, 7vw, 100px);
+  pointer-events: none;
+}
+.fs-overlay .scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.78));
+  z-index: -1;
+}
+
+/* --- Brand / HUD --------------------------------------------------------- */
+.hud-brand {
+  position: fixed;
+  z-index: 40;
+  top: clamp(22px, 3.4vh, 38px);
+  left: clamp(28px, 6vw, 92px);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hud-brand b {
+  color: var(--bone);
+  font-weight: 600;
+}
+.hud-brand .loopmark {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--mint);
+  border-right-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 3.4s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hud-chapter {
+  position: fixed;
+  z-index: 40;
+  top: clamp(22px, 3.4vh, 38px);
+  right: clamp(28px, 6vw, 92px);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+  text-align: right;
+}
+.hud-chapter b {
+  color: var(--mint);
+}
+
+/* --- Agenda / lists ------------------------------------------------------ */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 26px;
+}
+.agenda li {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: baseline;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.4s, transform 0.4s, color 0.4s;
+  color: var(--bone-dim);
+}
+.agenda li .n {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--mint);
+}
+.agenda li .t {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.4vw, 34px);
+  font-weight: 380;
+}
+.agenda li:hover {
+  background: rgba(243, 237, 225, 0.04);
+  transform: translateX(6px);
+}
+.agenda li.active {
+  background: linear-gradient(90deg, rgba(116, 242, 200, 0.12), transparent);
+  color: var(--bone);
+}
+.agenda li.active .t {
+  color: var(--bone);
+}
+
+/* --- Loop diagram (open vs closed) --------------------------------------- */
+.loops {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 30px;
+}
+.loop-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 22px 22px 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent);
+  overflow: hidden;
+  transition: border-color 0.4s, transform 0.4s;
+}
+.loop-card:hover {
+  transform: translateY(-4px);
+}
+.loop-card .lc-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.loop-card .lc-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+.loop-card .lc-note {
+  font-size: 14px;
+  color: var(--bone-dim);
+  line-height: 1.45;
+}
+.loop-card.closed {
+  border-color: rgba(116, 242, 200, 0.28);
+}
+.loop-card.closed .lc-label {
+  color: var(--mint);
+}
+.loop-card.closed:hover {
+  border-color: var(--mint);
+}
+.loop-card.open {
+  border-color: rgba(255, 138, 91, 0.28);
+}
+.loop-card.open .lc-label {
+  color: var(--coral);
+}
+.loop-card.open:hover {
+  border-color: var(--coral);
+}
+.loop-svg {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 14px;
+  overflow: visible;
+}
+.loop-svg .track {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.loop-svg .runner {
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+/* --- Skills self-improvement loop ---------------------------------------- */
+.skill-loop {
+  margin-top: 26px;
+  display: grid;
+  gap: 16px;
+}
+.skill-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.chip {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--bone);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: default;
+  transition: border-color 0.35s, color 0.35s, transform 0.35s, background 0.35s;
+}
+.chip:hover {
+  transform: translateY(-3px);
+  border-color: var(--mint);
+  color: var(--mint);
+}
+.chip .pre {
+  color: var(--bone-dim);
+  margin-right: 6px;
+}
+.flowline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--bone-dim);
+  flex-wrap: wrap;
+}
+.flowline .step {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  color: var(--bone);
+  background: rgba(255, 255, 255, 0.02);
+}
+.flowline .step.metric {
+  border-color: rgba(116, 242, 200, 0.4);
+  color: var(--mint);
+}
+.flowline .arrow {
+  color: var(--mint);
+  font-size: 18px;
+}
+.flowline .loopback {
+  color: var(--coral);
+}
+
+/* --- Meta callout -------------------------------------------------------- */
+.meta-card {
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 22px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bone-dim);
+}
+.meta-card .tag {
+  color: var(--mint);
+}
+
+/* --- Scrubber ------------------------------------------------------------ */
+.scrubber {
+  position: fixed;
+  z-index: 45;
+  left: clamp(28px, 6vw, 92px);
+  right: clamp(28px, 6vw, 92px);
+  bottom: clamp(22px, 3.6vh, 40px);
+  opacity: 0;
+  transform: translateY(30px);
+  pointer-events: none;
+}
+.scrubber .sb-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+.scrubber .sb-meta .lbl b {
+  color: var(--bone);
+}
+.scrubber .sb-time b {
+  color: var(--mint);
+}
+.sb-track {
+  position: relative;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.sb-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--bone-faint);
+  overflow: hidden;
+}
+.sb-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, var(--mint-deep), var(--mint));
+  box-shadow: 0 0 16px rgba(116, 242, 200, 0.6);
+}
+.sb-ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sb-tick {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  background: var(--bone-faint);
+  border-radius: 2px;
+  transition: background 0.3s, height 0.3s;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.sb-tick.past {
+  background: rgba(116, 242, 200, 0.5);
+}
+.sb-tick.current {
+  background: var(--mint);
+  height: 18px;
+}
+.sb-tick .tip {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone);
+  background: var(--ink-card);
+  border: 1px solid var(--line);
+  padding: 6px 9px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.sb-tick:hover .tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.sb-head {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bone);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 4px rgba(116, 242, 200, 0.18), 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s;
+}
+.sb-track:hover .sb-head {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* --- Play / pause + hint ------------------------------------------------- */
+.controls {
+  position: fixed;
+  z-index: 46;
+  left: clamp(28px, 6vw, 92px);
+  bottom: calc(clamp(22px, 3.6vh, 40px) + 64px);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  pointer-events: none;
+}
+.play-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--bone);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.3s, transform 0.3s, background 0.3s;
+}
+.play-btn:hover {
+  border-color: var(--mint);
+  color: var(--mint);
+  transform: scale(1.06);
+}
+.play-btn svg {
+  width: 18px;
+  height: 18px;
+}
+.hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+.hint kbd {
+  font-family: var(--font-mono);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 2px 7px;
+  color: var(--bone);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* --- Paused state -------------------------------------------------------- */
+.pause-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  background: radial-gradient(80% 60% at 30% 50%, rgba(7, 8, 11, 0.4), rgba(7, 8, 11, 0.7));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.is-paused .pause-veil {
+  opacity: 1;
+}
+.pause-badge {
+  position: fixed;
+  z-index: 47;
+  left: 50%;
+  top: clamp(22px, 12vh, 120px);
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mint);
+  border: 1px solid rgba(116, 242, 200, 0.4);
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: rgba(13, 15, 21, 0.7);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.4s, transform 0.4s;
+  pointer-events: none;
+}
+.is-paused .pause-badge {
+  opacity: 1;
+}
+
+/* let interactive content invite clicks only when paused */
+.is-paused .agenda li,
+.is-paused .loop-card,
+.is-paused .chip {
+  cursor: pointer;
+}
+
+/* --- Loading ------------------------------------------------------------- */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  transition: opacity 0.8s ease;
+}
+.loader.gone {
+  opacity: 0;
+  pointer-events: none;
+}
+.loader .lwrap {
+  text-align: center;
+}
+.loader .loopmark-lg {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--mint);
+  border-right-color: transparent;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  animation: spin 1s linear infinite;
+}
+.loader .lt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+/* --- Start gate (entry; satisfies autoplay-with-sound policy) ------------ */
+.start-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  cursor: pointer;
+  background: radial-gradient(70% 70% at 50% 45%, rgba(7, 8, 11, 0.35), rgba(7, 8, 11, 0.72));
+  backdrop-filter: blur(6px);
+  padding: 8vw;
+}
+.start-gate .sg-inner {
+  max-width: 720px;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.start-gate .sg-title {
+  font-size: clamp(44px, 8vw, 104px);
+  font-weight: 360;
+  line-height: 0.96;
+  letter-spacing: -0.02em;
+}
+.start-gate .sg-title em {
+  font-style: italic;
+  color: var(--mint);
+}
+.start-gate .sg-sub {
+  font-size: clamp(15px, 1.5vw, 19px);
+  color: var(--bone-dim);
+  max-width: 44ch;
+  line-height: 1.5;
+}
+.start-gate .sg-play {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 1px solid rgba(116, 242, 200, 0.5);
+  background: rgba(116, 242, 200, 0.08);
+  color: var(--mint);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform 0.4s var(--ease-cinematic), background 0.4s, box-shadow 0.4s;
+  box-shadow: 0 0 0 0 rgba(116, 242, 200, 0.4);
+  animation: gatepulse 2.6s ease-in-out infinite;
+}
+.start-gate .sg-play svg {
+  width: 30px;
+  height: 30px;
+  margin-left: 4px;
+}
+.start-gate:hover .sg-play {
+  transform: scale(1.08);
+  background: rgba(116, 242, 200, 0.16);
+}
+@keyframes gatepulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(116, 242, 200, 0.32);
+  }
+  50% {
+    box-shadow: 0 0 0 22px rgba(116, 242, 200, 0);
+  }
+}
+.start-gate .sg-cta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+/* --- Responsive: stack on narrow screens --------------------------------- */
+@media (max-width: 860px) {
+  .content-layer,
+  .panel {
+    padding-right: clamp(20px, 6vw, 40px);
+    right: clamp(20px, 6vw, 40px);
+  }
+  .panel {
+    bottom: 22vh;
+    top: auto;
+  }
+  .loops {
+    grid-template-columns: 1fr;
+  }
+  .t-hero {
+    font-size: clamp(40px, 13vw, 72px);
+  }
+}

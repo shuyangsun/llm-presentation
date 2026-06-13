@@ -62,3 +62,10 @@ CLAUDE.local.md
 # Agy local-only settings
 .agy/cache/
 .agy/sessions/
+
+# Large media assets (transcoded talking-head video) — never commit
+**/public/*.webm
+**/public/*.mp4
+**/public/*.m4s
+**/node_modules/
+**/dist/
