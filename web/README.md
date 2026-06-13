@@ -12,22 +12,28 @@ with a terracotta signature accent. Light mode only for now.
 
 ## The choreography (from `docs/subtitles/0001_intro.vtt`)
 
+Every beat is pinned to the **moment the presenter says the words** in
+`0001_intro.vtt`, and scenes reveal *part by part* — nothing appears before he
+asks for it.
+
 | time | beat |
 | ---- | ---- |
 | 0:00 | **Cold open** — just the first frame + a play button. Zero GUI. |
-| ~2:00 | **Reveal, step 1** — the 16:9 video center-crops to a vertical portrait, centered. |
-| ~2:12 | **Reveal, step 2** — the portrait slides to the left (top strip on mobile); the deck fades in. |
-| ~2:14 | **Deck** — a compact teleprompter beside an illustrative *scene* that changes with the talk. |
+| ~2:00 | **Reveal, step 1** — on "you should start cropping", the 16:9 video eases over a slow, smooth crop to a centered vertical portrait. |
+| ~2:11 | **Reveal, step 2** — on "place the frame at the left side", the portrait slides left (top strip on mobile). |
+| ~2:17 | **Deck** — on "show this teleprompter", the compact transcript fades in; an illustrative *scene* joins at "the .VTT file that's transcribed" (~2:22). |
 | ~2:45 | **Auto-translate** — at "Mandarin Chinese", the whole UI + transcript flip to 中文. |
 | ~2:56 | **Language picker** — EN / 中文, defaulting to 中文 (near the playhead). |
 | ~3:25 | **Progress bar** — on-demand, thin, with section dots + frame thumbnails on hover. |
-| ~4:58 | **The model** — "who transcribed this?" answered via RAG: **WhisperX · large-v3**, with the two open-source skills linked. |
-| ~5:35 | **Open & closed loops** — a side illustration: a closed loop (a dot iterating) and an open loop (breathing, awaiting a human). |
+| ~4:58 | **The model** — RAG poses "who transcribed this?"; the two skills pop in one at a time as he names them (~5:13 / ~5:16); the answer **WhisperX · large-v3** resolves only on "show that on the screen" (~5:30). |
+| ~5:43 | **Open & closed loops** — a closed loop (a dot iterating) appears; the open loop (breathing, awaiting a human) joins on "I'm going to open the loop now" (~5:50). |
 
 The interface is **time-driven and fully reversible**: scrubbing backward
-re-hides every element. The illustrative scenes live in `src/engine/scenes.ts`;
-the beat timings in `src/data/timeline.ts`. Mobile docks the video to the top
-with content below; desktop docks it left with content beside it.
+re-hides every element *and every sub-part*. Each scene part carries an optional
+`data-at` timestamp (see `src/engine/scenes.ts`); the director loop in
+`src/main.ts` fades it in only once its words have been spoken. Beat thresholds
+live in `src/data/timeline.ts`. Mobile docks the video to the top with content
+below; desktop docks it left with content beside it.
 
 ## Controls (YouTube-like behavior, warm palette)
 

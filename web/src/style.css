@@ -353,8 +353,8 @@ body.deck-on .wordmark {
   transform: none;
 }
 .wordmark .loop {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   flex: none;
   color: var(--accent);
   animation: glow-breathe 4.5s ease-in-out infinite;
@@ -362,16 +362,16 @@ body.deck-on .wordmark {
 .wordmark .title {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: clamp(22px, 2.4vw, 30px);
+  font-size: clamp(27px, 2.9vw, 39px);
   line-height: 1;
   color: var(--fg);
 }
 .wordmark .sub {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.06em;
   color: var(--fg-muted);
-  margin-top: 4px;
+  margin-top: 5px;
 }
 @keyframes glow-breathe {
   0%,
@@ -387,7 +387,7 @@ body.deck-on .wordmark {
 .scene-stage {
   position: relative;
   flex: 1 1 auto;
-  min-height: 230px;
+  min-height: 300px;
 }
 .scene {
   position: absolute;
@@ -400,16 +400,16 @@ body.deck-on .wordmark {
 }
 .scene-cap {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.08em;
   color: var(--accent-ink);
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 .scene-cap::before {
   content: "";
-  width: 16px;
+  width: 22px;
   height: 1px;
   background: var(--accent);
 }
@@ -418,22 +418,22 @@ body.deck-on .wordmark {
 .prompter {
   flex: none;
   position: relative;
-  max-width: 40ch;
+  max-width: 46ch;
 }
 .prompter-tag {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 11px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--fg-muted);
 }
 .prompter-tag .live-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
   background: var(--accent);
 }
@@ -444,15 +444,15 @@ body.deck-on .wordmark {
 }
 .pl {
   font-family: var(--font-serif);
-  font-size: clamp(15px, 1.55vw, 21px);
-  line-height: 1.3;
+  font-size: clamp(19px, 2.0vw, 28px);
+  line-height: 1.32;
   color: var(--fg-muted);
   opacity: 0.55;
   transition: color 0.5s var(--ease-mirror), opacity 0.5s var(--ease-mirror);
 }
 .pl.prev,
 .pl.next {
-  font-size: clamp(13px, 1.25vw, 16px);
+  font-size: clamp(15px, 1.5vw, 20px);
 }
 .pl.current {
   color: var(--fg);
@@ -469,41 +469,41 @@ body.deck-on .wordmark {
 .scene--asr .asr-wave {
   display: flex;
   align-items: center;
-  gap: 4px;
-  height: 60px;
+  gap: 6px;
+  height: 78px;
 }
 .scene--asr .asr-wave span {
-  width: 4px;
+  width: 5px;
   border-radius: 999px;
   background: var(--accent);
   opacity: 0.75;
   animation: wave 1.2s ease-in-out infinite;
   animation-delay: calc(var(--i) * 0.055s);
-  height: 18px;
+  height: 24px;
 }
 @keyframes wave {
   0%,
   100% {
-    height: 12px;
+    height: 16px;
     opacity: 0.4;
   }
   50% {
-    height: 52px;
+    height: 68px;
     opacity: 0.9;
   }
 }
 .scene--asr .asr-arrow {
   color: var(--fg-faint);
-  font-size: 20px;
+  font-size: 26px;
 }
 .scene--asr .asr-lines {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  width: min(320px, 100%);
+  gap: 12px;
+  width: min(380px, 100%);
 }
 .scene--asr .ln {
-  height: 7px;
+  height: 9px;
   border-radius: 999px;
   background: var(--hairline-strong);
   animation: ln-grow 2.4s var(--ease-mirror) infinite;
@@ -535,12 +535,12 @@ body.deck-on .wordmark {
 .scene--translate .tr-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
 }
 .scene--translate .tr-tag {
   font-family: var(--font-mono);
-  font-size: 26px;
-  padding: 8px 16px;
+  font-size: 32px;
+  padding: 10px 20px;
   border-radius: var(--radius-md);
   border: 1px solid var(--hairline-strong);
   background: var(--surface);
@@ -554,7 +554,7 @@ body.deck-on .wordmark {
 }
 .scene--translate .tr-mid {
   color: var(--fg-faint);
-  font-size: 22px;
+  font-size: 28px;
 }
 @keyframes pop {
   0%,
@@ -568,24 +568,24 @@ body.deck-on .wordmark {
 .scene--translate .tr-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 13px;
 }
 .scene--translate .tr-line {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 16px;
+  gap: 12px;
+  height: 20px;
 }
 .scene--translate .tr-line .lat {
-  width: 90px;
-  height: 7px;
+  width: 118px;
+  height: 9px;
   border-radius: 999px;
   background: var(--hairline-strong);
   animation: fade-ab 3.4s ease-in-out infinite;
 }
 .scene--translate .tr-line .cjk {
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 21px;
   color: var(--fg-2);
   opacity: 0;
   animation: fade-ba 3.4s ease-in-out infinite;
@@ -618,50 +618,50 @@ body.deck-on .wordmark {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  width: min(340px, 100%);
-  padding: 4px 0;
+  gap: 24px;
+  width: min(400px, 100%);
+  padding: 5px 0;
 }
 .scene--sync .sync-track {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 .scene--sync .st-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   color: var(--fg-muted);
-  width: 46px;
+  width: 58px;
   flex: none;
 }
 .scene--sync .st-rail {
   position: relative;
   flex: 1;
-  height: 4px;
+  height: 6px;
   border-radius: 999px;
   background: var(--hairline-strong);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 6px;
+  padding: 0 7px;
 }
 .scene--sync .st-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: var(--surface);
   border: 1px solid var(--hairline-strong);
 }
 .scene--sync .sync-head {
   position: absolute;
-  top: -2px;
-  bottom: -2px;
+  top: -3px;
+  bottom: -3px;
   left: 12%;
-  width: 2px;
+  width: 3px;
   border-radius: 999px;
   background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  box-shadow: 0 0 0 5px var(--accent-soft);
   animation: sweep 4s var(--ease-mirror) infinite;
 }
 @keyframes sweep {
@@ -680,32 +680,32 @@ body.deck-on .wordmark {
 .scene--responsive .dev-row {
   display: flex;
   align-items: flex-end;
-  gap: 22px;
+  gap: 26px;
 }
 .scene--responsive .dev {
   border: 2px solid var(--hairline-strong);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
-  padding: 7px;
+  padding: 9px;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   animation: float 5s ease-in-out infinite;
 }
 .scene--responsive .dev--desktop {
-  width: 168px;
-  height: 108px;
+  width: 208px;
+  height: 132px;
   flex-direction: row;
+  animation-delay: 0.6s;
 }
 .scene--responsive .dev--phone {
-  width: 64px;
-  height: 124px;
+  width: 80px;
+  height: 154px;
   flex-direction: column;
-  animation-delay: 0.6s;
 }
 .scene--responsive .dv {
   background: var(--accent);
   opacity: 0.85;
-  border-radius: 4px;
+  border-radius: 5px;
 }
 .scene--responsive .dv.side {
   width: 38%;
@@ -736,11 +736,11 @@ body.deck-on .wordmark {
    Scene: director (tell a story)
    ============================================================ */
 .scene--director .clap {
-  width: 150px;
+  width: 192px;
 }
 .scene--director .clap-top {
   display: flex;
-  height: 26px;
+  height: 32px;
   border: 2px solid var(--fg);
   border-radius: 4px 4px 0 0;
   overflow: hidden;
@@ -755,7 +755,7 @@ body.deck-on .wordmark {
   background: var(--surface);
 }
 .scene--director .clap-body {
-  height: 76px;
+  height: 96px;
   border: 2px solid var(--fg);
   border-top: none;
   border-radius: 0 0 6px 6px;
@@ -766,7 +766,7 @@ body.deck-on .wordmark {
 .scene--director .clap-body em {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 22px;
+  font-size: 28px;
   color: var(--accent-ink);
 }
 @keyframes clap {
@@ -791,30 +791,30 @@ body.deck-on .wordmark {
 }
 .scene--rag .rag-orbit {
   position: relative;
-  width: 130px;
-  height: 90px;
+  width: 162px;
+  height: 114px;
 }
 .scene--rag .rag-core {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 70px;
   border-radius: 999px;
   display: grid;
   place-items: center;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.06em;
   color: #fff;
   background: var(--accent);
-  box-shadow: 0 0 0 6px var(--accent-soft);
+  box-shadow: 0 0 0 7px var(--accent-soft);
 }
 .scene--rag .doc {
   position: absolute;
-  width: 14px;
-  height: 18px;
+  width: 17px;
+  height: 22px;
   border-radius: 2px;
   background: var(--surface);
   border: 1px solid var(--hairline-strong);
@@ -866,7 +866,7 @@ body.deck-on .wordmark {
 }
 .scene--rag .ctx-kicker {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent-ink);
@@ -874,18 +874,18 @@ body.deck-on .wordmark {
 .scene--rag .model {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 13px;
   flex-wrap: wrap;
 }
 .scene--rag .model .q {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--fg-muted);
 }
 .scene--rag .model .a {
   position: relative;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: clamp(27px, 2.9vw, 40px);
   color: var(--fg);
 }
 .scene--rag .model .a::after {
@@ -910,24 +910,24 @@ body.deck-on .wordmark {
 .scene--rag .model .note {
   width: 100%;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--fg-muted);
 }
 .scene--rag .skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
+  gap: 11px;
 }
 .scene--rag .skill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 11px;
+  gap: 8px;
+  padding: 9px 14px;
   border: 1px solid var(--hairline-strong);
   border-radius: 999px;
   background: var(--surface);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--fg-2);
   transition: border-color var(--dur-base), background var(--dur-base), transform var(--dur-base);
 }
@@ -937,8 +937,8 @@ body.deck-on .wordmark {
   transform: translateY(-1px);
 }
 .scene--rag .skill .arrow {
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   opacity: 0.5;
 }
 .scene--rag a.skill:hover .arrow {
@@ -950,13 +950,13 @@ body.deck-on .wordmark {
    ============================================================ */
 .scene--loop .loops {
   display: flex;
-  gap: 30px;
+  gap: 42px;
 }
 .scene--loop .loopcard {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 .scene--loop .loopcard.closed {
   color: var(--green);
@@ -966,8 +966,8 @@ body.deck-on .wordmark {
 }
 .scene--loop .loopglyph {
   position: relative;
-  width: 80px;
-  height: 80px;
+  width: 104px;
+  height: 104px;
 }
 .scene--loop .loopglyph svg {
   width: 100%;
@@ -979,18 +979,18 @@ body.deck-on .wordmark {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 54px;
-  height: 54px;
+  width: 70px;
+  height: 70px;
   transform: translate(-50%, -50%);
   animation: orbit-spin 3.4s linear infinite;
 }
 .scene--loop .orbit-dot {
   position: absolute;
-  top: -4px;
+  top: -5px;
   left: 50%;
-  width: 9px;
-  height: 9px;
-  margin-left: -4.5px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
   border-radius: 999px;
   background: currentColor;
 }
@@ -1016,7 +1016,7 @@ body.deck-on .wordmark {
 }
 .scene--loop .lc-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.04em;
   color: var(--fg-muted);
 }
@@ -1370,6 +1370,26 @@ body.chrome-active .helphint {
   }
   .prompter {
     max-width: none;
+  }
+  /* The enlarged type stays; only rein in the two widest illustrations so the
+     device mock-up and translate row never overflow a narrow phone. */
+  .scene--responsive .dev-row {
+    gap: 18px;
+  }
+  .scene--responsive .dev--desktop {
+    width: 172px;
+    height: 110px;
+  }
+  .scene--responsive .dev--phone {
+    width: 70px;
+    height: 132px;
+  }
+  .scene--translate .tr-tag {
+    font-size: 28px;
+    padding: 9px 16px;
+  }
+  .scene--translate .tr-mid {
+    font-size: 24px;
   }
   .helphint {
     display: none;

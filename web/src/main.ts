@@ -12,7 +12,7 @@ import "./style.css";
 import { gsap } from "gsap";
 import { parseVtt, activeCueIndex, type Cue } from "./engine/vtt";
 import { SCENES, activeSceneIndex } from "./engine/scenes";
-import { BEATS, CHAPTERS, STRINGS, type Lang } from "./data/timeline";
+import { BEATS, CROP_DURATION, CHAPTERS, STRINGS, type Lang } from "./data/timeline";
 import enVtt from "./data/en.vtt?raw";
 import zhVtt from "./data/zh.vtt?raw";
 
@@ -199,13 +199,13 @@ function writeVideoVars(g: { x: number; y: number; w: number; h: number }) {
   s.setProperty("--video-h", `${g.h}px`);
 }
 
-function applyStage(state: StageState, animate: boolean) {
+function applyStage(state: StageState, animate: boolean, duration = 1.3) {
   currentStage = state;
   const g = geomFor(state);
   stage.classList.toggle("docked", state !== "full");
   writeVideoVars(g);
   const props = { x: g.x, y: g.y, width: g.w, height: g.h, borderRadius: g.r };
-  if (animate && !REDUCE_MOTION) gsap.to(stage, { ...props, duration: 1.3, ease: "power3.inOut" });
+  if (animate && !REDUCE_MOTION) gsap.to(stage, { ...props, duration, ease: "power3.inOut" });
   else gsap.set(stage, props);
 }
 applyStage("full", false);
@@ -215,17 +215,51 @@ applyStage("full", false);
    ============================================================================ */
 let sceneIndex = -2;
 
-function revealIn(root: HTMLElement, delay = 0.1) {
+/* Each scene part is hidden until the presenter says its words. A part carries
+   an optional `data-at` (seconds); parts without one inherit the scene's base
+   time. The reveal is fully reversible — scrubbing before a part's time fades it
+   back out — so the interface only ever shows what has already been spoken. */
+function primeReveals(root: HTMLElement) {
   const targets = root.querySelectorAll<HTMLElement>("[data-reveal]");
+  gsap.set(targets, REDUCE_MOTION ? { autoAlpha: 0 } : { autoAlpha: 0, y: 22, filter: "blur(8px)" });
+}
+
+function showReveals(nodes: HTMLElement[]) {
   if (REDUCE_MOTION) {
-    gsap.set(targets, { autoAlpha: 1, y: 0, filter: "blur(0px)" });
+    gsap.set(nodes, { autoAlpha: 1, y: 0, filter: "blur(0px)" });
     return;
   }
-  gsap.fromTo(
-    targets,
-    { y: 22, autoAlpha: 0, filter: "blur(8px)" },
-    { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out", stagger: 0.08, delay },
-  );
+  gsap.to(nodes, { autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", stagger: 0.07 });
+}
+
+function hideReveal(node: HTMLElement) {
+  gsap.killTweensOf(node);
+  if (REDUCE_MOTION) {
+    gsap.set(node, { autoAlpha: 0 });
+    return;
+  }
+  gsap.to(node, { autoAlpha: 0, y: 22, filter: "blur(8px)", duration: 0.3, ease: "power2.in" });
+}
+
+/** Reveal/hide the active scene's parts to match the playhead `t`. */
+function updateSceneReveals(t: number) {
+  const node = sceneStage.lastElementChild as HTMLElement | null;
+  if (!node || sceneIndex < 0) return;
+  const base = SCENES[sceneIndex].t;
+  const toShow: HTMLElement[] = [];
+  node.querySelectorAll<HTMLElement>("[data-reveal]").forEach((part) => {
+    const at = part.dataset.at != null ? Number(part.dataset.at) : base;
+    const want = t >= at;
+    const shown = part.classList.contains("is-in");
+    if (want && !shown) {
+      part.classList.add("is-in");
+      toShow.push(part);
+    } else if (!want && shown) {
+      part.classList.remove("is-in");
+      hideReveal(part);
+    }
+  });
+  if (toShow.length) showReveals(toShow);
 }
 
 function swapScene(i: number, force = false) {
@@ -250,7 +284,9 @@ function swapScene(i: number, force = false) {
   if (i < 0) return;
   const node = SCENES[i].build(lang);
   sceneStage.append(node);
-  revealIn(node, 0.12);
+  // Start every part hidden; updateSceneReveals (called right after, each tick)
+  // fades in only the parts whose words have been spoken.
+  primeReveals(node);
 }
 
 /* ============================================================================
@@ -335,7 +371,12 @@ function applyBeats(t: number) {
   let wantStage: StageState = "full";
   if (t >= BEATS.dock) wantStage = "dock";
   else if (t >= BEATS.crop) wantStage = "center";
-  if (wantStage !== currentStage) applyStage(wantStage, true);
+  if (wantStage !== currentStage) {
+    // Step 1 (full → centered portrait) is the "very smooth animation" he asks
+    // for, so it eases slowly; every other move (incl. scrubbing) stays snappy.
+    const slowCrop = wantStage === "center" && currentStage === "full";
+    applyStage(wantStage, true, slowCrop ? CROP_DURATION : 1.3);
+  }
 
   setFlag("revealed", t >= BEATS.crop);
   setFlag("deck-on", t >= BEATS.deck);
@@ -360,6 +401,7 @@ function applyBeats(t: number) {
   }
 
   swapScene(t >= BEATS.deck ? activeSceneIndex(t) : -1);
+  updateSceneReveals(t);
 }
 
 /* ============================================================================
@@ -376,7 +418,10 @@ function applyLang() {
   langEn.setAttribute("aria-pressed", String(lang === "en"));
   langZh.setAttribute("aria-pressed", String(lang === "zh"));
   renderPrompter(video.currentTime || 0, true);
-  if (sceneIndex >= 0) swapScene(sceneIndex, true);
+  if (sceneIndex >= 0) {
+    swapScene(sceneIndex, true);
+    updateSceneReveals(video.currentTime || 0); // re-show the spoken parts at once (no flash on a paused switch)
+  }
 }
 
 function setLangInternal(next: Lang) {

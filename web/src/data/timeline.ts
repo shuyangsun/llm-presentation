@@ -12,16 +12,25 @@
 
 export type Lang = "en" | "zh";
 
-/** Beat thresholds (seconds into the video) where the interface changes. */
+/** Beat thresholds (seconds into the video) where the interface changes.
+ *
+ * Every threshold is pinned to the moment the presenter *says* the words in
+ * `en.vtt`, so nothing animates ahead of the audio. (Cross-reference the cue
+ * timings before nudging any of these.) */
 export const BEATS = {
   // The reveal is TWO steps, each matched to the words:
-  crop: 120.2, // "you should start cropping ... into a vertical aspect ratio"
-  dock: 131.6, // "then place the frame at the left side of the screen"
-  deck: 134, // the generated content beside the video animates in
-  translate: 165.5, // "My native tongue is Mandarin Chinese, so translate it" → auto-switch to 中文
-  picker: 176, // "show a language picker somewhere on the UI" (defaults to 中文)
-  progress: 205, // "So display that progress bar" — a one-time auto-reveal
+  crop: 120.3, // 02:00.2 "you should start cropping the horizontal aspect ratio video"
+  dock: 131.6, // 02:11.6 "then place the frame at the left side of the screen"
+  deck: 137.05, // 02:17.04 "Now on the main screen, you should show this teleprompter"
+  translate: 165.5, // 02:45.5 "My native tongue is Mandarin Chinese, so translate it" → auto-switch to 中文
+  picker: 176, // 02:54.8 "and now show a language picker somewhere on the UI" (defaults to 中文)
+  progress: 205.2, // 03:25.2 "So display that progress bar" — a one-time auto-reveal
 } as const;
+
+/** The crop is described as "a very smooth animation", so step 1 (full →
+ *  centered portrait) eases over this long duration starting at BEATS.crop;
+ *  every other stage move uses the snappier default in main.ts. */
+export const CROP_DURATION = 3.0;
 
 export interface Chapter {
   t: number;
