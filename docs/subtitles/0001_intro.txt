@@ -8,17 +8,17 @@ should strictly ban not only writing code, but also reviewing code.
 Everything should be done through the large language model layer, okay?
 That may piss off a lot of people.
 That's fine because there's nothing wrong with being wrong.
-When the AI bubble bursts, you can pull up this video and laugh at me, at my face,
+When the AI bubble bursts, you can pull up this video and laugh at me in my face,
 okay?
 I believe that if you don't constantly find yourself wrong, you're just not
 learning, you're not growing, you're just stuck in the same place, right?
 So that's fine.
 Okay.
 There are a lot of like tips and tricks on how to improve your productivity with the
-large size models. That's not what we will focus on today.
-We're going to focus on a very high level abstract core principles when working with
-these. I actually don't think most people are paying attention to the place where
-they should be.
+large length models. That's not what we will focus on today.
+We're going to focus on the very high level abstract core principles when working
+with these. I actually don't think most people are paying attention to the place
+where they should be.
 They're using large language models as a library, not like a framework, not like an
 operating system.
 But talk is cheap. Everyone can talk.
@@ -32,9 +32,8 @@ Yeah.
 If the viewer is on desktop,
 the video should have been played in full screen with just a play button at the
 beginning with the first frame as the image, right?
-Then the first part of the video should just be like a video.
-But right now, If it's on desktop, you should start cropping the horizontal aspect
-ratio video
+Then the first part of the video should just be like a video, but right now, If it's
+on desktop, you should start cropping the horizontal aspect ratio video
 into a vertical layout, into a vertical aspect ratio with a very smooth animation,
 then place the frame at the left side of the screen.
 All right, so that's my right side.
@@ -44,40 +43,40 @@ showing exactly what I'm talking about at this moment, right?
 So make sure the text match with my audio.
 Okay.
 Now, well, actually, you know what?
-Let's translate it to a different language.
-My native tongue is Mandarin Chinese.
-So translate it to this entire transcript
-and the website content that we will display later
+Let's translate it
+to a different language.
+My native tongue is Mandarin Chinese, so translate it to this entire transcript
+and the website content that we will display later.
 also to Mandarin Chinese, and now show a language picker somewhere on the UI,
-maybe next to the playhead, right?
-Oh, right, the progress bar.
+maybe next to the playhead. Oh, right, the progress bar.
 This is an interactive podcast where there's the video element of it, then there's
-this interactive website you can interact, play with.
-When the users scrub on the progress bar, they should
+this interactive website you can play with.
+When the users scrub on the
+progress bar, they should
 both scrub the video and the website itself.
-They should always be in sync, right?
-So display that progress bar that the design should be very minimal, very thin line
-with some dots representing each sections
-and make the control and everything like feel intuitive like YouTube, right?
-Like,
-yeah, just make it easy to use.
-One thing to note is that if you're on mobile,
-you should like the video should have been played as a vertical like
-layout aspect ratio with me in the center and then As you transition, instead of
-putting it to the side, make it horizontal and put it on the top, right?
-The main content should be below
+They should always be in sync.
+So display that progress bar.
+The design should be very minimal, very thin line with some dots representing each
+sections. And make the control and everything feel intuitive, like YouTube.
+Yeah, just make it easy to use.
+One thing to note is that if you're on mobile, the video should have been played as
+a vertical
+layout aspect ratio with me in the center.
+As you transition, instead of putting it to the side, make it horizontal and put it
+on the top, right? The main content should be below
 the video, right? Not to the side.
-Okay, let's see. What else?
-Yeah, about this presentation or podcast, I guess.
-Don't think of yourself as like a corporate employee trying to make slides
-presenting the leadership. That's not the point.
+Okay. Uh, let's see what else.
+Yeah. Uh, about this presentation or podcast, I guess
+your don't, don't think of yourself as like a corporate employee trying to make
+slides presenting to the leadership.
+That's not the point.
 Think of yourself as a Hollywood director trying to tell a story.
-The story, the marketing, that's what matters, right?
-You have to resonate with your user
-or viewer, I guess.
-Making this presentation fun is the number one non-negotiable requirement.
+The story, the marketing, that's what matters.
+You have to resonate with your user,
+or viewer, I guess. Making this presentation fun is the number
+one non-negotiable requirement.
 If it's not fun, I will have to ask you to redo it.
-Okay. What else?
+What else?
 Okay, I think that's fine for now.
 Oh, right.
 I don't know what model I will be using to transcribe this video yet, right?
@@ -87,15 +86,16 @@ Use the
 retrieving context skill
 and the export transcript skill to read my chat history with all the large anchor
 models
-use the rag, use the rag, don't just search for the string, and find out which model
-I will be using at the time of this recording and show that on the screen
+use the RAG,
+don't just search for the string, and find out which model I will be using at the
+time of this recording, and show that on the screen
 so the viewers know.
 Okay, so viewers,
 what you just witnessed, this stage setting part about this presentation,
 that ties directly into what we're going to talk about today, the open and close
 loop.
-I'm going to open the loop now by pausing the video and work with
-large-length models
+I'm going to open the loop now, by pausing the video and work with
+large-language models
 to come up with the first draft.
 I want to make sure that the design, the style,
 and the animation, the user experience is smooth.
