@@ -39,8 +39,9 @@ The main source context is:
   LLMOS workflow notes, and example projects.
 - [Five-minute outline](docs/archive/20260611/llmos_5_minute_outline.md) -
   compressed talking-head reference with key concepts and marked examples.
-- [Coding-session transcripts](docs/README.md#transcripts) - durable context
-  for prior agent decisions, workflows, and implementation changes.
+- [Session memory](docs/README.md#transcripts) - durable transcripts and
+  [coding-session notes](docs/README.md#coding-sessions) for prior agent
+  decisions, workflows, and implementation changes.
 
 ## Local Tooling
 
@@ -68,7 +69,7 @@ Use `asr-tui` when you want to view the waveform, play the audio, adjust
 
 ## Documentation
 
-- [Documentation index](docs/README.md) - archive, research notes, and
-  coding-session transcripts.
+- [Documentation index](docs/README.md) - archive, research notes, design notes,
+  subtitles, transcripts, and coding-session notes.
 - [Source guide](src/README.md) - local package and ASR pipeline documentation.
 - [Agent guide](AGENTS.md) - repository workflow for coding agents.

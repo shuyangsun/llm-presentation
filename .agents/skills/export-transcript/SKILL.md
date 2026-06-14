@@ -2,7 +2,7 @@
 name: export-transcript
 description: >-
   Export the current Claude Code / Codex / Gemini (agy) / Cursor agent session as
-  a markdown transcript into docs/coding-sessions/. Run only when the user
+  a markdown transcript into docs/transcripts/. Run only when the user
   explicitly asks to export the session; never export proactively. This skill owns
   the export mechanics — filename, transcript collection, verbatim user turns,
   and redaction. Formerly `export-coding-session`; that old skill name is
@@ -12,7 +12,7 @@ description: >-
 # Export transcript
 
 Save the current agent session as a markdown transcript under
-`docs/coding-sessions/`. Agent-neutral: the skill directory can be used directly
+`docs/transcripts/`. Agent-neutral: the skill directory can be used directly
 from `.agents/skills/` or symlinked into another runtime directory
 (`.claude/skills/`, etc.), so the same copy serves every agent.
 
@@ -39,9 +39,9 @@ they need, so they work from any agent and any working directory.
 ## Steps
 
 1. **Target dir + index** — run `bash <skill-dir>/next-index.sh`. It creates
-   today's dated folder under `docs/coding-sessions/` (creating
-   `docs/coding-sessions/` first if it doesn't exist) and prints both the dir and
-   the next zero-padded index (e.g. `dir: docs/coding-sessions/2026-05-23` /
+   today's dated folder under `docs/transcripts/` (creating
+   `docs/transcripts/` first if it doesn't exist) and prints both the dir and
+   the next zero-padded index (e.g. `dir: docs/transcripts/2026-05-23` /
    `index: 0003`); the index scans every date folder, so it's globally unique.
    Use those values directly — don't recompute the date or list the directory
    yourself.
@@ -118,5 +118,5 @@ Opt-in only: export when the user explicitly asks. Never proactively.
 
 - Numbering is global and strictly increasing across all date folders; always
   trust the script's output.
-- The scripts create `docs/coding-sessions/` and the dated subfolder if they're
+- The scripts create `docs/transcripts/` and the dated subfolder if they're
   missing, so a first export in a fresh repo works without setup.

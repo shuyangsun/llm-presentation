@@ -44,18 +44,18 @@ than anything you'd build ad hoc.
 - **Use it, then verify.** Query in the corpus's own words; treat the hits as
   candidates and confirm against the cited source before relying on them.
 
-### Tier 2 — Local RAG (the `setting-up-rag` stack)
+### Tier 2 — Local RAG (if a local RAG stack is installed)
 
 No cloud retrieval, but a **medium-to-large local corpus** (a real `docs/` tree,
-exported transcripts, a source tree)? Use the local hybrid index from
-[`setting-up-rag`](../setting-up-rag/SKILL.md) — Qdrant + FastEmbed, CPU-only, no
-cloud key. It beats keyword search on recall because it fuses dense (semantic) and
-sparse (lexical) retrieval and reranks the shortlist.
+exported transcripts, a source tree)? Use a local hybrid index when the host
+project has installed one, such as the `setting-up-rag` Qdrant + FastEmbed stack.
+It beats keyword search on recall because it fuses dense (semantic) and sparse
+(lexical) retrieval and reranks the shortlist.
 
 - **Is it up?** Run `setting-up-rag`'s `check-local-rag.sh` (prints `READY` /
-  `NOT_READY`), then query with its `query.py`. Both live in the sibling skill —
-  `<setting-up-rag-dir>` is `../setting-up-rag` relative to this skill, so its scripts
-  are at `../setting-up-rag/scripts/`. If `READY` and the corpus is indexed:
+  `NOT_READY`), then query with its `query.py`. In repos that vendor the
+  `setting-up-rag` skill, those scripts usually live under
+  `<setting-up-rag-dir>/scripts/`. If `READY` and the corpus is indexed:
 
   ```sh
   python3 <setting-up-rag-dir>/scripts/query.py "a natural-language question" --top-k 20
@@ -63,9 +63,9 @@ sparse (lexical) retrieval and reranks the shortlist.
   python3 <setting-up-rag-dir>/scripts/query.py --list-projects
   ```
 
-- **Up but corpus not indexed?** Index it first (one command — see `setting-up-rag`
-  §1), which also records the project in `$RAG_HOME/projects.json`; then query it
-  by project name or root path.
+- **Up but corpus not indexed?** Index it first using the installed stack's setup
+  command, which should also record the project in `$RAG_HOME/projects.json`; then
+  query it by project name or root path.
 - **Not set up at all?** If the corpus is large or you're about to make many
   queries, **set it up** via `setting-up-rag` rather than grinding `rg` — that is
   the nudge, not a detour. For a one-off lookup, drop to Tier 3 instead.

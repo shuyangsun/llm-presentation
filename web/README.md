@@ -1,5 +1,12 @@
 # Open & Closed Loops — interactive presentation (production v1: intro)
 
+Date: 2026-06-14
+Status: Current
+Area: `web`, video-driven presentation, synchronized timeline, Three.js supporting art
+Sources: `src/main.ts`, `src/data/timeline.ts`, `src/engine/scenes.ts`, `src/engine/scene3d.ts`, `src/engine/{asr3d,translate3d,sync3d,responsive3d,director3d,rag3d,loop3d}.ts`, `src/engine/audio.ts`, `src/data/en.vtt`, `src/data/zh.vtt`, `src/data/intro.peaks.json`
+
+## Summary
+
 The talking-head video **is the prompt**. Its playback position drives a
 synchronized interface generated from the transcript: the teleprompter, the
 reveal, the language picker, the progress bar, and the model card all appear on
@@ -11,6 +18,12 @@ the 3D supporting-art scenes (lazy-loaded on demand, so the cold open stays
 light). The look ports the warm "Paper" design system from
 [shuyangsun.com](https://github.com/shuyangsun/website) with a terracotta
 signature accent. Light mode only for now.
+
+The current app includes the June 14 refinements from the indexed coding
+sessions: a post-cold-open pause/play overlay, a seek bar hidden until
+`BEATS.progress`, a live-audio analyser for the ASR waveform while the video is
+playing, source-linked RAG graph nodes, and a mobile-specific responsive scene
+whose cursor fold controls whether the video fills the phone or docks to the top.
 
 ## The choreography (from `docs/subtitles/0001_intro.vtt`)
 
@@ -46,21 +59,23 @@ Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). **All seven
 
 | beat | scene | the 3D metaphor |
 | ---- | ----- | --------------- |
-| ~2:22 | **audio → transcript** (`asr3d.ts`) | a frosted-glass waveform of the video's *real* audio envelope that crystallizes the live `.vtt` cue into invisible-ink particle text; hover disrupts the words |
-| ~2:45 | **translate** (`translate3d.ts`) | EN word-particles stream through a refracting glass **membrane** and re-form as 中文; the mouse ripples the pane |
-| ~3:06 | **sync** (`sync3d.ts`) | two parallel **filmstrip ribbons** (video frames + UI blocks) bound to one playhead you can **scrub** — both move in lockstep |
-| ~3:42 | **responsive** (`responsive3d.ts`) | one **glass device** whose aspect morphs portrait→landscape while its content tiles reflow; drag to turn it |
+| ~2:22 | **audio -> transcript** (`asr3d.ts`) | frosted-glass wavebars rise in, then live `.vtt` cue particles drop from the waveform; while playing the bars use a Web Audio analyser, and while paused/scrubbing they fall back to the baked envelope |
+| ~2:45 | **translate** (`translate3d.ts`) | `Text` particles transmute through a glass membrane into `文`; after the scripted reveal, the cursor side controls the actual site language (left EN, right 中文) without rebuilding the WebGL scene |
+| ~3:06 | **sync** (`sync3d.ts`) | a head-on 3D progress bar where warm particle links rain from VIDEO to WEB, section dots sit at their true timeline positions, and cursor hover shows the section title |
+| ~3:42 | **responsive** (`responsive3d.ts`) | a vertical mobile layout: video fills the phone, docks to the top on the spoken cue, then reveals content below; cursor height folds between full-video and docked states |
 | ~4:23 | **director** (`director3d.ts`) | a cinematic **stage + volumetric spotlight** you steer, a clapper that snaps, a spark burst on "make it fun" |
-| ~4:58 | **rag** (`rag3d.ts`) | an **embedding-space constellation**; a mouse-steered query probe lights its nearest documents, then converges on the answer card |
-| ~5:43 | **loop** (`loop3d.ts`) | the finale — a glowing **torus** with an orbiting comet (closed loop) that breaks open toward you (open loop) |
+| ~4:58 | **rag** (`rag3d.ts`) | a stable embedding-space constellation with real open-source file links; the two named skills appear as graph edges that lock onto corpus nodes one by one |
+| ~5:43 | **loop** (`loop3d.ts`) | the finale: a green ice closed loop with sparse trapped particles, then a red top opening where particles flood out into a human silhouette |
 
-The asr waveform plays the recording's *real* amplitude envelope, precomputed into
-`src/data/intro.peaks.json` (via `scripts/gen-waveform.py`) and scrolled by the
-playhead. Every scene shares the scaffold in **`src/engine/scene3d.ts`** (transparent
-DPR-capped stage, Paper palette from the CSS `:root` tokens, a damped pointer, and the
-reversible `phase(t,a,b)` ramp). Like everything else each scene is a pure function of
-the playhead `t` (fully scrub-reversible) and falls back to the original 2D CSS scene
-when WebGL is unavailable or `prefers-reduced-motion` is set. Design notes:
+The ASR waveform uses `src/engine/audio.ts` for live RMS data while playback is
+advancing. `src/data/intro.peaks.json` (generated with `scripts/gen-waveform.py`)
+is still committed as the scrub-reversible fallback for pause, seek, mute, and no
+Web Audio. Every scene shares the scaffold in **`src/engine/scene3d.ts`**
+(transparent DPR-capped stage, Paper palette from the CSS `:root` tokens, a
+damped pointer, and the reversible `phase(t,a,b)` ramp). Like everything else,
+each narrative reveal is driven by the playhead `t` and falls back to the
+original 2D CSS scene when WebGL is unavailable or `prefers-reduced-motion` is
+set. Baseline design notes plus links to the later scene refinements:
 [docs/design/.../0001-bespoke-3d-supporting-art-scenes.md](../docs/design/2026-06-14/0001-bespoke-3d-supporting-art-scenes.md).
 
 Dev preview: `src/preview.ts` mounts any scene via `preview.html?scene=<key>&t=<sec>`
@@ -74,6 +89,13 @@ when you move to the bottom edge (desktop) or tap (mobile), then auto-hide while
 playing. Keys: `space`/`k` play-pause · `←`/`→` ±5s · `j`/`l` ±10s · `0`–`9`
 jump to 0–90% · `↑`/`↓` volume · `m` mute · `f` fullscreen · `?` shortcuts.
 Hovering the bar previews each bookmark with a square frame thumbnail.
+
+Before the presenter says "So display that progress bar" (`BEATS.progress`,
+205.2s), the seek bar is concealed and only appears on a deliberate bottom-edge
+hover or active scrub. From `BEATS.progress` through the end of the `sync3d.ts`
+scene, the bar stays visible for the "one timeline" explanation. After the cold
+open has begun, pausing shows a centered play overlay on the video and keeps the
+chrome visible.
 
 ## Run
 

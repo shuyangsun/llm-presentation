@@ -1,7 +1,7 @@
 # Six bespoke 3D supporting-art scenes (translate · sync · responsive · director · rag · loop)
 
 Date: 2026-06-14
-Status: Current
+Status: Current baseline with follow-up refinements
 Area: presentation supporting art, 3D scenes, shaders, shared WebGL scaffold, phase timeline, mouse interaction
 Sources: `web/src/engine/scene3d.ts`, `web/src/engine/{translate3d,sync3d,responsive3d,director3d,rag3d,loop3d}.ts`, `web/src/engine/scenes.ts`, `web/src/engine/asr3d.ts`, `web/src/style.css`, `web/src/preview.ts`; transcript [docs/transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md](../../transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md); builds on [the ASR 3D design](../2026-06-13/0000-asr-3d-frosted-glass-waveform.md)
 
@@ -18,17 +18,20 @@ when WebGL is unavailable or `prefers-reduced-motion` is set, and lazy-loads its
 
 | scene | file · export | base beat | the metaphor |
 |---|---|---|---|
-| translate | `translate3d.ts` · `mountTranslate3D` | 165.5 | EN word-particles stream through a refracting **glass membrane** and re-form as 中文 |
-| sync | `sync3d.ts` · `mountSync3D` | 186.7 | two parallel **filmstrip ribbons** (video frames + UI blocks) bound to one sweeping, scrub-able playhead |
-| responsive | `responsive3d.ts` · `mountResponsive3D` | 222.7 | one **glass device** whose aspect morphs portrait→landscape while its content tiles reflow |
+| translate | `translate3d.ts` · `mountTranslate3D` | 165.5 | `Text` particles stream through a refracting **glass membrane** and re-form as `文`; cursor side later controls the actual site language |
+| sync | `sync3d.ts` · `mountSync3D` | 186.7 | a head-on **3D progress bar** where warm particle links rain from VIDEO to WEB and section dots/title hovers mirror the real scrubber |
+| responsive | `responsive3d.ts` · `mountResponsive3D` | 222.7 | one **vertical mobile device** whose video fills the phone, docks to the top, then reveals content below; cursor height folds between the states |
 | director | `director3d.ts` · `mountDirector3D` | 263.1 | a cinematic **stage + steerable volumetric spotlight**, a clapper that snaps, a spark burst on "make it fun" |
-| rag | `rag3d.ts` · `mountRag3D` | 298.5 | an **embedding-space constellation**; a mouse-steered query probe lights its k nearest documents, then converges on the answer |
-| loop | `loop3d.ts` · `mountLoop3D` | 343.4 | the finale — a glowing **torus** with an orbiting comet (closed loop) that breaks open toward you (open loop) |
+| rag | `rag3d.ts` · `mountRag3D` | 298.5 | a stable **embedding-space constellation** with real open-source file links; the two named skills draw graph edges to corpus nodes |
+| loop | `loop3d.ts` · `mountLoop3D` | 343.4 | a green ice **closed loop** with sparse trapped particles that opens red at the top and floods particles into a human silhouette |
 
 The design directive (from the recording, and the project memory): "make it FUN" is the
 number-one requirement, sync every change to the spoken word, reveal gradually, and use
 big-but-mobile-safe type. The previous "remaining scenes are still 2D CSS" note in
-`web/README.md` is now obsolete — all seven scenes are 3D with 2D fallbacks.
+`web/README.md` is now obsolete — all seven scenes are 3D with 2D fallbacks. The
+scene table above reflects follow-up refinements recorded after the first
+six-scene implementation transcript; those detailed session notes are indexed
+under [`docs/coding-sessions/2026-06-14/`](../../coding-sessions/2026-06-14/).
 
 ## The shared scaffold — `web/src/engine/scene3d.ts`
 
@@ -59,7 +62,12 @@ big-but-mobile-safe type. The previous "remaining scenes are still 2D CSS" note 
   technique, exposed so `translate3d` can morph "translate" → "翻译". Sample only after
   `document.fonts.ready`.
 
-## Per-scene notes
+## Original Per-scene Notes
+
+The notes below record the first six-scene implementation from transcript
+`0019`. Later scene-specific sessions refined translate, sync, responsive, rag,
+and loop behavior; the current behavior is summarized in the table above and in
+[`web/README.md`](../../../web/README.md).
 
 Each scene's narrative beats are pinned to the words in `web/src/data/en.vtt` (the same
 cues the teleprompter uses), matching the `data-at` reveal times the old 2D scenes used.

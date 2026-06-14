@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prepare the next session export under docs/coding-sessions/ and print what the
+# Prepare the next session export under docs/transcripts/ and print what the
 # agent needs, so it doesn't have to derive either value on its own:
 #   dir:   today's dated folder (local-time YYYY-MM-DD), created if missing
 #   index: next zero-padded number = (max existing + 1), scanned across ALL date
@@ -18,10 +18,10 @@ if [[ -z "$root" ]]; then
   root="$(pwd)"
 fi
 
-rel_base="docs/coding-sessions"
+rel_base="docs/transcripts"
 hist="$root/$rel_base"
 date_dir="$rel_base/$(date +%F)" # %F = local-time YYYY-MM-DD
-mkdir -p "$root/$date_dir"        # creates docs/coding-sessions/<date>/ if missing
+mkdir -p "$root/$date_dir"        # creates docs/transcripts/<date>/ if missing
 
 max=-1
 while IFS= read -r f; do

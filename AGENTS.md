@@ -1,6 +1,6 @@
 # Agent Guide
 
-Date: 2026-06-12
+Date: 2026-06-14
 Status: Current
 Area: repository workflow, agent skills, jj workspaces
 
@@ -21,6 +21,8 @@ repo-local skills, and durable documentation as project memory.
 - Documentation workflow: load `.agents/skills/updating-docs/SKILL.md` before
   writing docs. Search first and keep docs linked from an index.
 - Session exports: use `.agents/skills/export-transcript/SKILL.md` only when
-  requested; write transcripts under `docs/transcripts/`.
+  requested; write new transcripts under `docs/transcripts/`. Historical
+  `docs/coding-sessions/` exports are linked from `docs/README.md`, but do not
+  use that path for new exports unless the user explicitly asks.
 - Skills source of truth: edit `.agents/skills`, not `.claude/skills`.
 - Docs-only verification: check linked files and `jj status`.

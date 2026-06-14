@@ -1,10 +1,22 @@
 # Interactive Presentation — Open & Closed Loops
 
+Date: 2026-06-13
+Status: Prototype (superseded by [`web/`](../../../web/README.md))
+Area: `prototypes/20260613/web`, first interactive talking-head prototype
+Sources: `src/main.ts`, `src/timeline.ts`, `docs/subtitles/presentation_test.vtt`, [`../NOTES.md`](../NOTES.md), [`docs/transcripts/2026-06-13/0013-claude-interactive-presentation-prototype.md`](../../../docs/transcripts/2026-06-13/0013-claude-interactive-presentation-prototype.md)
+
+## Summary
+
 A talking-head presentation where **the video is the prompt**. The interface is
 generated, beat by beat, from the video's transcript
 ([`docs/subtitles/presentation_test.vtt`](../../../docs/subtitles/presentation_test.vtt))
 and driven by the video's playback position. Scrubbing the video scrubs the
 whole deck — they are one timeline, not a video next to slides.
+
+This prototype is preserved as a milestone snapshot. The production intro app in
+[`../../../web/`](../../../web/README.md) implements the later review feedback:
+Hollywood cold open, warm Paper palette, gradual word-synced reveals, subtle
+YouTube-like controls, and Three.js supporting-art scenes.
 
 ## How it behaves
 
