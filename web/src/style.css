@@ -1359,6 +1359,37 @@ body.begun.paused .chrome {
   transform: none;
   pointer-events: auto;
 }
+/* The scrubber is concealed until "So display that progress bar" (BEATS.progress):
+   the cold open shouldn't advertise that you can jump ahead. The rest of the
+   chrome (play, time) behaves normally — only the seek bar is held back. It still
+   reveals on a deliberate hover into the bottom edge, and stays up while it's
+   being grabbed/scrubbed (.tipping), so it's discoverable without being obvious. */
+body.scrub-locked .bar {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  /* visibility (not just opacity) so the concealed seek bar is also out of the
+     tab order + a11y tree — no invisible focus target while the chrome is up.
+     Delay the hide to the end of the fade so it still animates out. */
+  visibility: hidden;
+  transition: opacity 0.35s var(--ease-mirror), transform 0.35s var(--ease-mirror), visibility 0s linear 0.35s;
+}
+body.scrub-locked .chrome:hover .bar,
+body.scrub-locked .bar.tipping {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity 0.35s var(--ease-mirror), transform 0.35s var(--ease-mirror);
+}
+/* The on-screen "wow": on the cue the real progress bar materialises and holds
+   through the rest of the in-sync section, so the audience sees the very thing
+   he's describing. After it, the bar reverts to on-demand. */
+body.scrub-reveal .chrome {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
 .chrome-scrim {
   position: absolute;
   left: 0;
@@ -1376,6 +1407,7 @@ body.begun.paused .chrome {
   align-items: center;
   cursor: pointer;
   touch-action: none;
+  transition: opacity 0.35s var(--ease-mirror), transform 0.35s var(--ease-mirror);
 }
 .bar-rail {
   position: absolute;

@@ -381,7 +381,11 @@ function setFlag(name: string, on: boolean) {
 }
 
 let pickerDemoed = false;
-let progressDemoed = false;
+
+// The progress bar stays revealed through the rest of the in-sync section — from
+// "So display that progress bar" (BEATS.progress) until the next scene begins
+// ("if you're on mobile"). Derived from the schedule so it tracks the timings.
+const SCRUB_REVEAL_END = SCENES[activeSceneIndex(BEATS.progress) + 1]?.t ?? Infinity;
 
 function applyBeats(t: number) {
   let wantStage: StageState = "full";
@@ -404,14 +408,20 @@ function applyBeats(t: number) {
     if (scripted !== lang) setLangInternal(scripted);
   }
 
-  // the controls are on-demand, but their first appearances are scripted moments
+  // The scrubber is *concealed* until the presenter asks for it: "So display that
+  // progress bar" (BEATS.progress). Before that it only reveals on a deliberate
+  // hover into the bottom edge (CSS), so the cold open never advertises that you
+  // can jump ahead. From the cue it materialises and holds through the rest of
+  // the in-sync section (the on-screen "wow"), then goes on-demand like YouTube.
+  // Both flags are pure functions of t, so a reverse scrub re-conceals it.
+  setFlag("scrub-locked", t < BEATS.progress);
+  setFlag("scrub-reveal", t >= BEATS.progress && t < SCRUB_REVEAL_END);
+
+  // the controls are on-demand, but the language picker's first appearance is a
+  // scripted moment
   if (!video.paused) {
     if (!pickerDemoed && t >= BEATS.picker && t < BEATS.picker + 6) {
       pickerDemoed = true;
-      showChrome();
-    }
-    if (!progressDemoed && t >= BEATS.progress && t < BEATS.progress + 6) {
-      progressDemoed = true;
       showChrome();
     }
   }
