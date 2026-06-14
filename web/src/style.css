@@ -601,12 +601,141 @@ body.deck-on .wordmark {
   position: absolute;
   left: 0;
   bottom: 0;
+  z-index: 3; /* the answer card stays above the graph overlay */
   max-width: min(440px, 94%);
   padding: 16px 18px;
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
+}
+
+/* rag overlay — corpus-file node labels + the two skill links whose curved edges
+   point at graph nodes. left/top/transform/opacity are set by rag3d.ts each frame
+   (it projects world points to screen); the rules here are just look + layering. */
+.scene--rag3d .rag-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none; /* the canvas keeps the probe interaction; links opt back in */
+}
+.scene--rag3d .rag-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none; /* edges are decorative; only the links capture hover */
+}
+.scene--rag3d .rag-edge {
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.scene--rag3d .rag-edges #rag-arrow path {
+  fill: var(--accent);
+}
+.scene--rag3d .rag-edge-src {
+  fill: var(--accent-ink);
+}
+.scene--rag3d .rag-node-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--fg-muted);
+  text-decoration: none;
+  text-shadow:
+    0 0 6px var(--bg),
+    0 1px 3px var(--bg);
+  pointer-events: auto; /* rag3d flips this to none while a node is ~invisible */
+  transition: color var(--dur-base);
+  will-change: transform, opacity;
+}
+.scene--rag3d .rag-node-label .nl-name {
+  align-self: flex-start;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur-base);
+}
+.scene--rag3d a.rag-node-label:hover {
+  color: var(--accent-ink);
+}
+.scene--rag3d a.rag-node-label:hover .nl-name {
+  border-bottom-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+/* the emphasised node — rag3d.ts, the source code of this very animation */
+.scene--rag3d .rag-node-label--src {
+  font-size: 13.5px;
+  z-index: 1;
+}
+.scene--rag3d .rag-node-label--src .nl-name {
+  color: var(--accent-ink);
+  font-weight: 500;
+}
+.scene--rag3d .rag-node-label--src .nl-tag {
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--fg-muted);
+  opacity: 0.9;
+}
+@media (max-width: 760px) {
+  .scene--rag3d .rag-node-label {
+    font-size: 9.5px;
+  }
+  .scene--rag3d .rag-node-label--src {
+    font-size: 12px;
+  }
+  .scene--rag3d .rag-node-label--src .nl-tag {
+    font-size: 8.5px;
+  }
+}
+.scene--rag3d .rag-skill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--fg-2);
+  text-decoration: none;
+  white-space: nowrap;
+  pointer-events: none; /* rag3d flips this to auto once the link is permanent */
+  transition:
+    border-color var(--dur-base),
+    background var(--dur-base);
+  will-change: transform, opacity;
+}
+.scene--rag3d a.rag-skill:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.scene--rag3d .rag-skill__name {
+  color: var(--accent-ink);
+}
+.scene--rag3d .rag-skill .arrow {
+  width: 13px;
+  height: 13px;
+  opacity: 0.55;
+}
+.scene--rag3d a.rag-skill:hover .arrow {
+  opacity: 1;
 }
 .scene--asr .asr-wave {
   display: flex;

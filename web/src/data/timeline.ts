@@ -91,3 +91,41 @@ export const SKILLS: SkillRef[] = [
     },
   },
 ];
+
+/** When each skill is *named* in the recording. In the 3D RAG scene this is the
+ *  moment that skill's edge stops scanning random corpus nodes, locks onto a node
+ *  in the cloud, and its link becomes permanently visible — one at a time. Pinned
+ *  to en.vtt ("retrieving context skill" · "and the export transcript skill"). */
+export const SKILL_AT = [313.25, 316.0];
+
+/** A labelled document node in the 3D RAG galaxy — a real file from one of
+ *  Shuyang's **open-source** repos, linked to its source on GitHub. */
+export interface CorpusFile {
+  /** shown on the node (basename, or `repo/README.md` to disambiguate). */
+  label: string;
+  /** the actual open-source file URL on GitHub. */
+  href: string;
+  /** `rag3d.ts` — the source of *this very animation*; rendered prominently. */
+  emphasis?: boolean;
+}
+
+const GH = "https://github.com/shuyangsun";
+
+/** The corpus the two skills search, drawn as labelled nodes in the galaxy:
+ *  complex agent session transcripts, one README, and `rag3d.ts` itself (the
+ *  code drawing this scene). Curated via the /retrieving-context RAG (local
+ *  Qdrant) and pinned to files that exist on each repo's `main`; every label is
+ *  a real link to its open-source source. Only public repos appear here
+ *  (llm-presentation, coding-agent-skills, alpha-zero-game/-api). */
+export const CORPUS_FILES: CorpusFile[] = [
+  // the source of this animation — emphasised so it's clear what you're watching.
+  { label: "rag3d.ts", href: `${GH}/llm-presentation/blob/main/web/src/engine/rag3d.ts`, emphasis: true },
+  // complex session transcripts (this presentation + the skills/RAG work)
+  { label: "0013-claude-interactive-presentation-prototype.md", href: `${GH}/llm-presentation/blob/main/docs/transcripts/2026-06-13/0013-claude-interactive-presentation-prototype.md` },
+  { label: "0018-claude-3d-asr-supporting-art.md", href: `${GH}/llm-presentation/blob/main/docs/transcripts/2026-06-14/0018-claude-3d-asr-supporting-art.md` },
+  { label: "0017-codex-vcs-script-first-jj-workspaces.md", href: `${GH}/coding-agent-skills/blob/main/docs/transcripts/2026-06-07/0017-codex-vcs-script-first-jj-workspaces.md` },
+  { label: "0055-claude-wave4-contextual-retrieval-generator-comparison.md", href: `${GH}/coding-agent-skills/blob/main/docs/transcripts/2026-06-10/0055-claude-wave4-contextual-retrieval-generator-comparison.md` },
+  { label: "0060-codex-rag-wave7-answer-faithfulness.md", href: `${GH}/coding-agent-skills/blob/main/docs/transcripts/2026-06-12/0060-codex-rag-wave7-answer-faithfulness.md` },
+  // one README, from another open-source project
+  { label: "alpha-zero-game/README.md", href: `${GH}/alpha-zero-game/blob/main/README.md` },
+];

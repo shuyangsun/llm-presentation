@@ -13,7 +13,7 @@
    `data-at` reveal at the scene's own base time (see SCENES below).
    ============================================================================ */
 
-import { STRINGS, SKILLS, type Lang } from "../data/timeline";
+import { STRINGS, SKILLS, SKILL_AT, type Lang } from "../data/timeline";
 import { parseVtt, activeCueIndex, type Cue } from "./vtt";
 import enVtt from "../data/en.vtt?raw";
 import zhVtt from "../data/zh.vtt?raw";
@@ -294,20 +294,19 @@ function directorScene2D(lang: Lang): HTMLElement {
   return root;
 }
 
-// The two skills are *named in order* in the recording, so they pop in one at a
-// time, and the model name only resolves when he says "show that on the screen".
-const SKILL_AT = [313.25, 316.0]; // "retrieving context skill" · "and the export transcript skill"
-
 function ragScene(lang: Lang): HTMLElement {
   // "I don't know what model I will be using to transcribe this video yet ... use
   // the RAG, don't just search for the string" — a 3D embedding-space constellation
   // of documents; a mouse-steered query probe pulls its nearest neighbours and the
   // beams converge to crystallise the answer. The crisp answer card stays in the DOM.
+  // The two named skills are NOT in the card here: rag3d draws each as an *edge*
+  // that scans random corpus-file nodes, then locks onto a node in the cloud and
+  // becomes a permanent link (one per `SKILL_AT`) — see mountRag3D.
   if (REDUCE_MOTION || !webglAvailable()) return ragScene2D(lang);
   const root = el("div", "scene scene--rag scene--rag3d") as SceneNode;
   const stage = reveal(el("div", "rag-canvas")); // base 298.5
   root.append(stage);
-  root.append(ragAnswer(lang));
+  root.append(ragAnswer(lang, false)); // skills live on the graph, not the card
   attach3D(root, stage, () => import("./rag3d").then((m) => m.mountRag3D), lang);
   return root;
 }
@@ -324,9 +323,11 @@ function ragScene2D(lang: Lang): HTMLElement {
   return root;
 }
 
-/* The retrieved-context answer card — the question, the resolved model, and the
-   two named skills (real links). Shared by the 2D orbit and the 3D constellation. */
-function ragAnswer(lang: Lang): HTMLElement {
+/* The retrieved-context answer card — the question and the resolved model. The
+   2D fallback also lists the two named skills as real links (`withSkills`); the
+   3D scene instead draws them as edges into the constellation, so it passes
+   `false` and rag3d owns the links. */
+function ragAnswer(lang: Lang, withSkills = true): HTMLElement {
   const answer = el("div", "rag-answer interactive");
   answer.append(reveal(el("div", "ctx-kicker", STRINGS.contextKicker[lang]), 300));
   const model = el("div", "model");
@@ -336,6 +337,7 @@ function ragAnswer(lang: Lang): HTMLElement {
     reveal(el("span", "note", STRINGS.modelNote[lang]), 329.65),
   );
   answer.append(model);
+  if (!withSkills) return answer;
   const skills = el("div", "skills");
   SKILLS.forEach((sk, i) => {
     const arrow =
