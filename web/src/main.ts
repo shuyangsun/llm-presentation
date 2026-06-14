@@ -12,6 +12,7 @@ import "./style.css";
 import { gsap } from "gsap";
 import { parseVtt, activeCueIndex, type Cue } from "./engine/vtt";
 import { SCENES, activeSceneIndex, type SceneNode } from "./engine/scenes";
+import { attachAudioAnalyser, resumeAudio } from "./engine/audio";
 import { BEATS, CROP_DURATION, CHAPTERS, STRINGS, type Lang } from "./data/timeline";
 import enVtt from "./data/en.vtt?raw";
 import zhVtt from "./data/zh.vtt?raw";
@@ -464,7 +465,10 @@ playBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   togglePlay();
 });
-video.addEventListener("play", () => setPaused(false));
+video.addEventListener("play", () => {
+  setPaused(false);
+  resumeAudio(); // browsers can suspend the context across pauses/backgrounding
+});
 video.addEventListener("pause", () => setPaused(true));
 video.addEventListener("ended", () => setPaused(true));
 
@@ -651,6 +655,10 @@ function begin() {
   hasBegun = true;
   setMuted(false);
   video.preload = "auto"; // pull the full media, after the user gesture
+  // tap the live audio so the 3D ASR waveform tracks exactly what's heard
+  // (the AudioContext needs this user gesture to start)
+  attachAudioAnalyser(video);
+  resumeAudio();
   video.play().catch(() => {});
   gate.classList.add("gone");
   showChrome();
