@@ -587,6 +587,46 @@ body.deck-on .wordmark {
   color: var(--accent-ink);
 }
 
+/* sync — the section-title tooltip that follows the cursor over the 3D timeline,
+   mirroring the progress-bar tip but text-only (no thumbnail). Positioned in px
+   by the scene (it projects the hovered column to the canvas), so it tracks the
+   beam exactly. pointer-events off so it never eats the hover. */
+.scene--sync3d .sync-canvas {
+  overflow: hidden;
+}
+.sync-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, calc(-100% - 12px));
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 9px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  box-shadow: var(--shadow-2);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-micro) var(--ease-out);
+}
+.sync-tip-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+.sync-tip-name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+  color: var(--accent-ink);
+}
+:root[data-lang="zh"] .sync-tip-name {
+  font-family: var(--font-sans);
+}
+
 /* rag — the embedding galaxy fills the scene; the answer is a HUD card over it */
 .scene--rag3d {
   display: block;
