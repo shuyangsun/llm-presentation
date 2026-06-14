@@ -314,6 +314,62 @@ body.paused .rec .rec-dot {
 }
 
 /* ============================================================
+   Pause overlay — a clear play affordance over the video while
+   it's paused. The cold-open gate handles the very first play;
+   this takes over for every pause (and the end) afterwards.
+   ============================================================ */
+.po {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: radial-gradient(120% 120% at 50% 50%, rgba(12, 11, 10, 0.06), rgba(12, 11, 10, 0.3));
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-mirror);
+}
+body.begun.paused .po {
+  opacity: 1;
+  pointer-events: auto;
+}
+.po-btn {
+  width: clamp(54px, 17%, 88px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(247, 244, 238, 0.92);
+  color: var(--accent-ink);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  transition: transform var(--dur-base) var(--ease-out), background var(--dur-base);
+}
+body.begun.paused .po-btn {
+  animation: po-pop 0.42s var(--ease-out);
+}
+.po:hover .po-btn {
+  transform: scale(1.06);
+  background: #fff;
+}
+.po-btn svg {
+  width: 38%;
+  height: 38%;
+  margin-left: 6%; /* optical centering for the play triangle */
+}
+@keyframes po-pop {
+  from {
+    transform: scale(0.86);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* ============================================================
    Deck — wordmark · scene · compact transcript
    ============================================================ */
 .deck {
@@ -1123,6 +1179,13 @@ body.deck-on .wordmark {
   transition: opacity 0.4s var(--ease-mirror), transform 0.4s var(--ease-mirror);
 }
 body.chrome-active .chrome {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+/* While paused, the controls + progress bar stay up no matter what the
+   auto-hide timer is doing, so the timeline is always readable. */
+body.begun.paused .chrome {
   opacity: 1;
   transform: none;
   pointer-events: auto;
