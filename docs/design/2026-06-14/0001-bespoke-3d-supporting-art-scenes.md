@@ -3,7 +3,7 @@
 Date: 2026-06-14
 Status: Current baseline with follow-up refinements
 Area: presentation supporting art, 3D scenes, shaders, shared WebGL scaffold, phase timeline, mouse interaction
-Sources: `web/src/engine/scene3d.ts`, `web/src/engine/{translate3d,sync3d,responsive3d,director3d,rag3d,loop3d}.ts`, `web/src/engine/scenes.ts`, `web/src/engine/asr3d.ts`, `web/src/style.css`, `web/src/preview.ts`; transcript [docs/transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md](../../transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md); builds on [the ASR 3D design](../2026-06-13/0000-asr-3d-frosted-glass-waveform.md)
+Sources: `web/src/engine/scene3d.ts`, `web/src/engine/{translate3d,sync3d,responsive3d,director3d,rag3d,loop3d}.ts`, `web/src/engine/scenes.ts`, `web/src/engine/asr3d.ts`, `web/src/style.css`, `web/src/preview.ts`; transcript [docs/transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md](../../transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md), and the later director recast [docs/transcripts/2026-06-14/0021-claude-director-dash-pixel-game.md](../../transcripts/2026-06-14/0021-claude-director-dash-pixel-game.md); builds on [the ASR 3D design](../2026-06-13/0000-asr-3d-frosted-glass-waveform.md)
 
 ## Summary
 
@@ -21,14 +21,16 @@ when WebGL is unavailable or `prefers-reduced-motion` is set, and lazy-loads its
 | translate | `translate3d.ts` · `mountTranslate3D` | 165.5 | `Text` particles stream through a refracting **glass membrane** and re-form as `文`; cursor side later controls the actual site language |
 | sync | `sync3d.ts` · `mountSync3D` | 186.7 | a head-on **3D progress bar** where warm particle links rain from VIDEO to WEB and section dots/title hovers mirror the real scrubber |
 | responsive | `responsive3d.ts` · `mountResponsive3D` | 222.7 | one **vertical mobile device** whose video fills the phone, docks to the top, then reveals content below; cursor height folds between the states |
-| director | `director3d.ts` · `mountDirector3D` | 263.1 | a cinematic **stage + steerable volumetric spotlight**, a clapper that snaps, a spark burst on "make it fun" |
+| director | `director3d.ts` · `mountDirector3D` | 263.1 | **recast as a 2D pixel-art platformer** ("Director's Dash"): the director hops corporate-employee **turtles**, ducks office-memo planes, and collects real open-source file links (see the director note below) |
 | rag | `rag3d.ts` · `mountRag3D` | 298.5 | a stable **embedding-space constellation** with real open-source file links; the two named skills draw graph edges to corpus nodes |
 | loop | `loop3d.ts` · `mountLoop3D` | 343.4 | a green ice **closed loop** with sparse trapped particles that opens red at the top and floods particles into a human silhouette |
 
 The design directive (from the recording, and the project memory): "make it FUN" is the
 number-one requirement, sync every change to the spoken word, reveal gradually, and use
 big-but-mobile-safe type. The previous "remaining scenes are still 2D CSS" note in
-`web/README.md` is now obsolete — all seven scenes are 3D with 2D fallbacks. The
+`web/README.md` is now obsolete — six of the seven scenes are 3D Three.js with 2D
+fallbacks; the **director scene was later recast as a standalone 2D pixel-art platformer**
+(plain 2D canvas, no WebGL — see the director note below). The
 scene table above reflects follow-up refinements recorded after the first
 six-scene implementation transcript; those detailed session notes are indexed
 under [`docs/coding-sessions/2026-06-14/`](../../coding-sessions/2026-06-14/).
@@ -88,11 +90,23 @@ cues the teleprompter uses), matching the `data-at` reveal times the old 2D scen
   left, content beside). The device does a **flip-and-settle** flourish that returns
   face-on at both ends — a full 90° turn was rejected because it goes edge-on (a sliver)
   mid-reflow. Mouse `ndc.x` adds parallax spin. 3 draw calls.
-- **director** (263.1): a warm-dark radial **vignette** stage, an open `ConeGeometry`
-  **spotlight** that aims at the mouse hit point with drifting dust motes, and a
-  box-built **clapperboard** whose hinged top snaps shut (`snap` 263.1→263.9). A warm
-  **spark burst** fires on "make it fun, number one" (`funBurst` 278.5→280.6). The DOM
-  carries the crisp "Take 01" slate tag (reveal 264.5).
+- **director** (263.1) — **recast 2026-06-14 as a 2D pixel-art platformer** ("Director's
+  Dash"); the original 3D vignette + `ConeGeometry` spotlight + clapperboard scene is
+  **superseded** (see [transcript 0021](../../transcripts/2026-06-14/0021-claude-director-dash-pixel-game.md)).
+  `director3d.ts` no longer uses Three.js or `scene3d.ts`: it is a standalone low-resolution
+  **2D canvas** upscaled nearest-neighbour (`image-rendering: pixelated`), so the chunk
+  carries no `three` (~13 KB). A clapperboard **director** runs a grassy stage, **jumps**
+  necktie-wearing corporate-employee **turtles** (stomp for a bonus), **ducks** office-memo
+  paper planes, and **collects real open-source file tokens** that drop clickable
+  `github.com/shuyangsun/<repo>/blob/main/<path>` links (with facts about this talk, sourced
+  from the [brain dump](../../archive/20260611/brain_dump_20260611_distilled.txt)) into a DOM
+  panel. Controls: **click / `J`** = jump, **`K`** = duck (Space stays free for the video);
+  a **3-lives** death mechanic keels the director over with cute "X X" eyes and **Enter**
+  restarts (collected links stay clickable). Story beats stay pure functions of `t` (`intro`
+  263.1→264.5; `fun` 278.5→280.8 washes muted corporate → vivid colour; `retake`
+  282.6→284.3); the game loop runs on the wall-clock with an attract-mode AI, and only
+  `prefers-reduced-motion` falls back to the static CSS clapper. The DOM still carries the
+  "Take 01" slate tag (reveal 264.5).
 - **rag** (298.5): an ambient **galaxy** of ~2600 faint corpus points + ~30 brighter
   document nodes in a flattened disk. A **query probe** (mouse on z=0, else a slow
   auto-orbit) runs per-frame k-NN against the document nodes and lights terracotta
