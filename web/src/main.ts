@@ -22,6 +22,9 @@ const CUES: Record<Lang, Cue[]> = { en: parseVtt(enVtt), zh: parseVtt(zhVtt) };
 let lang: Lang = "en";
 let manualLang: Lang | null = null; // set once the viewer picks a language
 const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const VIDEO_SRC = "https://cdn.shuyangsun.com/videos/001_intro.v1.webm";
+const VIDEO_POSTER = "https://cdn.shuyangsun.com/videos/001_intro.poster.v1.jpg";
+const LIVE_AUDIO_ANALYSER_ENABLED = false;
 
 /* --- tiny DOM helper ----------------------------------------------------- */
 function h<K extends keyof HTMLElementTagNameMap>(
@@ -54,14 +57,14 @@ const aura = h("div", { class: "aura" });
 
 const video = document.createElement("video");
 video.playsInline = true;
+if (LIVE_AUDIO_ANALYSER_ENABLED) video.crossOrigin = "anonymous";
 // Only the metadata up front (duration → chapter dots); the full download
 // starts on the play gesture in begin(), so the cold open is instant.
 video.preload = "metadata";
 video.setAttribute("playsinline", "");
-video.poster = "/media/intro.poster.jpg";
+video.poster = VIDEO_POSTER;
 video.append(
-  Object.assign(document.createElement("source"), { src: "/media/intro.webm", type: "video/webm" }),
-  Object.assign(document.createElement("source"), { src: "/media/intro.mp4", type: "video/mp4" }),
+  Object.assign(document.createElement("source"), { src: VIDEO_SRC, type: "video/webm" }),
 );
 
 const recText = h("span", { class: "rec-text" });
@@ -686,10 +689,12 @@ function begin() {
   setFlag("begun", true); // from now on, pausing shows the play overlay + keeps the bar up
   setMuted(false);
   video.preload = "auto"; // pull the full media, after the user gesture
-  // tap the live audio so the 3D ASR waveform tracks exactly what's heard
-  // (the AudioContext needs this user gesture to start)
-  attachAudioAnalyser(video);
-  resumeAudio();
+  // The CDN needs CORS before this can be enabled; otherwise Web Audio can
+  // silence cross-origin media. The ASR scene falls back to intro.peaks.json.
+  if (LIVE_AUDIO_ANALYSER_ENABLED) {
+    attachAudioAnalyser(video);
+    resumeAudio();
+  }
   // Optimistically clear the paused state so the play overlay never flashes
   // under the fading gate; the play/pause events keep it honest if play() fails.
   setPaused(false);

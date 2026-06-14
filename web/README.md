@@ -67,10 +67,12 @@ Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). **All seven
 | ~4:58 | **rag** (`rag3d.ts`) | a stable embedding-space constellation with real open-source file links; the two named skills appear as graph edges that lock onto corpus nodes one by one |
 | ~5:43 | **loop** (`loop3d.ts`) | the finale: a green ice closed loop with sparse trapped particles, then a red top opening where particles flood out into a human silhouette |
 
-The ASR waveform uses `src/engine/audio.ts` for live RMS data while playback is
-advancing. `src/data/intro.peaks.json` (generated with `scripts/gen-waveform.py`)
-is still committed as the scrub-reversible fallback for pause, seek, mute, and no
-Web Audio. Every scene shares the scaffold in **`src/engine/scene3d.ts`**
+The ASR waveform can use `src/engine/audio.ts` for live RMS data when same-origin
+or CORS-enabled video media is available. The current CDN-hosted intro does not
+expose CORS headers, so `src/data/intro.peaks.json` (generated with
+`scripts/gen-waveform.py`) is the active scrub-reversible waveform source for
+playback, pause, seek, mute, and no Web Audio. Every scene shares the scaffold in
+**`src/engine/scene3d.ts`**
 (transparent DPR-capped stage, Paper palette from the CSS `:root` tokens, a
 damped pointer, and the reversible `phase(t,a,b)` ramp). Like everything else,
 each narrative reveal is driven by the playhead `t` and falls back to the
@@ -107,12 +109,11 @@ npm run build    # typecheck + production build
 
 ## Media
 
-The video is **not committed**. `public/media/` holds git-ignored symlinks to
-the transcoded derivatives stored beside the source on the NAS:
+The video is **not committed**. The production intro loads its media from the
+project CDN:
 
-- `intro.webm` — AV1 + Opus, ~36 MB (primary)
-- `intro.mp4` — H.264 + AAC, ~37 MB (Safari fallback)
-- `intro.poster.jpg` — first frame (cold-open poster)
+- `https://cdn.shuyangsun.com/videos/001_intro.v1.webm` — primary video
+- `https://cdn.shuyangsun.com/videos/001_intro.poster.v1.jpg` — first frozen frame / cold-open poster
 
 Transcript data lives in `src/data/en.vtt` and `src/data/zh.vtt` (same cue
 timings; the Mandarin file is the on-the-fly translation the video asks for).
