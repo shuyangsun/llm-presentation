@@ -1,47 +1,56 @@
 /* ============================================================================
-   responsive3d.ts — the 3D "responsive layout" supporting art.
+   responsive3d.ts — the 3D "mobile layout" supporting art.
 
-   ONE glass device — a rounded frosted slab standing in for a screen — that
-   physically ROTATES from PORTRAIT (a phone) to LANDSCAPE (a desktop) while its
-   inner content TILES smoothly REFLOW between two arrangements as it crosses the
-   breakpoint. Responsiveness *is* the content:
+   ONE glass device — a rounded frosted slab standing in for a PHONE held in
+   PORTRAIT — whose inner "video" tile retells exactly what the monologue says
+   about the mobile layout. Responsiveness *is* the content, and it plays out in
+   three beats, each pinned to the playhead so a backward scrub rewinds it:
 
-     PORTRAIT / mobile  — a "video" tile on TOP, content blocks STACKED below it.
-     LANDSCAPE / desktop — the "video" tile docked to the SIDE, content beside it.
+     1. FULL   (≈3:50, "a vertical layout aspect ratio") — the red video tile
+        fills the whole screen: the phone is playing the video full-bleed.
+     2. DOCK   (≈3:57, "instead of putting it ... put it on the top") — the video
+        slides + shrinks to the TOP of the screen. Nothing below it yet.
+     3. CONTENT(≈4:01, "the main content should be below the video") — the page
+        content blocks fade in, stacked BELOW the video.
 
-   Like asr3d, everything narrative is a pure function of the playhead `t` built
-   from `phase(t,a,b)`, so scrubbing BACKWARD rewinds the rotation + reflow
-   exactly. The wall-clock is used ONLY for the idle float/breath so a parked
-   device never freezes, and the mouse adds a purely-additive parallax spin (plus
-   a tiny breakpoint nudge) layered on top of the t-driven pose.
+   There is no landscape/desktop state here — this beat is purely about mobile,
+   so the device never rotates to a wide aspect.
 
-   Igloo.inc is the spirit — frosted-glass volume, terracotta fresnel rim, a soft
-   warm core glow — palette kept on warm Paper, never icy blue. ColorManagement
-   is OFF globally, so colours are authored + emitted in sRGB to match the DOM.
+   INTERACTIVE: the viewer's cursor drags the video's bottom edge. A stable
+   threshold sits at that edge in the docked state. Hold the cursor ABOVE it — up
+   over the video — and the layout keeps the split (video on top, content below);
+   drop BELOW it and the video grows back to FULL-screen. Crossing the border is
+   the gesture.
+
+   Like the other scenes, every narrative reveal is `phase(t,a,b)`; the wall-clock
+   only drives a faint idle breath, and the cursor fold is damped per-frame so it
+   eases rather than jumps. Igloo.inc spirit — frosted glass, terracotta fresnel
+   rim, warm core glow on warm Paper; ColorManagement is OFF so colours are
+   authored + emitted in sRGB to match the DOM.
    ============================================================================ */
 
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { createStage, palette, trackPointer, makeClock, phase, smooth } from "./scene3d";
+import { createStage, palette, trackPointer, makeClock, phase, smooth, damp } from "./scene3d";
 import type { Lang } from "../data/timeline";
 
 /* --- the score (playhead seconds) ---------------------------------------- */
-const T_APPEAR_A = 222.7; // device fades/scales in, PORTRAIT, content stacked
-const T_APPEAR_B = 224.2;
-const T_REFLOW_A = 234.6; // "instead of putting it to the side / make it horizontal"
-const T_REFLOW_B = 237.0; // device is LANDSCAPE, tiles docked side-by-side
+// Anchored to docs/subtitles/0001_intro.vtt.
+const T_APPEAR_A = 228.4; // 03:48.4 "a vertical ..." — full-screen video fades in
+const T_APPEAR_B = 230.7; // 03:50.7 "... layout aspect ratio" — fully present
+const T_DOCK_A = 237.0; //   03:57.0 "instead of putting it ... make it horizontal"
+const T_DOCK_B = 240.0; //   04:00.0 "... and put it on the top" — video docked top
+const T_CONTENT_A = 241.0; // 04:01.0 "the main content should be below ..."
+const T_CONTENT_B = 243.3; // 04:03.3 "... the video" — content blocks settled in
 
-/* --- device half-extents, in the two states (world units) ---------------- */
-// The slab keeps a constant area-ish footprint; only its aspect morphs. Half
-// width/height interpolate by `reflow`; the camera frames the larger envelope.
+/* --- device half-extents (world units) — PORTRAIT phone, fixed aspect ----- */
 const DEV_DEPTH = 0.12; // slab thickness (the glass body)
 const PORT_HW = 0.62; // portrait half-width  (narrow)
 const PORT_HH = 1.18; // portrait half-height (tall)
-const LAND_HW = 1.34; // landscape half-width (wide)
-const LAND_HH = 0.86; // landscape half-height (short)
 const PAD = 0.14; // inner margin from the device edge to the tile field
 const TILE_DEPTH = 0.05; // inner tiles float just proud of the front face
 const TILE_GAP = 0.06; // gap between content blocks
+const FACE_Z = DEV_DEPTH * 0.5 + TILE_DEPTH * 0.5; // z of the tile front plane
 
 /* A tile rectangle in the device's LOCAL face space (centre x/y, half w/h). */
 interface Rect {
@@ -57,62 +66,50 @@ const lerpRect = (a: Rect, b: Rect, k: number): Rect => ({
   hh: a.hh + (b.hh - a.hh) * k,
 });
 
-/* Build the two layouts for a given device size. PORTRAIT: video on top, three
-   content blocks stacked below. LANDSCAPE: video docked left, content stacked to
-   its right. Returns matched [video, c0, c1, c2] rect arrays. */
-function layoutPortrait(hw: number, hh: number): Rect[] {
-  const ix = hw - PAD; // inner half-width
-  const iy = hh - PAD; // inner half-height
-  const videoHH = iy * 0.42; // video occupies the top ~42%
-  const top = iy - videoHH; // y of the video centre
-  const stackTop = top - videoHH - TILE_GAP; // top edge of the content stack
-  const stackH = stackTop - -iy; // remaining height for 3 blocks
-  const blockHH = (stackH - 2 * TILE_GAP) / 6; // half-height of one block
-  const bx = ix; // full-width content
-  const c = (n: number): Rect => ({
-    x: 0,
-    y: stackTop - blockHH - n * (blockHH * 2 + TILE_GAP),
-    hw: bx,
-    hh: blockHH,
-  });
-  return [{ x: 0, y: top, hw: ix, hh: videoHH }, c(0), c(1), c(2)];
-}
+/* The two video poses + the content stack, all in the portrait face space.
+   FULL: the video fills the entire inner face (full-screen playback).
+   DOCK: the video shrinks to the top ~42%, with three content blocks stacked in
+   the remaining height below it — the classic mobile article layout. */
+const IX = PORT_HW - PAD; // inner half-width
+const IY = PORT_HH - PAD; // inner half-height
+const VIDEO_FULL: Rect = { x: 0, y: 0, hw: IX, hh: IY };
 
-function layoutLandscape(hw: number, hh: number): Rect[] {
-  const ix = hw - PAD;
-  const iy = hh - PAD;
-  const videoHW = ix * 0.46; // video docks to the left ~46%
-  const left = -ix + videoHW; // x of the video centre
-  const colLeft = left + videoHW + TILE_GAP; // left edge of the content column
-  const colW = ix - colLeft; // width left for the stacked blocks (colLeft → right inner edge +ix)
-  const colHW = colW / 2;
-  const cx = colLeft + colHW; // content column centre x
-  const blockHH = (2 * iy - 2 * TILE_GAP) / 6;
-  const c = (n: number): Rect => ({
-    x: cx,
-    y: iy - blockHH - n * (blockHH * 2 + TILE_GAP),
-    hw: colHW,
-    hh: blockHH,
-  });
-  return [{ x: left, y: 0, hw: videoHW, hh: iy }, c(0), c(1), c(2)];
-}
+const VIDEO_DOCK_HH = IY * 0.42; // docked video occupies the top ~42%
+const VIDEO_DOCK_Y = IY - VIDEO_DOCK_HH; // its centre y (pinned to the top edge)
+const VIDEO_DOCK: Rect = { x: 0, y: VIDEO_DOCK_Y, hw: IX, hh: VIDEO_DOCK_HH };
+const VIDEO_DOCK_BOTTOM = VIDEO_DOCK_Y - VIDEO_DOCK_HH; // local y of the fold line
+
+// three content blocks filling the height below the docked video.
+const STACK_TOP = VIDEO_DOCK_BOTTOM - TILE_GAP; // top edge of the content stack
+const STACK_H = STACK_TOP - -IY; // remaining height for the blocks
+const BLOCK_HH = (STACK_H - 2 * TILE_GAP) / 6; // half-height of one of three blocks
+const contentRects: Rect[] = [0, 1, 2].map((n) => ({
+  x: 0,
+  y: STACK_TOP - BLOCK_HH - n * (BLOCK_HH * 2 + TILE_GAP),
+  hw: IX,
+  hh: BLOCK_HH,
+}));
 
 const N_TILES = 4; // [video, content×3] — one instanced draw call
 
 /* --- glass shader (frosted volume + terracotta fresnel rim) -------------- */
-// Shared by the device frame and the inner tiles; `uTint` mixes the body toward
-// terracotta (1 for the video tile, 0 for neutral content), `uGlow` lifts a warm
-// core so it reads on light paper with NormalBlending (additive would blow out).
-// Tile variant: instanced, with a per-instance `aTint` (1 = the video tile).
+// Shared by the device frame and the inner tiles. `tintExpr` mixes the body
+// toward terracotta (1 for the video tile, 0 for neutral content); `revealExpr`
+// fades the whole tile up. The frame feeds both from uniforms; the tiles feed
+// them per-instance (aTint/aReveal varyings) so the video can stay lit while the
+// content blocks fade independently — all from one draw call.
 const TILE_VERT = /* glsl */ `
   attribute float aTint;
+  attribute float aReveal;
   varying float vTint;
+  varying float vReveal;
   varying vec3 vN;
   varying vec3 vV;
   varying vec2 vUv;
   void main() {
     vUv = uv;
     vTint = aTint;
+    vReveal = aReveal;
     vec4 wp = modelMatrix * instanceMatrix * vec4(position, 1.0);
     vN = normalize(mat3(modelMatrix * instanceMatrix) * normal);
     vV = normalize(cameraPosition - wp.xyz);
@@ -132,13 +129,13 @@ const FRAME_VERT = /* glsl */ `
     gl_Position = projectionMatrix * viewMatrix * wp;
   }
 `;
-// The tint amount comes from a uniform (frame: one mesh) or a varying (tiles:
-// per-instance). `tintExpr` is the GLSL that yields it, `decl` declares whatever
-// it references — so the two materials share one body with no dead uniforms.
-const glassFrag = (decl: string, tintExpr: string): string => /* glsl */ `
+// `decl` declares whatever `tintExpr`/`revealExpr` reference (uniforms for the
+// frame, varyings for the tiles) so the two materials share one body with no
+// dead uniforms.
+const glassFrag = (decl: string, tintExpr: string, revealExpr: string): string => /* glsl */ `
   precision highp float;
   uniform vec3 uPaper, uGlass, uTintCol, uRim;
-  uniform float uGlow, uAlpha, uReveal;
+  uniform float uGlow, uAlpha;
   ${decl}
   varying vec3 vN;
   varying vec3 vV;
@@ -157,12 +154,12 @@ const glassFrag = (decl: string, tintExpr: string): string => /* glsl */ `
     vec3 col = mix(core, uRim, max(fres * 0.7, edge * 0.55));
     col += vec3(1.0, 0.96, 0.9) * spec * 0.2;
     col = mix(col, uPaper, 0.04);
-    float a = clamp(uAlpha + fres * 0.4 + edge * 0.34, 0.0, 0.96) * uReveal;
+    float a = clamp(uAlpha + fres * 0.4 + edge * 0.34, 0.0, 0.96) * (${revealExpr});
     gl_FragColor = vec4(col, a);
   }
 `;
-const FRAME_FRAG = glassFrag("uniform float uTint;", "uTint");
-const TILE_FRAG = glassFrag("varying float vTint;", "vTint");
+const FRAME_FRAG = glassFrag("uniform float uTint; uniform float uReveal;", "uTint", "uReveal");
+const TILE_FRAG = glassFrag("varying float vTint; varying float vReveal;", "vTint", "vReveal");
 
 /* --- soft warm core glow behind the device (1 textured quad) ------------- */
 const GLOW_VERT = /* glsl */ `
@@ -193,15 +190,9 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
   const pointer = trackPointer(canvas, camera, 0);
   const clock = makeClock();
 
-  /* --- precompute both layouts for the two device sizes -------------------- */
-  // Tile rects live in the LARGEST face space; we lerp the device size and the
-  // rects together by `reflow`, so a tile always sits inside its frame.
-  const portRects = layoutPortrait(PORT_HW, PORT_HH);
-  const landRects = layoutLandscape(LAND_HW, LAND_HH);
-
   /* --- device frame (single rounded glass slab) ---------------------------- */
-  // Built unit-sized (1×1×depth) and scaled per-frame to the morphing aspect, so
-  // there is never a per-frame geometry rebuild.
+  // Built unit-sized (1×1×depth) and scaled once to the portrait aspect — the
+  // device never changes shape now, so there is no per-frame geometry work.
   const frameGeo = new RoundedBoxGeometry(1, 1, DEV_DEPTH, 4, DEV_DEPTH * 0.5);
   const frameU = {
     uPaper: { value: pal.paper },
@@ -222,8 +213,9 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
     side: THREE.DoubleSide,
     blending: THREE.NormalBlending,
   });
-  const device = new THREE.Group(); // holds frame + tiles; we rotate/scale this
+  const device = new THREE.Group(); // holds frame + tiles; we float this
   const frame = new THREE.Mesh(frameGeo, frameMat);
+  frame.scale.set(PORT_HW * 2, PORT_HH * 2, 1); // fixed portrait aspect
   frame.frustumCulled = false;
   device.add(frame);
   scene.add(device);
@@ -233,6 +225,9 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
   const tintArr = new Float32Array(N_TILES); // 1 = video tile, 0 = content
   tintArr[0] = 1;
   tileGeo.setAttribute("aTint", new THREE.InstancedBufferAttribute(tintArr, 1));
+  const revealAttr = new THREE.InstancedBufferAttribute(new Float32Array(N_TILES), 1);
+  revealAttr.setUsage(THREE.DynamicDrawUsage); // video vs content fade independently
+  tileGeo.setAttribute("aReveal", revealAttr);
   const tileU = {
     uPaper: { value: pal.paper },
     uGlass: { value: pal.surface.clone().lerp(pal.glass, 0.25) }, // neutral content body
@@ -240,11 +235,10 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
     uRim: { value: pal.accent },
     uGlow: { value: 0.35 },
     uAlpha: { value: 0.32 },
-    uReveal: { value: 0 },
   };
   const tileMat = new THREE.ShaderMaterial({
     uniforms: tileU,
-    vertexShader: TILE_VERT, // per-instance aTint -> vTint -> body mix
+    vertexShader: TILE_VERT, // per-instance aTint/aReveal
     fragmentShader: TILE_FRAG,
     transparent: true,
     depthWrite: false,
@@ -257,7 +251,16 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
   device.add(tiles);
   const tileM4 = new THREE.Matrix4();
 
-  /* --- soft warm core glow (1 quad, always facing the camera plane) -------- */
+  // The three content blocks never move — only the video tile (instance 0)
+  // animates — so place the content once up front.
+  for (let i = 0; i < 3; i++) {
+    const r = contentRects[i];
+    tileM4.makeScale(r.hw * 2, r.hh * 2, 1);
+    tileM4.setPosition(r.x, r.y, FACE_Z);
+    tiles.setMatrixAt(i + 1, tileM4);
+  }
+
+  /* --- soft warm core glow (1 quad, behind the device) --------------------- */
   const glowGeo = new THREE.PlaneGeometry(1, 1);
   const glowU = { uColor: { value: pal.accent.clone().lerp(pal.paper, 0.35) }, uAlpha: { value: 0 } };
   const glowMat = new THREE.ShaderMaterial({
@@ -272,29 +275,33 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
   const glow = new THREE.Mesh(glowGeo, glowMat);
   glow.frustumCulled = false;
   glow.position.set(0, 0, -0.6); // sits behind the device
+  glow.scale.set(PORT_HW * 4.2, PORT_HH * 4.2, 1);
   scene.add(glow);
 
-  /* --- camera framing: fit BOTH the tall portrait box AND the wide landscape
-     envelope so neither orientation clips on mobile or desktop. -------------- */
+  /* --- camera framing: fit the portrait phone with a comfortable margin, on a
+     gentle 3/4 view so the glass slab reads as a physical object. ----------- */
   const FOV = 32;
   const tanH = Math.tan((FOV * Math.PI) / 360);
-  const BASE_AZ = -0.32; // resting 3/4 azimuth (rad)
-  const BASE_EL = 0.16; // resting elevation (rad)
+  const BASE_AZ = 0.24; // resting azimuth (rad) — camera to the right, so the phone's
+  //                       face turns LEFT toward the desktop video docked on that side
+  const BASE_EL = 0.12; // resting elevation (rad)
   let camDist = 6;
   stage.onResize((w, h) => {
     const aspect = w / h || 1;
-    // worst-case envelope across the whole reflow: tallest height, widest width
-    const halfH = Math.max(PORT_HH, LAND_HH) + 0.35;
-    const halfW = Math.max(PORT_HW, LAND_HW) + 0.35;
+    const halfH = PORT_HH + 0.3;
+    const halfW = PORT_HW + 0.3;
     const zH = halfH / tanH;
     const zW = halfW / (tanH * aspect);
-    camDist = Math.max(zH, zW) * 1.18;
+    camDist = Math.max(zH, zW) * 1.12;
     const ce = Math.cos(BASE_EL);
     camera.position.set(Math.sin(BASE_AZ) * ce * camDist, Math.sin(BASE_EL) * camDist, Math.cos(BASE_AZ) * ce * camDist);
     camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld(); // keep matrixWorldInverse fresh for project() below
   });
 
   let disposed = false;
+  let fold = 0; // damped cursor fold: 0 = FULL (hover over video), 1 = split layout
+  const probe = new THREE.Vector3(); // reused for the threshold projection
 
   function tick(t: number) {
     if (disposed) return;
@@ -303,47 +310,60 @@ export function mountResponsive3D(container: HTMLElement, _lang: Lang): { tick(t
 
     /* narrative phases — pure functions of the playhead ---------------------- */
     const appear = phase(t, T_APPEAR_A, T_APPEAR_B);
-    // hover may bias the breakpoint a touch earlier/later, but only ADDITIVELY
-    // and clamped so it can never fight or overshoot the t-driven reflow.
-    const bias = pointer.ndc.y * 0.6; // -0.6..0.6 s of nudge while hovering
-    const reflow = smooth((t - (T_REFLOW_A - bias)) / (T_REFLOW_B - T_REFLOW_A));
+    const dockNarr = phase(t, T_DOCK_A, T_DOCK_B); // video full → top
+    const contentNarr = phase(t, T_CONTENT_A, T_CONTENT_B); // content fades in below
 
-    /* device size + orientation morph -------------------------------------- */
-    const hw = PORT_HW + (LAND_HW - PORT_HW) * reflow;
-    const hh = PORT_HH + (LAND_HH - PORT_HH) * reflow;
-    frame.scale.set(hw * 2, hh * 2, 1);
-
-    // entrance: scale-in pop + the t-driven rotation; idle breath + mouse spin
-    // are purely additive so the reflow read stays clean.
+    /* device pose: entrance pop + a faint idle breath only (no reflow spin) --- */
     const pop = 0.82 + 0.18 * appear;
     const breath = Math.sin(idle * 0.7) * 0.025;
     device.scale.setScalar(pop + breath);
-    const spin = pointer.ndc.x * 0.6 * pointer.hover; // mouse turns it in 3D
-    const float = Math.sin(idle * 0.9) * 0.05; // gentle idle drift
-    // The aspect morph (tall → wide) already carries portrait → landscape; the
-    // device only needs a flip-and-SETTLE flourish that peaks mid-reflow and
-    // returns face-on at both ends — a full 90° turn would go edge-on (a sliver)
-    // at the midpoint and hide the content. The camera's 3/4 azimuth gives the 3D.
-    const flip = Math.sin(reflow * Math.PI) * 0.42;
-    device.rotation.y = flip + spin;
-    device.rotation.x = -0.04 + float * 0.4;
-    device.position.y = float * 0.18;
+    const driftY = Math.sin(idle * 0.9) * 0.05;
+    device.rotation.y = Math.sin(idle * 0.5) * 0.02; // whisper of life
+    device.rotation.x = -0.02 + driftY * 0.3;
+    device.position.y = driftY * 0.15;
+    device.updateMatrixWorld(true); // refresh before we project the fold line
 
-    /* inner tiles reflow: lerp each rect, place on the front face ------------ */
-    for (let i = 0; i < N_TILES; i++) {
-      const r = lerpRect(portRects[i], landRects[i], reflow);
-      tileM4.makeScale(Math.max(0.02, r.hw * 2), Math.max(0.02, r.hh * 2), 1);
-      tileM4.setPosition(r.x, r.y, DEV_DEPTH * 0.5 + TILE_DEPTH * 0.5);
-      tiles.setMatrixAt(i, tileM4);
+    /* interactive fold ------------------------------------------------------- */
+    // The threshold is the video's bottom border in the DOCKED pose — a stable
+    // screen line. The cursor "drags" that bottom edge: project the line to NDC y,
+    // then ABOVE it (up over the video) holds the split (video on top, content
+    // below), and BELOW it pulls the video back to FULL-screen.
+    probe.set(0, VIDEO_DOCK_BOTTOM, FACE_Z).applyMatrix4(device.matrixWorld).project(camera);
+    const thresholdNdcY = probe.y;
+    if (pointer.hover > 0.02) {
+      const want = pointer.ndc.y > thresholdNdcY ? 1 : 0; // cursor above the fold → video docked top
+      fold = damp(fold, want, 7, dt);
+    } else {
+      // park on the narrative value so re-entry blends seamlessly into the story
+      fold = damp(fold, dockNarr, 4, dt);
     }
+
+    // Blend story ↔ cursor by how present the pointer is. While hovering, the
+    // fold drives BOTH the dock and the content together (it's a single gesture);
+    // the narrative keeps them as distinct beats (dock leads, content follows).
+    const k = pointer.hover;
+    const dock = dockNarr + (fold - dockNarr) * k;
+    const content = contentNarr + (fold - contentNarr) * k;
+
+    /* video tile: lerp FULL → DOCK by `dock`, place on the front face --------- */
+    const v = lerpRect(VIDEO_FULL, VIDEO_DOCK, dock);
+    tileM4.makeScale(Math.max(0.02, v.hw * 2), Math.max(0.02, v.hh * 2), 1);
+    tileM4.setPosition(v.x, v.y, FACE_Z);
+    tiles.setMatrixAt(0, tileM4);
     tiles.instanceMatrix.needsUpdate = true;
 
-    /* reveals + warm glow --------------------------------------------------- */
+    /* reveals: video tracks the entrance; content waits until the video has
+       docked (gate on `dock`) so the two never overlap mid-fold. ------------- */
+    const gate = smooth((dock - 0.5) / 0.5); // 0 until the video is half-docked
+    revealAttr.setX(0, appear); // video tile
+    const contentReveal = appear * content * gate;
+    revealAttr.setX(1, contentReveal);
+    revealAttr.setX(2, contentReveal);
+    revealAttr.setX(3, contentReveal);
+    revealAttr.needsUpdate = true;
+
+    /* frame + warm glow ------------------------------------------------------ */
     frameU.uReveal.value = appear;
-    tileU.uReveal.value = appear;
-    // tiles fade up a beat after the frame so the device "boots" its content
-    tileU.uAlpha.value = 0.32 * smooth((appear - 0.35) / 0.65);
-    glow.scale.set(hw * 4.2, hh * 4.2, 1);
     glowU.uAlpha.value = (0.16 + 0.06 * Math.sin(idle * 1.3)) * appear;
 
     stage.render();
