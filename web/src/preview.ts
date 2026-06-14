@@ -1,7 +1,12 @@
-/* DEV-ONLY preview harness for the 3D ASR scene (asr3d.ts). Mounts the scene in
-   a deck-like panel and drives __tick(t) at a fixed playhead time chosen via the
-   URL (?t=145.5&mx=0.5&my=0.5&lang=en). Lets us screenshot each narrative phase
-   without the (uncommitted) video. Not shipped — vite build ignores it. */
+/* DEV-ONLY preview harness for the 3D supporting-art scenes. Mounts any scene in
+   a deck-like panel and drives __tick(t) at a playhead time chosen via the URL
+   (?scene=loop&t=345&mx=0.5&my=0.5&lang=en). Lets us screenshot each narrative
+   phase without the (uncommitted) video. Not shipped — vite build ignores it.
+
+   ?scene=<key>  asr · translate · sync · responsive · director · rag · loop
+   ?t=<seconds>  playhead; defaults to the scene's base beat
+   ?mx,?my       0..1 cursor across the canvas (drives the hover interaction)
+   ?lang=en|zh */
 import "./style.css";
 import { gsap } from "gsap";
 import { SCENES } from "./engine/scenes";
@@ -9,10 +14,18 @@ import type { SceneNode } from "./engine/scenes";
 import type { Lang } from "./data/timeline";
 
 const q = new URLSearchParams(location.search);
-let t = parseFloat(q.get("t") ?? "146");
+const sceneKey = q.get("scene") ?? "asr";
 const lang = (q.get("lang") as Lang) ?? "en";
-const mxFrac = q.get("mx") != null ? parseFloat(q.get("mx")!) : null; // 0..1 across canvas (screenshot mode)
+const mxFrac = q.get("mx") != null ? parseFloat(q.get("mx")!) : null;
 const myFrac = q.get("my") != null ? parseFloat(q.get("my")!) : null;
+
+const idx = Math.max(0, SCENES.findIndex((s) => s.key === sceneKey));
+const sceneDef = SCENES[idx];
+const next = SCENES[idx + 1];
+// the scene's narrative window: from its base beat to the next scene (or +28s)
+const winStart = sceneDef.t - 0.5;
+const winEnd = next ? next.t : sceneDef.t + 28;
+let t = q.get("t") != null ? parseFloat(q.get("t")!) : sceneDef.t + 3;
 
 document.documentElement.setAttribute("data-lang", lang);
 document.body.classList.add("deck-on", "revealed");
@@ -21,9 +34,7 @@ const app = document.getElementById("app")!;
 const panel = document.createElement("div");
 panel.style.cssText =
   "position:fixed; inset:0; padding:6vh 6vw; display:flex; flex-direction:column; gap:24px; background:var(--bg);";
-// interactive review controls: scrub the playhead (142.75 wave → 145.5 settled →
-// 165.5 next scene) and Play to watch the crystallization. Move the mouse over
-// the slabs to feel the hover-on-ice + parallax.
+
 const bar = document.createElement("div");
 bar.style.cssText =
   "display:flex; align-items:center; gap:14px; font-family:var(--font-mono); font-size:12px; color:var(--fg-muted);";
@@ -33,14 +44,14 @@ playBtn.style.cssText =
   "font:inherit; padding:6px 12px; border:1px solid var(--hairline-strong); border-radius:8px; background:var(--surface); color:var(--accent-ink); cursor:pointer;";
 const slider = document.createElement("input");
 slider.type = "range";
-slider.min = "142";
-slider.max = "166";
+slider.min = String(winStart);
+slider.max = String(winEnd);
 slider.step = "0.01";
 slider.value = String(t);
 slider.style.cssText = "flex:1 1 auto; accent-color:var(--accent);";
 const label = document.createElement("div");
-label.style.cssText = "min-width:170px; text-align:right;";
-const setLabel = () => (label.textContent = `t=${t.toFixed(2)}  lang=${lang}  (move mouse over the ice)`);
+label.style.cssText = "min-width:210px; text-align:right;";
+const setLabel = () => (label.textContent = `${sceneKey}  t=${t.toFixed(2)}  ${lang}  (move mouse over it)`);
 setLabel();
 
 let playing = false;
@@ -50,7 +61,7 @@ playBtn.addEventListener("click", () => {
   playing = !playing;
   playBtn.textContent = playing ? "❚❚ pause" : "▶ play";
   if (playing) {
-    if (t >= 147) t = 142.5; // restart from the top of the beat
+    if (t >= winEnd) t = winStart;
     playStartT = t;
     playStartClock = performance.now() / 1000;
   }
@@ -69,7 +80,7 @@ stageWrap.style.cssText = "position:relative; flex:1 1 auto; min-height:300px;";
 panel.append(bar, stageWrap);
 app.append(panel);
 
-const scene = SCENES[0].build(lang) as SceneNode; // SCENES[0].build === asrScene
+const scene = sceneDef.build(lang) as SceneNode;
 stageWrap.append(scene);
 
 // reveal all [data-reveal] parts immediately (main.ts would stagger these)
@@ -93,11 +104,10 @@ function dispatchMouse() {
 
 function loop() {
   if (playing) {
-    // ~1x speed through the beat, then hold on the settled transcript
-    t = Math.min(147, playStartT + (performance.now() / 1000 - playStartClock));
+    t = Math.min(winEnd, playStartT + (performance.now() / 1000 - playStartClock));
     slider.value = String(t);
     setLabel();
-    if (t >= 147) {
+    if (t >= winEnd) {
       playing = false;
       playBtn.textContent = "▶ play";
     }

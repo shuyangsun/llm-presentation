@@ -83,6 +83,36 @@ export type SceneNode = HTMLElement & {
   __cleanup?: () => void;
 };
 
+/* Every 3D scene module exposes the same tiny controller — a playhead-driven
+   `tick` and a `dispose` that releases the GL context on removal. */
+export interface Scene3DController {
+  tick(t: number): void;
+  dispose(): void;
+}
+type Mount3D = (container: HTMLElement, lang: Lang) => Scene3DController;
+
+/* Wire a lazily-imported 3D module onto a scene root: mount it when the chunk
+   resolves (unless scrubbed away first), then forward the director's per-frame
+   __tick and release the GL context on __cleanup. Mirrors asrScene exactly so
+   every GPU scene shares one robust lifecycle. */
+function attach3D(root: SceneNode, stage: HTMLElement, load: () => Promise<Mount3D>, lang: Lang): void {
+  let ctrl: Scene3DController | null = null;
+  let cancelled = false;
+  load()
+    .then((mount) => {
+      if (!cancelled) ctrl = mount(stage, lang);
+    })
+    .catch(() => {
+      /* WebGL/import failure: the DOM caption still carries the beat */
+    });
+  root.__tick = (t: number) => ctrl?.tick(t);
+  root.__cleanup = () => {
+    cancelled = true;
+    ctrl?.dispose();
+    ctrl = null;
+  };
+}
+
 /* ---- individual scenes -------------------------------------------------- */
 
 function asrScene2D(lang: Lang): HTMLElement {
@@ -141,6 +171,18 @@ function asrScene(lang: Lang): HTMLElement {
 }
 
 function translateScene(lang: Lang): HTMLElement {
+  // "My native tongue is Mandarin Chinese, so translate it" — Latin word-particles
+  // stream rightward through a refracting glass membrane and re-form as 中文.
+  if (REDUCE_MOTION || !webglAvailable()) return translateScene2D(lang);
+  const root = el("div", "scene scene--translate scene--translate3d") as SceneNode;
+  const stage = reveal(el("div", "translate-canvas")); // base 165.5
+  root.append(stage);
+  root.append(cap(lang, "translated live", "实时翻译", 169));
+  attach3D(root, stage, () => import("./translate3d").then((m) => m.mountTranslate3D), lang);
+  return root;
+}
+
+function translateScene2D(lang: Lang): HTMLElement {
   // "My native tongue is Mandarin Chinese, so translate it" — EN flips to 中文.
   const root = el("div", "scene scene--translate");
   const row = el("div", "tr-row");
@@ -157,6 +199,19 @@ function translateScene(lang: Lang): HTMLElement {
 }
 
 function syncScene(lang: Lang): HTMLElement {
+  // "there's the video element ... then there's this interactive website" — two
+  // parallel 3D ribbons (film frames + UI blocks) bound to one sweeping playhead
+  // ring; it accelerates on "scrub" (195.5) and locks in sync at the caption.
+  if (REDUCE_MOTION || !webglAvailable()) return syncScene2D(lang);
+  const root = el("div", "scene scene--sync scene--sync3d") as SceneNode;
+  const stage = reveal(el("div", "sync-canvas")); // base 186.7
+  root.append(stage);
+  root.append(cap(lang, "one timeline", "同一条时间线", 202.75));
+  attach3D(root, stage, () => import("./sync3d").then((m) => m.mountSync3D), lang);
+  return root;
+}
+
+function syncScene2D(lang: Lang): HTMLElement {
   // "there's the video element ... then there's this interactive website" — two
   // tracks; the shared playhead arrives on "scrub", the caption on "in sync".
   const root = el("div", "scene scene--sync");
@@ -176,6 +231,19 @@ function syncScene(lang: Lang): HTMLElement {
 }
 
 function responsiveScene(lang: Lang): HTMLElement {
+  // "if you're on mobile ... a vertical layout" then "make it horizontal and put
+  // it on the top" — one glass device rotates portrait→landscape and its content
+  // tiles physically reflow (stacked → side) as it crosses the breakpoint (234.6).
+  if (REDUCE_MOTION || !webglAvailable()) return responsiveScene2D(lang);
+  const root = el("div", "scene scene--responsive scene--responsive3d") as SceneNode;
+  const stage = reveal(el("div", "responsive-canvas")); // base 222.7
+  root.append(stage);
+  root.append(cap(lang, "mobile · desktop", "手机 · 桌面", 240));
+  attach3D(root, stage, () => import("./responsive3d").then((m) => m.mountResponsive3D), lang);
+  return root;
+}
+
+function responsiveScene2D(lang: Lang): HTMLElement {
   // "if you're on mobile ... a vertical layout" then "make it horizontal and
   // put it on the top" — the phone leads, the desktop joins on the transition.
   const root = el("div", "scene scene--responsive");
@@ -191,6 +259,21 @@ function responsiveScene(lang: Lang): HTMLElement {
 }
 
 function directorScene(lang: Lang): HTMLElement {
+  // "Think of yourself as a Hollywood director trying to tell a story." A 3D
+  // clapper snaps, a volumetric spotlight you steer sweeps the dark stage, and
+  // "make it fun" (≈278.5) fires a spark burst into the beam.
+  if (REDUCE_MOTION || !webglAvailable()) return directorScene2D(lang);
+  const root = el("div", "scene scene--director scene--director3d") as SceneNode;
+  const stage = reveal(el("div", "director-canvas")); // base 263.1
+  root.append(stage);
+  // the slate label rides the DOM (crisp bilingual type), the spotlight is GPU
+  root.append(reveal(el("div", "slate-tag", `<em>${pick(lang, "Take 01", "第 01 镜")}</em>`), 264.5));
+  root.append(cap(lang, "tell a story", "讲个故事", 266.8));
+  attach3D(root, stage, () => import("./director3d").then((m) => m.mountDirector3D), lang);
+  return root;
+}
+
+function directorScene2D(lang: Lang): HTMLElement {
   // "Think of yourself as a Hollywood director trying to tell a story."
   const root = el("div", "scene scene--director");
   const clap = el("div", "clap");
@@ -206,6 +289,20 @@ function directorScene(lang: Lang): HTMLElement {
 const SKILL_AT = [313.25, 316.0]; // "retrieving context skill" · "and the export transcript skill"
 
 function ragScene(lang: Lang): HTMLElement {
+  // "I don't know what model I will be using to transcribe this video yet ... use
+  // the RAG, don't just search for the string" — a 3D embedding-space constellation
+  // of documents; a mouse-steered query probe pulls its nearest neighbours and the
+  // beams converge to crystallise the answer. The crisp answer card stays in the DOM.
+  if (REDUCE_MOTION || !webglAvailable()) return ragScene2D(lang);
+  const root = el("div", "scene scene--rag scene--rag3d") as SceneNode;
+  const stage = reveal(el("div", "rag-canvas")); // base 298.5
+  root.append(stage);
+  root.append(ragAnswer(lang));
+  attach3D(root, stage, () => import("./rag3d").then((m) => m.mountRag3D), lang);
+  return root;
+}
+
+function ragScene2D(lang: Lang): HTMLElement {
   // "I don't know what model I will be using to transcribe this video yet" —
   // pose the question, surface the tools he names, then reveal the answer.
   const root = el("div", "scene scene--rag");
@@ -213,7 +310,13 @@ function ragScene(lang: Lang): HTMLElement {
   for (let i = 0; i < 5; i++) orbit.append(el("i", `doc d${i}`));
   orbit.append(el("div", "rag-core", "RAG"));
   root.append(reveal(orbit)); // base 298.5
+  root.append(ragAnswer(lang));
+  return root;
+}
 
+/* The retrieved-context answer card — the question, the resolved model, and the
+   two named skills (real links). Shared by the 2D orbit and the 3D constellation. */
+function ragAnswer(lang: Lang): HTMLElement {
   const answer = el("div", "rag-answer interactive");
   answer.append(reveal(el("div", "ctx-kicker", STRINGS.contextKicker[lang]), 300));
   const model = el("div", "model");
@@ -240,8 +343,7 @@ function ragScene(lang: Lang): HTMLElement {
     }
   });
   answer.append(skills);
-  root.append(answer);
-  return root;
+  return answer;
 }
 
 const RING_FULL =
@@ -251,6 +353,19 @@ const RING_GAP =
   '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="27" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="118 52" transform="rotate(-58 40 40)"/></svg>';
 
 function loopScene(lang: Lang): HTMLElement {
+  // "the open and close loop" — a glowing glass torus with a comet orbiting it
+  // forever (closed · iterating); on "I'm going to open the loop now" (349.95) the
+  // ring breaks, its gap rotates to face you, and the comet waits there for you.
+  if (REDUCE_MOTION || !webglAvailable()) return loopScene2D(lang);
+  const root = el("div", "scene scene--loop scene--loop3d") as SceneNode;
+  const stage = reveal(el("div", "loop-canvas")); // base 343.4
+  root.append(stage);
+  root.append(cap(lang, "open where you add value", "在你创造价值之处开环", 352));
+  attach3D(root, stage, () => import("./loop3d").then((m) => m.mountLoop3D), lang);
+  return root;
+}
+
+function loopScene2D(lang: Lang): HTMLElement {
   const root = el("div", "scene scene--loop");
   const loops = el("div", "loops");
 

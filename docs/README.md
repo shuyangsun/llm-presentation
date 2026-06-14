@@ -10,6 +10,7 @@
 ## Design
 
 - [ASR scene → 3D frosted-glass waveform](design/2026-06-13/0000-asr-3d-frosted-glass-waveform.md) - the synthesized implementation plan that turns the 2D `audio → transcript` supporting art into an interactive 3D frosted-glass waveform that crystallizes into transcript lines; reconciles the three 2026-06-13 research briefs.
+- [Six bespoke 3D supporting-art scenes](design/2026-06-14/0001-bespoke-3d-supporting-art-scenes.md) - the distinct interactive Three.js scenes for translate · sync · responsive · director · rag · loop, all on the shared `web/src/engine/scene3d.ts` scaffold (palette, pointer, reversible `phase(t,a,b)`), each a pure function of the playhead with a 2D fallback.
 
 ## Subtitles
 

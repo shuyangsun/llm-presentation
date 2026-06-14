@@ -39,25 +39,33 @@ below; desktop docks it left with content beside it.
 
 ## Supporting art (3D)
 
-Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). The first —
-**audio → transcript** — is a 3D WebGL scene (`src/engine/asr3d.ts`, Three.js,
-lazy-loaded, in the spirit of [igloo.inc](https://igloo.inc) but warm
-Paper/terracotta, never icy blue):
+Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). **All seven are
+3D WebGL** (Three.js, lazy-loaded per scene, in the spirit of
+[igloo.inc](https://igloo.inc) but warm Paper/terracotta, never icy blue) — each a
+**distinct** metaphor for what's being said, never the same look twice:
 
-- A **frosted-glass waveform** of slabs seen at a 3/4 angle, playing the video's
-  *real* audio envelope — precomputed from the recording into
-  `src/data/intro.peaks.json` (via `scripts/gen-waveform.py`) and scrolled by the
-  playhead, so the bars match what's being said.
-- **Transcript particles** that develop the *actual* current `.vtt` cue into
-  legible words, iMessage invisible-ink style (nothing hardcoded; the cue is read
-  live from the same VTT the teleprompter uses).
-- **Mouse hover disrupts the text** with animated noise + repulsion; it restores
-  to clean text when the cursor leaves.
+| beat | scene | the 3D metaphor |
+| ---- | ----- | --------------- |
+| ~2:22 | **audio → transcript** (`asr3d.ts`) | a frosted-glass waveform of the video's *real* audio envelope that crystallizes the live `.vtt` cue into invisible-ink particle text; hover disrupts the words |
+| ~2:45 | **translate** (`translate3d.ts`) | EN word-particles stream through a refracting glass **membrane** and re-form as 中文; the mouse ripples the pane |
+| ~3:06 | **sync** (`sync3d.ts`) | two parallel **filmstrip ribbons** (video frames + UI blocks) bound to one playhead you can **scrub** — both move in lockstep |
+| ~3:42 | **responsive** (`responsive3d.ts`) | one **glass device** whose aspect morphs portrait→landscape while its content tiles reflow; drag to turn it |
+| ~4:23 | **director** (`director3d.ts`) | a cinematic **stage + volumetric spotlight** you steer, a clapper that snaps, a spark burst on "make it fun" |
+| ~4:58 | **rag** (`rag3d.ts`) | an **embedding-space constellation**; a mouse-steered query probe lights its nearest documents, then converges on the answer card |
+| ~5:43 | **loop** (`loop3d.ts`) | the finale — a glowing **torus** with an orbiting comet (closed loop) that breaks open toward you (open loop) |
 
-Like everything else it is a pure function of the playhead `t` (fully
-scrub-reversible — the waveform and the words rewind). It falls back to the
-original 2D CSS scene when WebGL is unavailable or `prefers-reduced-motion` is
-set. The remaining scenes are still 2D CSS for now.
+The asr waveform plays the recording's *real* amplitude envelope, precomputed into
+`src/data/intro.peaks.json` (via `scripts/gen-waveform.py`) and scrolled by the
+playhead. Every scene shares the scaffold in **`src/engine/scene3d.ts`** (transparent
+DPR-capped stage, Paper palette from the CSS `:root` tokens, a damped pointer, and the
+reversible `phase(t,a,b)` ramp). Like everything else each scene is a pure function of
+the playhead `t` (fully scrub-reversible) and falls back to the original 2D CSS scene
+when WebGL is unavailable or `prefers-reduced-motion` is set. Design notes:
+[docs/design/.../0001-bespoke-3d-supporting-art-scenes.md](../docs/design/2026-06-14/0001-bespoke-3d-supporting-art-scenes.md).
+
+Dev preview: `src/preview.ts` mounts any scene via `preview.html?scene=<key>&t=<sec>`
+(keys: `asr` · `translate` · `sync` · `responsive` · `director` · `rag` · `loop`) so each
+phase can be inspected/screenshotted without the video.
 
 ## Controls (YouTube-like behavior, warm palette)
 

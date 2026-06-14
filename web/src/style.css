@@ -483,6 +483,75 @@ body.deck-on .wordmark {
   width: 100%;
   height: 100%;
 }
+
+/* ============================================================
+   3D scene shells — each WebGL canvas fills the hero area; the
+   captions / answer cards beside it stay crisp DOM. The geometry
+   + interaction live in the matching src/engine/*3d.ts module,
+   all on the shared scaffold in src/engine/scene3d.ts.
+   ============================================================ */
+.scene--translate3d,
+.scene--sync3d,
+.scene--responsive3d,
+.scene--director3d,
+.scene--loop3d {
+  justify-content: stretch;
+}
+.scene--translate3d .translate-canvas,
+.scene--sync3d .sync-canvas,
+.scene--responsive3d .responsive-canvas,
+.scene--director3d .director-canvas,
+.scene--loop3d .loop-canvas {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 160px;
+}
+.scene--translate3d .translate-canvas canvas,
+.scene--sync3d .sync-canvas canvas,
+.scene--responsive3d .responsive-canvas canvas,
+.scene--director3d .director-canvas canvas,
+.scene--loop3d .loop-canvas canvas,
+.scene--rag3d .rag-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* director — the slate label floats over the dark cinematic stage */
+.scene--director3d .slate-tag {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.scene--director3d .slate-tag em {
+  font-style: normal;
+  color: var(--accent-ink);
+}
+
+/* rag — the embedding galaxy fills the scene; the answer is a HUD card over it */
+.scene--rag3d {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+.scene--rag3d .rag-canvas {
+  position: absolute;
+  inset: 0;
+}
+.scene--rag3d .rag-answer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  max-width: min(440px, 94%);
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
 .scene--asr .asr-wave {
   display: flex;
   align-items: center;
