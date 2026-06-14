@@ -353,9 +353,10 @@ const RING_GAP =
   '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="27" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="118 52" transform="rotate(-58 40 40)"/></svg>';
 
 function loopScene(lang: Lang): HTMLElement {
-  // "the open and close loop" — a glowing glass torus with a comet orbiting it
-  // forever (closed · iterating); on "I'm going to open the loop now" (349.95) the
-  // ring breaks, its gap rotates to face you, and the comet waits there for you.
+  // "the open and close loop" — a green frosted-ice torus with a blob of particles
+  // trapped inside, churning round forever (closed · iterating); on "I'm going to
+  // open the loop now" (349.95) the ring turns red, a quarter-circumference gap
+  // dissolves at the top, and the blob pours out and re-forms as a human.
   if (REDUCE_MOTION || !webglAvailable()) return loopScene2D(lang);
   const root = el("div", "scene scene--loop scene--loop3d") as SceneNode;
   const stage = reveal(el("div", "loop-canvas")); // base 343.4
