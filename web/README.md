@@ -52,9 +52,10 @@ below; desktop docks it left with content beside it.
 
 ## Supporting art (3D)
 
-Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). **All seven are
-3D WebGL** (Three.js, lazy-loaded per scene, in the spirit of
-[igloo.inc](https://igloo.inc) but warm Paper/terracotta, never icy blue) — each a
+Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). **Six of the seven
+are 3D WebGL** (Three.js, lazy-loaded per scene, in the spirit of
+[igloo.inc](https://igloo.inc) but warm Paper/terracotta, never icy blue); the **director
+scene was recast as a 2D pixel-art platformer** (plain 2D canvas, no WebGL). Each is a
 **distinct** metaphor for what's being said, never the same look twice:
 
 | beat | scene | the 3D metaphor |
@@ -63,19 +64,21 @@ Each beat swaps in an *illustrative scene* (`src/engine/scenes.ts`). **All seven
 | ~2:45 | **translate** (`translate3d.ts`) | `Text` particles transmute through a glass membrane into `文`; after the scripted reveal, the cursor side controls the actual site language (left EN, right 中文) without rebuilding the WebGL scene |
 | ~3:06 | **sync** (`sync3d.ts`) | a head-on 3D progress bar where warm particle links rain from VIDEO to WEB, section dots sit at their true timeline positions, and cursor hover shows the section title |
 | ~3:42 | **responsive** (`responsive3d.ts`) | a vertical mobile layout: video fills the phone, docks to the top on the spoken cue, then reveals content below; cursor height folds between full-video and docked states |
-| ~4:23 | **director** (`director3d.ts`) | a cinematic **stage + volumetric spotlight** you steer, a clapper that snaps, a spark burst on "make it fun" |
+| ~4:23 | **director** (`director3d.ts`) | a **2D pixel-art platformer** ("Director's Dash"): the clapperboard director hops necktie corporate-employee **turtles**, ducks office-memo planes, and collects real open-source GitHub file links (with facts about the talk); **click/`J`** jump, **`K`** duck, 3 lives then **Enter** to restart |
 | ~4:58 | **rag** (`rag3d.ts`) | a stable embedding-space constellation with real open-source file links; the two named skills appear as graph edges that lock onto corpus nodes one by one |
 | ~5:43 | **loop** (`loop3d.ts`) | the finale: a green ice closed loop with sparse trapped particles, then a red top opening where particles flood out into a human silhouette |
 
 The ASR waveform uses `src/engine/audio.ts` for live RMS data while playback is
 advancing. `src/data/intro.peaks.json` (generated with `scripts/gen-waveform.py`)
 is still committed as the scrub-reversible fallback for pause, seek, mute, and no
-Web Audio. Every scene shares the scaffold in **`src/engine/scene3d.ts`**
+Web Audio. The six 3D scenes share the scaffold in **`src/engine/scene3d.ts`**
 (transparent DPR-capped stage, Paper palette from the CSS `:root` tokens, a
-damped pointer, and the reversible `phase(t,a,b)` ramp). Like everything else,
-each narrative reveal is driven by the playhead `t` and falls back to the
-original 2D CSS scene when WebGL is unavailable or `prefers-reduced-motion` is
-set. Baseline design notes plus links to the later scene refinements:
+damped pointer, and the reversible `phase(t,a,b)` ramp); the director scene is a
+standalone 2D canvas off that scaffold. Like everything else, each narrative reveal
+is driven by the playhead `t` and falls back to the original 2D CSS scene when WebGL
+is unavailable or `prefers-reduced-motion` is set (the director, needing no WebGL,
+only falls back under `prefers-reduced-motion`). Baseline design notes plus links to
+the later scene refinements:
 [docs/design/.../0001-bespoke-3d-supporting-art-scenes.md](../docs/design/2026-06-14/0001-bespoke-3d-supporting-art-scenes.md).
 
 Dev preview: `src/preview.ts` mounts any scene via `preview.html?scene=<key>&t=<sec>`

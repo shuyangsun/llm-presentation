@@ -574,7 +574,7 @@ body.deck-on .wordmark {
   height: 100%;
 }
 
-/* director — the slate label floats over the dark cinematic stage */
+/* director — the "Take 01" slate label sits beside the runner stage (Director's Dash) */
 .scene--director3d .slate-tag {
   font-family: var(--font-mono);
   font-size: 13px;
@@ -585,6 +585,220 @@ body.deck-on .wordmark {
 .scene--director3d .slate-tag em {
   font-style: normal;
   color: var(--accent-ink);
+}
+
+/* director — pixel-game HUD over the canvas: controls hint, fact toast, and the
+   growing panel of collected open-source GitHub links. The canvas is position:relative
+   (above), so these absolutely-positioned children sit over the play area. */
+.dg-lives,
+.dg-hint,
+.dg-toast,
+.dg-links,
+.dg-restart {
+  position: absolute;
+  z-index: 2;
+  font-family: var(--font-mono);
+}
+.dg-lives {
+  left: 10px;
+  top: 9px;
+  display: flex;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+}
+.dg-lives span {
+  color: var(--accent);
+}
+.dg-lives span.x {
+  color: var(--hairline-strong);
+}
+.dg-hint {
+  left: 10px;
+  top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+.dg-hint b {
+  font-weight: 600;
+  font-style: normal;
+  color: var(--accent-ink);
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+}
+.dg-hint span {
+  opacity: 0.45;
+}
+.dg-toast {
+  left: 50%;
+  bottom: 12px;
+  transform: translate(-50%, 6px);
+  max-width: min(72%, 460px);
+  padding: 7px 11px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--fg-2);
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.dg-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.dg-toast b {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.dg-links {
+  right: 10px;
+  top: 10px;
+  width: min(40%, 220px);
+  padding: 6px 8px;
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.dg-links.has {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.dg-links-h {
+  margin-bottom: 5px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.dg-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 38vh;
+  overflow-y: auto;
+}
+.dg-links a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 3px;
+  border-radius: 4px;
+  color: var(--fg-2);
+  text-decoration: none;
+}
+.dg-links a:hover {
+  background: var(--surface-2);
+  color: var(--accent-ink);
+}
+.dg-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+.dg-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.dg-name b {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dg-name i {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* game-over prompt — centred card; pointer-events off so the collected-links panel
+   (top-right) and the canvas stay reachable while it shows. */
+.dg-restart {
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 18px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+.dg-restart.show {
+  display: flex;
+}
+.dg-restart > b {
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.dg-restart > span {
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+.dg-restart span b {
+  font-style: normal;
+  color: var(--accent-ink);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+}
+
+/* narrow screens: tighten the top-row HUD (hint left + links right) so they never collide */
+@media (max-width: 560px) {
+  .dg-lives {
+    font-size: 11px;
+  }
+  .dg-hint {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .dg-hint b {
+    padding: 0 3px;
+  }
+  .dg-links {
+    width: min(44%, 148px);
+    font-size: 10px;
+  }
+  .dg-toast {
+    font-size: 11px;
+    max-width: 80%;
+  }
+  .dg-restart > b {
+    font-size: 13px;
+  }
 }
 
 /* sync — the section-title tooltip that follows the cursor over the 3D timeline,

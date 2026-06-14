@@ -43,7 +43,7 @@ session, because early exports include duplicate numeric prefixes.
 ## Design
 
 - [ASR scene → 3D frosted-glass waveform](design/2026-06-13/0000-asr-3d-frosted-glass-waveform.md) - the synthesized implementation plan that turns the 2D `audio → transcript` supporting art into an interactive 3D frosted-glass waveform that crystallizes into transcript lines; reconciles the three 2026-06-13 research briefs.
-- [Six bespoke 3D supporting-art scenes](design/2026-06-14/0001-bespoke-3d-supporting-art-scenes.md) - the distinct interactive Three.js scenes for translate · sync · responsive · director · rag · loop, all on the shared `web/src/engine/scene3d.ts` scaffold (palette, pointer, reversible `phase(t,a,b)`), including later link-rain, mobile-fold, RAG-edge, and loop-human refinements.
+- [Six bespoke 3D supporting-art scenes](design/2026-06-14/0001-bespoke-3d-supporting-art-scenes.md) - the distinct interactive Three.js scenes for translate · sync · responsive · director · rag · loop, all on the shared `web/src/engine/scene3d.ts` scaffold (palette, pointer, reversible `phase(t,a,b)`), including later link-rain, mobile-fold, RAG-edge, and loop-human refinements; the **director scene was later recast as a standalone 2D pixel-art platformer** (no WebGL — see the transcript below).
 
 ## Subtitles
 
@@ -78,6 +78,7 @@ session, because early exports include duplicate numeric prefixes.
 - [3D ASR supporting-art session](transcripts/2026-06-14/0018-claude-3d-asr-supporting-art.md) - records the first Three.js `audio -> transcript` scene, waveform/particle design, real cue text, pointer disruption, and WebGL fallback work.
 - [Six bespoke 3D scenes session](transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md) - records the shared `scene3d.ts` scaffold and the translate, sync, responsive, director, rag, and loop Three.js scene implementations.
 - [Repository documentation pass session](transcripts/2026-06-14/0020-codex-repository-doc-pass.md) - records the whole-repo documentation audit, session-memory indexing, export-transcript path realignment, retrieval-skill link fix, verification, and VCS integration request.
+- [Director's Dash pixel-art game session](transcripts/2026-06-14/0021-claude-director-dash-pixel-game.md) - records recasting the director scene (`web/src/engine/director3d.ts`) from a 3D spotlight stage into a 2D pixel-art platformer: J/K controls, necktie corporate-employee turtles, collectible open-source GitHub file links with facts about the talk, and a 3-lives death mechanic with cute "X X" eyes and Enter restart.
 
 ## Coding Sessions
 

@@ -269,14 +269,15 @@ function responsiveScene2D(lang: Lang): HTMLElement {
 }
 
 function directorScene(lang: Lang): HTMLElement {
-  // "Think of yourself as a Hollywood director trying to tell a story." A 3D
-  // clapper snaps, a volumetric spotlight you steer sweeps the dark stage, and
-  // "make it fun" (≈278.5) fires a spark burst into the beam.
-  if (REDUCE_MOTION || !webglAvailable()) return directorScene2D(lang);
+  // "Think of yourself as a Hollywood director trying to tell a story." A pixel-art
+  // platformer ("Director's Dash"): the director hops corporate-employee turtles and
+  // grabs stars; "make it fun" (≈278.5) saturates the washed-out world into colour.
+  // Plain 2D canvas (no WebGL needed) — only reduced-motion falls back to the static clapper.
+  if (REDUCE_MOTION) return directorScene2D(lang);
   const root = el("div", "scene scene--director scene--director3d") as SceneNode;
   const stage = reveal(el("div", "director-canvas")); // base 263.1
   root.append(stage);
-  // the slate label rides the DOM (crisp bilingual type), the spotlight is GPU
+  // the slate label rides the DOM (crisp bilingual type) over the pixel stage
   root.append(reveal(el("div", "slate-tag", `<em>${pick(lang, "Take 01", "第 01 镜")}</em>`), 264.5));
   root.append(cap(lang, "tell a story", "讲个故事", 266.8));
   attach3D(root, stage, () => import("./director3d").then((m) => m.mountDirector3D), lang);
