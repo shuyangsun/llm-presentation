@@ -398,6 +398,7 @@ body.deck-on .deck a {
 .wordmark {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
   flex: none;
   opacity: 0;
@@ -1560,44 +1561,73 @@ body.scrub-reveal .chrome {
   font-weight: 500;
 }
 
-/* language picker — floats near the playhead, shown with the chrome */
+/* language picker — a drop-down beside the wordmark title. It reveals on its own
+   scripted beat (body.picker-on — the same moment as before) and then persists,
+   since it now lives next to the always-on title rather than in the bottom chrome.
+   pointer-events stay off until the beat so it can't be hit while still invisible. */
 .langwrap {
-  position: fixed;
-  right: clamp(16px, 3vw, 40px);
-  bottom: 64px;
-  z-index: 41;
+  margin-left: auto;
+  flex: none;
+  align-self: center;
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(6px);
   pointer-events: none;
   transition: opacity 0.4s var(--ease-mirror), transform 0.4s var(--ease-mirror);
 }
-body.chrome-active.picker-on .langwrap {
+body.picker-on .langwrap {
   opacity: 1;
   transform: none;
   pointer-events: auto;
 }
 .lang {
+  position: relative;
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--hairline-strong);
   border-radius: 999px;
-  overflow: hidden;
   background: var(--surface);
   box-shadow: var(--shadow-1);
 }
-.lang button {
+/* custom chevron — the native select arrow is removed on .lang-select below */
+.lang::after {
+  content: "";
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -4px;
+  border-right: 1.5px solid var(--fg-muted);
+  border-bottom: 1.5px solid var(--fg-muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.lang-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  margin: 0;
   border: none;
+  border-radius: 999px;
   background: transparent;
-  padding: 6px 13px;
+  padding: 7px 32px 7px 15px;
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--fg-muted);
+  color: var(--fg);
   cursor: pointer;
-  transition: color var(--dur-micro), background var(--dur-micro);
+  transition: color var(--dur-micro);
 }
-.lang button[aria-pressed="true"] {
-  color: #fff;
-  background: var(--accent);
+.lang-select:hover {
+  color: var(--accent-ink);
+}
+.lang-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* the native popup list — themed where the platform honours it */
+.lang-select option {
+  color: var(--fg);
+  background: var(--surface);
 }
 .lang.flash {
   animation: lang-flash 1.4s var(--ease-mirror);
@@ -1744,13 +1774,10 @@ body.chrome-active .helphint {
   .helphint {
     display: none;
   }
-  .lang button {
+  .lang-select {
     font-size: 14px;
-    min-height: 44px;
-    padding: 0 16px;
-  }
-  .langwrap {
-    bottom: 78px;
+    min-height: 40px;
+    padding: 0 36px 0 16px;
   }
   .rec {
     font-size: 11px;

@@ -38,7 +38,7 @@ asks for it.
 | ~2:11 | **Reveal, step 2** — on "place the frame at the left side", the portrait slides left (top strip on mobile). |
 | ~2:17 | **Deck** — on "show this teleprompter", the compact transcript fades in; the first **3D supporting-art scene** joins at "the .VTT file that's transcribed" (~2:22) — see *Supporting art* below. |
 | ~2:45 | **Auto-translate** — at "Mandarin Chinese", the whole UI + transcript flip to 中文. |
-| ~2:56 | **Language picker** — EN / 中文, defaulting to 中文 (near the playhead). |
+| ~2:56 | **Language picker** — a drop-down (English / 简体中文) beside the presentation title at the top, defaulting to 中文; two-way synced with the `translate3d.ts` scene (picking a language flips the scene, and the scene's cursor-driven flip updates the drop-down). |
 | ~3:25 | **Progress bar** — on-demand, thin, with section dots + frame thumbnails on hover. |
 | ~4:58 | **The model** — RAG poses "who transcribed this?"; the two skills pop in one at a time as he names them (~5:13 / ~5:16); the answer **WhisperX · large-v3** resolves only on "show that on the screen" (~5:30). |
 | ~5:43 | **Open & closed loops** — a closed loop (a dot iterating) appears; the open loop (breathing, awaiting a human) joins on "I'm going to open the loop now" (~5:50). |

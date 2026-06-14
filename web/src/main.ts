@@ -84,6 +84,21 @@ const wordmark = h("div", { class: "wordmark interactive" });
 wordmark.innerHTML = ICON.loop;
 wordmark.append(h("div", {}, wmTitle, h("br"), wmSub));
 
+/* language picker — a drop-down beside the title. It appears on its own scripted
+   beat (BEATS.picker, via the body.picker-on flag) and then persists, since it now
+   lives next to the always-on title rather than in the bottom chrome. It stays in
+   two-way sync with the live site language: picking an option flips the site (and
+   the 3D translate scene, which reads data-lang); the scene flipping it updates
+   the drop-down back — both directions funnel through setLang → applyLang. */
+const langSelect = h("select", { class: "lang-select", "aria-label": "Language" });
+langSelect.append(
+  Object.assign(document.createElement("option"), { value: "en", textContent: "English" }),
+  Object.assign(document.createElement("option"), { value: "zh", textContent: "简体中文" }),
+);
+const langPick = h("div", { class: "lang" }, langSelect);
+const langWrap = h("div", { class: "langwrap" }, langPick);
+wordmark.append(langWrap);
+
 const sceneStage = h("div", { class: "scene-stage" });
 
 const ptText = h("span", { class: "pt-text" });
@@ -130,14 +145,6 @@ const ctrl = h(
 );
 const chrome = h("div", { class: "chrome" }, h("div", { class: "chrome-scrim" }), bar, ctrl);
 
-/* language picker — floats near the playhead, shown with the chrome */
-const langEn = h("button", { type: "button" });
-langEn.textContent = "EN";
-const langZh = h("button", { type: "button" });
-langZh.textContent = "中文";
-const langPick = h("div", { class: "lang" }, langEn, langZh);
-const langWrap = h("div", { class: "langwrap" }, langPick);
-
 /* cold-open gate */
 const gatePlay = h("button", { class: "gate-play", "aria-label": "Play" });
 gatePlay.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
@@ -163,7 +170,7 @@ const help = h(
 const helpHint = h("div", { class: "helphint" });
 helpHint.textContent = "? shortcuts";
 
-app.append(aura, stage, deck, langWrap, chrome, helpHint, help, spinner, gate);
+app.append(aura, stage, deck, chrome, helpHint, help, spinner, gate);
 
 /* ============================================================================
    Layout — full-bleed → centered portrait (crop) → docked (reposition)
@@ -380,8 +387,6 @@ function setFlag(name: string, on: boolean) {
   document.body.classList.toggle(name, on);
 }
 
-let pickerDemoed = false;
-
 // The progress bar stays revealed through the rest of the in-sync section — from
 // "So display that progress bar" (BEATS.progress) until the next scene begins
 // ("if you're on mobile"). Derived from the schedule so it tracks the timings.
@@ -417,15 +422,6 @@ function applyBeats(t: number) {
   setFlag("scrub-locked", t < BEATS.progress);
   setFlag("scrub-reveal", t >= BEATS.progress && t < SCRUB_REVEAL_END);
 
-  // the controls are on-demand, but the language picker's first appearance is a
-  // scripted moment
-  if (!video.paused) {
-    if (!pickerDemoed && t >= BEATS.picker && t < BEATS.picker + 6) {
-      pickerDemoed = true;
-      showChrome();
-    }
-  }
-
   swapScene(t >= BEATS.deck ? activeSceneIndex(t) : -1);
   updateSceneReveals(t);
 }
@@ -441,8 +437,9 @@ function applyLang() {
   ptText.textContent = STRINGS.transcriptLabel[lang];
   recText.textContent = STRINGS.rec[lang];
   gateHint.textContent = STRINGS.playHint[lang];
-  langEn.setAttribute("aria-pressed", String(lang === "en"));
-  langZh.setAttribute("aria-pressed", String(lang === "zh"));
+  // keep the drop-down in sync whenever the language changes from anywhere — the
+  // scripted flip, the 3D translate scene, or a manual pick (two-way sync).
+  langSelect.value = lang;
   renderPrompter(video.currentTime || 0, true);
   if (sceneIndex >= 0) {
     // Prefer an in-place language update when the active scene supports one (the
@@ -469,8 +466,7 @@ function setLang(next: Lang) {
   void langPick.offsetWidth;
   langPick.classList.add("flash");
 }
-langEn.addEventListener("click", () => setLang("en"));
-langZh.addEventListener("click", () => setLang("zh"));
+langSelect.addEventListener("change", () => setLang(langSelect.value as Lang));
 
 // The 3D translate scene flips the whole site language when you drag the word
 // across the glass — cursor on the left → English, on the right → 中文.
@@ -677,10 +673,6 @@ window.addEventListener(
 );
 window.addEventListener("pointerdown", () => showChrome(), { passive: true });
 chrome.addEventListener("pointerenter", () => {
-  window.clearTimeout(hideTimer);
-  setFlag("chrome-active", true);
-});
-langWrap.addEventListener("pointerenter", () => {
   window.clearTimeout(hideTimer);
   setFlag("chrome-active", true);
 });
