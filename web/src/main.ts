@@ -427,7 +427,12 @@ function applyLang() {
   langZh.setAttribute("aria-pressed", String(lang === "zh"));
   renderPrompter(video.currentTime || 0, true);
   if (sceneIndex >= 0) {
-    swapScene(sceneIndex, true);
+    // Prefer an in-place language update when the active scene supports one (the
+    // 3D translate scene drives + reflects the site language itself and must keep
+    // its GL context across a flip); otherwise rebuild to re-translate its DOM.
+    const active = sceneStage.lastElementChild as SceneNode | null;
+    if (active && active.__setLang) active.__setLang(lang);
+    else swapScene(sceneIndex, true);
     updateSceneReveals(video.currentTime || 0); // re-show the spoken parts at once (no flash on a paused switch)
   }
 }
@@ -448,6 +453,13 @@ function setLang(next: Lang) {
 }
 langEn.addEventListener("click", () => setLang("en"));
 langZh.addEventListener("click", () => setLang("zh"));
+
+// The 3D translate scene flips the whole site language when you drag the word
+// across the glass — cursor on the left → English, on the right → 中文.
+window.addEventListener("site-set-lang", (e) => {
+  const next = (e as CustomEvent<Lang>).detail;
+  if (next === "en" || next === "zh") setLang(next);
+});
 
 /* ============================================================================
    Transport: play/pause, mute, fullscreen, scrubbing, keyboard

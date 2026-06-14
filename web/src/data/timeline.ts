@@ -22,7 +22,7 @@ export const BEATS = {
   crop: 120.3, // 02:00.2 "you should start cropping the horizontal aspect ratio video"
   dock: 131.6, // 02:11.6 "then place the frame at the left side of the screen"
   deck: 137.05, // 02:17.04 "Now on the main screen, you should show this teleprompter"
-  translate: 165.5, // 02:45.5 "My native tongue is Mandarin Chinese, so translate it" → auto-switch to 中文
+  translate: 169.0, // 02:49.0 site flips EN→中文 as the 3D crossing settles into 文 (post-animation, on the spoken word)
   picker: 176, // 02:54.8 "and now show a language picker somewhere on the UI" (defaults to 中文)
   progress: 205.2, // 03:25.2 "So display that progress bar" — a one-time auto-reveal
 } as const;

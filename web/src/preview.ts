@@ -11,7 +11,7 @@ import "./style.css";
 import { gsap } from "gsap";
 import { SCENES } from "./engine/scenes";
 import type { SceneNode } from "./engine/scenes";
-import type { Lang } from "./data/timeline";
+import { BEATS, type Lang } from "./data/timeline";
 
 const q = new URLSearchParams(location.search);
 const sceneKey = q.get("scene") ?? "asr";
@@ -89,6 +89,25 @@ scene.querySelectorAll<HTMLElement>("[data-reveal]").forEach((n) => {
   gsap.set(n, { autoAlpha: 1, y: 0, filter: "blur(0px)" });
 });
 
+// Mirror the host page's language handling so the translate scene is faithful in
+// isolation: (1) the scene flips the whole site language by dispatching this
+// event (cursor on the glass) — reflect it and stop the scripted flip; (2) absent
+// that, run the scripted EN→中文 flip at BEATS.translate, just like main.ts.
+let curLang: Lang = lang;
+let manualLang = false;
+function setPreviewLang(l: Lang) {
+  if (l === curLang) return;
+  curLang = l;
+  document.documentElement.setAttribute("data-lang", l);
+  scene.__setLang?.(l);
+}
+window.addEventListener("site-set-lang", (e) => {
+  const next = (e as CustomEvent).detail;
+  if (next !== "en" && next !== "zh") return;
+  manualLang = true; // cursor/picker took control — freeze the scripted flip
+  setPreviewLang(next);
+});
+
 function dispatchMouse() {
   if (mxFrac == null || myFrac == null) return;
   const canvas = scene.querySelector("canvas");
@@ -112,6 +131,9 @@ function loop() {
       playBtn.textContent = "▶ play";
     }
   }
+  // faithful scripted language flip for the translate scene (the host does this
+  // in applyBeats); cursor/picker control freezes it via manualLang.
+  if (sceneKey === "translate" && !manualLang) setPreviewLang(t >= BEATS.translate ? "zh" : "en");
   dispatchMouse();
   scene.__tick?.(t);
   requestAnimationFrame(loop);

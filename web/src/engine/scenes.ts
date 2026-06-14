@@ -81,6 +81,9 @@ export interface SceneDef {
 export type SceneNode = HTMLElement & {
   __tick?: (t: number) => void;
   __cleanup?: () => void;
+  /** Update language IN PLACE (no rebuild) — used by scenes that must survive a
+   *  language flip without losing state (e.g. the 3D translate scene's GL context). */
+  __setLang?: (lang: Lang) => void;
 };
 
 /* Every 3D scene module exposes the same tiny controller — a playhead-driven
@@ -177,8 +180,15 @@ function translateScene(lang: Lang): HTMLElement {
   const root = el("div", "scene scene--translate scene--translate3d") as SceneNode;
   const stage = reveal(el("div", "translate-canvas")); // base 165.5
   root.append(stage);
-  root.append(cap(lang, "translated live", "实时翻译", 169));
+  const capEl = cap(lang, "translated live", "实时翻译", 169);
+  root.append(capEl);
   attach3D(root, stage, () => import("./translate3d").then((m) => m.mountTranslate3D), lang);
+  // The canvas reads the live site language itself (it both drives and reflects
+  // it), so a flip must NOT rebuild this scene — that would drop the GL context
+  // mid-interaction. Update just the caption in place; main.ts calls this.
+  root.__setLang = (l: Lang) => {
+    capEl.textContent = pick(l, "translated live", "实时翻译");
+  };
   return root;
 }
 
