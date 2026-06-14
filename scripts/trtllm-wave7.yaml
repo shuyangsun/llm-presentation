@@ -1,0 +1,22 @@
+# TensorRT-LLM extra_llm_api_options for Nemotron 3 Super 120B NVFP4.
+#
+# Canonical recipe from RAG Wave 6/7 benchmarks (coding-agent-skills):
+#   docs/benchmarks/2026-06-12/0022-wave7-answer-faithfulness-rag.md
+#   docs/benchmarks/2026-06-10/0021-wave6-query-routing-rag.md
+#
+# Image: nvcr.io/nvidia/tensorrt-llm/release:1.3.0rc12
+# Hardware: 2× RTX PRO 6000 (Blackwell), TP=2
+#
+# On 1.3.0rc12, mamba_ssm_cache_dtype must be nested under kv_cache_config
+# (not a top-level key). Without that nesting, serve fails at startup.
+
+kv_cache_config:
+  dtype: fp8
+  free_gpu_memory_fraction: 0.8
+  enable_block_reuse: false
+  mamba_ssm_cache_dtype: float16
+moe_config:
+  backend: CUTLASS
+cuda_graph_config:
+  enable_padding: true
+  max_batch_size: 64
