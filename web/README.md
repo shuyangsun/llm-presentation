@@ -112,7 +112,7 @@ npm run build    # typecheck + production build
 The video is **not committed**. The production intro loads its media from the
 project CDN:
 
-- `https://cdn.shuyangsun.com/videos/001_intro.v1.webm` — primary video
+- `https://cdn.shuyangsun.com/videos/001_intro.v2.webm` — primary video
 - `https://cdn.shuyangsun.com/videos/001_intro.poster.v1.jpg` — first frozen frame / cold-open poster
 
 Transcript data lives in `src/data/en.vtt` and `src/data/zh.vtt` (same cue

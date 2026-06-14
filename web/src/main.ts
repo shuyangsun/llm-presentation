@@ -22,7 +22,7 @@ const CUES: Record<Lang, Cue[]> = { en: parseVtt(enVtt), zh: parseVtt(zhVtt) };
 let lang: Lang = "en";
 let manualLang: Lang | null = null; // set once the viewer picks a language
 const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const VIDEO_SRC = "https://cdn.shuyangsun.com/videos/001_intro.v1.webm";
+const VIDEO_SRC = "https://cdn.shuyangsun.com/videos/001_intro.v2.webm";
 const VIDEO_POSTER = "https://cdn.shuyangsun.com/videos/001_intro.poster.v1.jpg";
 const LIVE_AUDIO_ANALYSER_ENABLED = false;
 
