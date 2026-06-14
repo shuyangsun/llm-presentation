@@ -67,7 +67,15 @@ video.append(
 const recText = h("span", { class: "rec-text" });
 recText.textContent = STRINGS.rec[lang];
 const rec = h("div", { class: "rec" }, h("span", { class: "rec-dot" }), recText);
-const stage = h("div", { class: "stage" }, video, rec);
+
+// Big play affordance over the video whenever it's paused. The cold-open gate
+// covers the very first play; this takes over for every pause (and the end)
+// afterwards. aria-hidden + tabindex -1: it's a pointer affordance only — the
+// labelled play button in the chrome stays the canonical control for SR/keyboard.
+const pauseOverlay = h("button", { class: "po", "aria-hidden": "true", tabindex: "-1" });
+pauseOverlay.innerHTML = `<span class="po-btn">${ICON.play}</span>`;
+
+const stage = h("div", { class: "stage" }, video, rec, pauseOverlay);
 
 /* deck — wordmark · illustrative scene · compact transcript */
 const wmTitle = h("span", { class: "title" });
@@ -491,6 +499,14 @@ stage.addEventListener("pointerup", (e) => {
   else togglePlay();
 });
 
+// The paused overlay is a big resume button (mouse + touch). Swallow the
+// pointerup so the stage handler above doesn't toggle a second time.
+pauseOverlay.addEventListener("pointerup", (e) => e.stopPropagation());
+pauseOverlay.addEventListener("click", (e) => {
+  e.stopPropagation();
+  togglePlay();
+});
+
 function setMuted(m: boolean) {
   video.muted = m;
   muteBtn.innerHTML = m || video.volume === 0 ? ICON.mute : ICON.vol;
@@ -665,13 +681,17 @@ langWrap.addEventListener("pointerenter", () => {
 function begin() {
   if (hasBegun) return;
   hasBegun = true;
+  setFlag("begun", true); // from now on, pausing shows the play overlay + keeps the bar up
   setMuted(false);
   video.preload = "auto"; // pull the full media, after the user gesture
   // tap the live audio so the 3D ASR waveform tracks exactly what's heard
   // (the AudioContext needs this user gesture to start)
   attachAudioAnalyser(video);
   resumeAudio();
-  video.play().catch(() => {});
+  // Optimistically clear the paused state so the play overlay never flashes
+  // under the fading gate; the play/pause events keep it honest if play() fails.
+  setPaused(false);
+  video.play().catch(() => setPaused(true));
   gate.classList.add("gone");
   showChrome();
   window.setTimeout(() => gate.remove(), 900);
