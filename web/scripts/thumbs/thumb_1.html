@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Caveat&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  .thumb {
+    position: relative;
+    width: 360px;
+    height: 360px;
+    overflow: hidden;
+    margin: 0;
+    background: linear-gradient(135deg, #f7f4ee 0%, #f1ede4 100%);
+  }
+  /* soft inner vignette, very subtle */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(120% 120% at 50% 42%, rgba(0,0,0,0) 58%, rgba(26,22,20,0.06) 100%);
+  }
+  /* faint film grain */
+  .grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: multiply;
+  }
+</style>
+</head>
+<body>
+  <div class="thumb">
+    <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- grain -->
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" result="n"/>
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0"/>
+        </filter>
+        <!-- arrowhead -->
+        <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="3.6" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#c25450"/>
+        </marker>
+      </defs>
+
+      <!-- ============ LEFT: the curly brace { = "a library you import" ============ -->
+      <!-- big Instrument-Serif brace, vertically centered, generous margin -->
+      <text x="78" y="208" font-family="'Instrument Serif', serif" font-size="248"
+            fill="#1a1614" stroke="#1a1614" stroke-width="1.4" paint-order="stroke"
+            text-anchor="middle" dominant-baseline="middle"
+            style="font-style:normal">{</text>
+
+      <!-- ============ CENTER: terracotta morph arrow (the transformation) ============ -->
+      <line x1="142" y1="180" x2="190" y2="180" stroke="#c25450" stroke-width="9"
+            stroke-linecap="round" marker-end="url(#arrowhead)"/>
+
+      <!-- ============ RIGHT: the OS window = "operating system" ============ -->
+      <!-- window body -->
+      <rect x="210" y="92" width="124" height="176" rx="16" ry="16"
+            fill="#fbf9f4" stroke="#d6cfc0" stroke-width="2"/>
+      <!-- titlebar fill -->
+      <path d="M210,108 a16,16 0 0 1 16,-16 h92 a16,16 0 0 1 16,16 v24 h-124 z"
+            fill="#f1ede4"/>
+      <!-- titlebar underline (hairline) -->
+      <line x1="210" y1="132" x2="334" y2="132" stroke="#e6e1d7" stroke-width="2"/>
+
+      <!-- three traffic-light dots: terracotta (hottest), ochre, green -->
+      <circle cx="234" cy="112" r="7.5" fill="#c25450"/>
+      <circle cx="258" cy="112" r="7.5" fill="#a26a2c"/>
+      <circle cx="282" cy="112" r="7.5" fill="#2f6b4c"/>
+
+      <!-- 2x2 app grid of rounded tiles: one terracotta-hot, rest muted -->
+      <!-- body spans x 210..334 (w124); tiles 42px, gap 10, pair x 225..319 (margins 15/15) -->
+      <!-- top-left tile = terracotta accent (the one hot tile) -->
+      <rect x="225" y="152" width="42" height="42" rx="11" ry="11" fill="#c25450"/>
+      <!-- top-right -->
+      <rect x="277" y="152" width="42" height="42" rx="11" ry="11" fill="#6b6660" opacity="0.9"/>
+      <!-- bottom-left -->
+      <rect x="225" y="208" width="42" height="42" rx="11" ry="11" fill="#6b6660" opacity="0.9"/>
+      <!-- bottom-right -->
+      <rect x="277" y="208" width="42" height="42" rx="11" ry="11" fill="#6b6660" opacity="0.9"/>
+    </svg>
+    <div class="vignette"></div>
+    <svg class="grain" width="360" height="360"><rect width="360" height="360" filter="url(#grain)"/></svg>
+  </div>
+</body>
+</html>

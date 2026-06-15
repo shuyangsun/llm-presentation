@@ -1793,55 +1793,132 @@ body.picker-on .langwrap {
   transform: none;
   pointer-events: auto;
 }
+/* .lang is the pill: it anchors the floating menu and carries the .flash pulse. */
 .lang {
   position: relative;
   display: inline-flex;
+}
+/* trigger pill — current label + globe + chevron; matches the page's pill family */
+.lang-trigger {
+  display: inline-flex;
   align-items: center;
+  gap: 7px;
+  margin: 0;
   border: 1px solid var(--hairline-strong);
   border-radius: 999px;
   background: var(--surface);
   box-shadow: var(--shadow-1);
-}
-/* custom chevron — the native select arrow is removed on .lang-select below */
-.lang::after {
-  content: "";
-  position: absolute;
-  right: 13px;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  margin-top: -4px;
-  border-right: 1.5px solid var(--fg-muted);
-  border-bottom: 1.5px solid var(--fg-muted);
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-.lang-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  margin: 0;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  padding: 7px 32px 7px 15px;
+  padding: 6px 12px 6px 11px;
   font-family: var(--font-mono);
   font-size: 12px;
+  line-height: 1;
   color: var(--fg);
   cursor: pointer;
-  transition: color var(--dur-micro);
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    border-color var(--dur-micro) var(--ease-out),
+    background var(--dur-micro) var(--ease-out);
 }
-.lang-select:hover {
+.lang-trigger:hover {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.lang-trigger[aria-expanded="true"] {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.lang-glyph {
+  width: 14px;
+  height: 14px;
+  opacity: 0.75;
+  flex: none;
+}
+.lang-label {
+  white-space: nowrap;
+}
+.lang-chevron {
+  width: 13px;
+  height: 13px;
+  margin-left: 1px;
+  opacity: 0.6;
+  flex: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.lang-trigger[aria-expanded="true"] .lang-chevron {
+  transform: rotate(180deg);
+  opacity: 0.85;
+}
+
+/* floating menu — a small frosted "Paper" card; hidden + non-interactive when closed.
+   The resting open & closed states are clean (closed: scale/translate only as a
+   transition origin; open: no leftover transform), so a mid-frame capture looks right. */
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  min-width: max(100%, 9.5rem);
+  padding: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: var(--shadow-2);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.97);
+  transform-origin: top right;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+.lang.open .lang-menu {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.1;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition:
+    background var(--dur-micro) var(--ease-out),
+    color var(--dur-micro) var(--ease-out);
+}
+.lang-option:hover,
+.lang-option.is-focus {
+  background: var(--accent-soft);
   color: var(--accent-ink);
 }
-.lang-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.lang-option.is-active {
+  color: var(--accent-ink);
 }
-/* the native popup list — themed where the platform honours it */
-.lang-select option {
-  color: var(--fg);
-  background: var(--surface);
+.lang-check {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--dur-micro) var(--ease-out),
+    transform var(--dur-micro) var(--ease-out);
+}
+.lang-option.is-active .lang-check {
+  opacity: 1;
+  transform: none;
+}
+.lang-option-label {
+  white-space: nowrap;
 }
 .lang.flash {
   animation: lang-flash 1.4s var(--ease-mirror);
@@ -1988,10 +2065,16 @@ body.chrome-active .helphint {
   .helphint {
     display: none;
   }
-  .lang-select {
+  .lang-trigger {
     font-size: 14px;
     min-height: 40px;
-    padding: 0 36px 0 16px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+  .lang-option {
+    font-size: 14px;
+    min-height: 40px;
+    padding: 0 12px;
   }
   .rec {
     font-size: 11px;

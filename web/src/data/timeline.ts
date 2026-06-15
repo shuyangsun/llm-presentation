@@ -34,7 +34,7 @@ export const CROP_DURATION = 3.0;
 
 export interface Chapter {
   t: number;
-  thumb: number; // index into /media/thumbs/thumb_<n>.jpg
+  thumb: number; // index into the CDN thumbs (generated art, see web/scripts/thumbs/)
   label: Record<Lang, string>;
 }
 
@@ -76,7 +76,7 @@ export const SKILLS_REPO = "https://github.com/shuyangsun/coding-agent-skills";
 export const SKILLS: SkillRef[] = [
   {
     name: "/retrieving-context",
-    href: `${SKILLS_REPO}/tree/main/.agents/skills/retrieving-context`,
+    href: `${SKILLS_REPO}/blob/main/.agents/skills/retrieving-context/SKILL.md`,
     blurb: {
       en: "Find prior context with RAG, not blind grep.",
       zh: "用 RAG 检索过往上下文，而不是盲目 grep。",
