@@ -15,14 +15,14 @@
      - and COLLECTS open-source FILE TOKENS. Each token is a real markdown/code file
        from the presenter's public repos (llm-presentation, coding-agent-skills, the
        AlphaZero projects, ...). Grabbing one teaches a fact about the talk and drops a
-       clickable GitHub link into the on-screen panel to open later. Controls + the
+       clickable GitHub link into the on-screen panel to open later. Controls and
        collected links live in the DOM (crisp text) over the pixel canvas.
 
    Two clocks, on purpose:
    - The GAME loop (run cycle, scrolling, spawns, jumps, collisions, score) runs on
      the wall-clock + player input — like any game, it is NOT rewound by scrubbing.
-     It auto-plays as an attract-mode demo (a tiny AI clears everything + collects) so
-     the stage is alive untouched, and hands control to the viewer the instant they press.
+     It waits for the first CLICK/J/K input, then runs live and may later fall back
+     to a tiny attract-mode AI so the stage recovers if abandoned.
    - The STORY beats stay a pure function of the playhead `t` (via phase(t,a,b)):
        intro   phase(t, 263.1, 264.5)  the scene fades in.
        fun     phase(t, 278.5, 280.8)  "make it fun, number one" — the washed-out
@@ -30,9 +30,10 @@
                                         spotlight lands on the director, the dash speeds up.
        retake  phase(t, 282.6, 284.3)  "if it's not fun, I'll ask you to redo it" — a flash.
 
-   Controls: CLICK or J = jump, K = duck (Space is free for the video). 3 LIVES — on the
-   third hit the director keels over with cute "X X" eyes; the collected links stay clickable
-   and ENTER restarts (it also auto-restarts after a while so the attract loop recovers).
+   Controls: J starts/jumps, K starts/ducks; after start, CLICK also jumps (Space is
+   free for the video). 3 LIVES — on the third hit the director keels over with cute
+   "X X" eyes; collect 5 file tokens to win. The collected links stay clickable and
+   ENTER restarts (it also auto-restarts after a while so the attract loop recovers).
    ============================================================================ */
 
 import type { Lang } from "../data/timeline";
@@ -108,6 +109,7 @@ const AUTO_AFTER = 4.0; // seconds of no input before the attract-mode AI takes 
 const JUMP_BUFFER = 0.13; // a press up to this long before landing still jumps
 const MAX_LIVES = 3; // hits before the director keels over
 const DEAD_AUTORESTART = 9; // seconds idle on the game-over screen before it self-restarts
+const WIN_FILES = 5; // file tokens needed to win the run
 
 /* --- pixel palette (warm + earthy, harmonised with the Paper theme) ------- */
 const PAL = {
@@ -148,15 +150,49 @@ type Token = { active: boolean; x: number; y: number; pop: number; link: number 
 
 /* ---- controller ----------------------------------------------------------- */
 
-export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: number): void; dispose(): void } {
+export function mountDirector3D(container: HTMLElement, lang: Lang): { tick(t: number): void; dispose(): void } {
+  const isZh = lang === "zh";
+  const copy = {
+    controls: isZh ? "游戏控制" : "Game controls",
+    jump: isZh ? "跳跃:" : "Jump:",
+    duck: isZh ? "下蹲:" : "Duck:",
+    click: isZh ? "点击" : "Click",
+    title: isZh ? "导演冲刺" : "Director's Dash",
+    start: isZh ? "按 J 或 K 开始" : "Press J or K to start",
+    jumpHint: isZh ? "跳跃" : "jump",
+    duckHint: isZh ? "下蹲" : "duck",
+    goal: isZh ? `收集 ${WIN_FILES} 份文档获胜` : `Collect ${WIN_FILES} docs to win`,
+    collected: isZh ? "已收集" : "collected",
+    toGo: isZh ? "还差" : "to go",
+    context: isZh ? "开源文档" : "open-source context",
+    gameOver: isZh ? "游戏结束" : "game over",
+    restart: isZh ? "按 Enter 重新开始 · 链接已保存 ↗" : "press Enter to restart · your links are saved ↗",
+    win: isZh ? "你赢了" : "you win",
+    winFiles: isZh ? `已收集 ${WIN_FILES} 份开源文档` : `${WIN_FILES} open-source files collected`,
+    reset: isZh ? "按 Enter 重置" : "press Enter to reset",
+  } as const;
+  const controls = document.createElement("div");
+  controls.className = "dg-controls";
+  controls.setAttribute("aria-label", "Director's Dash controls");
+  controls.innerHTML = `<span class="dg-controls-title">${copy.controls}</span><span class="dg-action">${copy.jump}</span><b>${copy.click}</b><span>/</span><b>J</b><span class="dg-sep">·</span><span class="dg-action">${copy.duck}</span><b>K</b><span class="dg-progress"></span>`;
+  const progressEl = controls.querySelector(".dg-progress");
+  const startOverlay = document.createElement("div");
+  startOverlay.className = "dg-start show";
+  startOverlay.innerHTML = `<div class="dg-start-card"><span>${copy.title}</span><b>${copy.start}</b><i><kbd>J</kbd> ${copy.jumpHint} · <kbd>K</kbd> ${copy.duckHint}</i><strong>${copy.goal}</strong><em></em></div>`;
+  const startProgressEl = startOverlay.querySelector("em");
+  const playfield = document.createElement("div");
+  playfield.className = "dg-playfield";
   const canvas = document.createElement("canvas");
   canvas.style.width = "100%";
   canvas.style.height = "100%";
   canvas.style.display = "block";
   canvas.style.imageRendering = "pixelated";
-  container.appendChild(canvas);
+  container.append(playfield);
+  playfield.appendChild(canvas);
   const ctx0 = canvas.getContext("2d");
   if (!ctx0) {
+    controls.remove();
+    playfield.remove();
     return { tick() {}, dispose() {} };
   }
   const ctx = ctx0; // narrowed to non-null; the alias stays non-null inside the draw closures
@@ -165,31 +201,43 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
   // a warm tint pulled from the theme so the accents track a future palette tweak
   const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || PAL.red;
 
-  /* --- DOM HUD over the canvas: controls hint, fact toast, collected links -- */
+  /* --- DOM HUD over the canvas: controls, lives, facts, collected links -- */
   const livesEl = document.createElement("div");
   livesEl.className = "dg-lives";
-  const hint = document.createElement("div");
-  hint.className = "dg-hint";
-  hint.innerHTML = `<b>click</b>/<b>J</b> jump<span>·</span><b>K</b> duck`;
   const toast = document.createElement("div");
   toast.className = "dg-toast";
   const panel = document.createElement("div");
   panel.className = "dg-links";
   const linksHead = document.createElement("div");
   linksHead.className = "dg-links-h";
-  linksHead.textContent = "open-source context";
+  linksHead.textContent = copy.context;
   const linksList = document.createElement("div");
   linksList.className = "dg-links-list";
   panel.append(linksHead, linksList);
   const restartEl = document.createElement("div");
   restartEl.className = "dg-restart";
-  restartEl.innerHTML = `<b>game over</b><span>press <b>Enter</b> to restart · your links are saved ↗</span>`;
-  container.append(livesEl, hint, toast, panel, restartEl);
+  restartEl.innerHTML = `<b>${copy.gameOver}</b><span>${copy.restart}</span>`;
+  const winEl = document.createElement("div");
+  winEl.className = "dg-win";
+  winEl.innerHTML = `<b>${copy.win}</b><span>${copy.winFiles}</span><i>${copy.reset}</i>`;
+  playfield.append(controls, startOverlay, livesEl, toast, panel, restartEl, winEl);
 
   const collected = new Set<number>();
   let toastHideAt = 0;
+  function progressText(): string {
+    const got = Math.min(runFiles, WIN_FILES);
+    const left = Math.max(0, WIN_FILES - got);
+    return isZh ? `${copy.collected} ${got}/${WIN_FILES} · ${copy.toGo} ${left}` : `${got}/${WIN_FILES} ${copy.collected} · ${left} ${copy.toGo}`;
+  }
+  function renderProgress() {
+    const text = progressText();
+    if (progressEl) progressEl.textContent = text;
+    if (startProgressEl) startProgressEl.textContent = text;
+  }
   function collect(li: number) {
+    if (won) return;
     score++;
+    runFiles++;
     const l = LINKS[li];
     if (!l) return;
     // fact toast (transient, non-interactive so it never eats a jump-click)
@@ -206,8 +254,10 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     a.title = `${l.repo}/${l.path} — ${l.fact}`;
     a.innerHTML = `<span class="dg-dot" style="background:${REPO_COLOR[l.repo]}"></span><span class="dg-name"><b>${linkFile(l)}</b><i>${l.repo}</i></span>`;
     linksList.append(a);
-    linksHead.textContent = `open-source context · ${collected.size}`;
+    linksHead.textContent = `${copy.context} · ${collected.size}`;
     panel.classList.add("has");
+    renderProgress();
+    if (runFiles >= WIN_FILES) triggerWin();
   }
 
   /* --- internal buffer + layout (recomputed on resize) ------------------ */
@@ -218,11 +268,10 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
   let spawnX = GW + 24;
   let despawnX = -32;
   let small = false;
-  let bulbCount = 12;
 
   function layout() {
-    const cw = Math.max(1, container.clientWidth);
-    const ch = Math.max(1, container.clientHeight);
+    const cw = Math.max(1, playfield.clientWidth);
+    const ch = Math.max(1, playfield.clientHeight);
     small = cw < 560;
     // fix a chunky pixel size (~4 screen-px), clamp the play height so a short
     // hero panel still has room for sky + ground.
@@ -236,52 +285,85 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     playerX = Math.round(Math.min(GW * 0.4, Math.max(34, GW * 0.26)));
     spawnX = GW + 24;
     despawnX = -36;
-    bulbCount = small ? 8 : 12;
   }
   const ro = new ResizeObserver(() => layout());
-  ro.observe(container);
+  ro.observe(playfield);
   layout();
 
   /* --- input: CLICK or J = jump, K = duck (Space stays free for the video) -- */
   const input = { jumpAt: -999, keyDuck: false, lastInput: -999 };
-  let hovering = false;
   let idle = 0; // wall-clock accumulator
+  let gameStarted = false;
   const markInput = () => (input.lastInput = idle);
+  const startGame = () => {
+    if (gameStarted || dead || won) return;
+    gameStarted = true;
+    startOverlay.classList.remove("show");
+    markInput();
+  };
+  const resetToStart = () => {
+    gameStarted = false;
+    input.jumpAt = -999;
+    input.keyDuck = false;
+    input.lastInput = -999;
+    startOverlay.classList.add("show");
+  };
+  const swallow = (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
-  const onDown = () => {
+  const onDown = (e: PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!gameStarted || dead || won) return;
     input.jumpAt = idle;
     markInput();
   };
-  const onEnter = () => (hovering = true);
-  const onLeave = () => {
-    hovering = false;
-    input.keyDuck = false;
+  const onClick = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
   const onKeyDown = (e: KeyboardEvent) => {
-    if (e.code === "Enter" && dead) {
-      restart();
+    if (e.code === "Enter" && (dead || won)) {
       e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      restart();
       return;
     }
-    if (!hovering || dead) return; // only while on the scene; no jump/duck while dead
+    if (dead) return; // no jump/duck while dead
     if (e.code === "KeyJ") {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      startGame();
       input.jumpAt = idle;
       markInput();
-      e.preventDefault();
     } else if (e.code === "KeyK") {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      startGame();
       input.keyDuck = true;
       markInput();
-      e.preventDefault();
     }
   };
   const onKeyUp = (e: KeyboardEvent) => {
+    if (e.code !== "KeyJ" && e.code !== "KeyK") return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
     if (e.code === "KeyK") input.keyDuck = false;
   };
-  canvas.addEventListener("pointerdown", onDown, { passive: true });
-  container.addEventListener("pointerenter", onEnter);
-  container.addEventListener("pointerleave", onLeave);
-  window.addEventListener("keydown", onKeyDown);
-  window.addEventListener("keyup", onKeyUp);
+  canvas.addEventListener("pointerdown", onDown);
+  canvas.addEventListener("click", onClick);
+  startOverlay.addEventListener("pointerdown", swallow);
+  startOverlay.addEventListener("click", swallow);
+  winEl.addEventListener("pointerdown", swallow);
+  winEl.addEventListener("click", swallow);
+  window.addEventListener("keydown", onKeyDown, { capture: true });
+  window.addEventListener("keyup", onKeyUp, { capture: true });
 
   /* --- game state ------------------------------------------------------- */
   const N_TURTLES = 6,
@@ -305,6 +387,8 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
   let tokenCd = 1.1;
   let linkCursor = 0; // spawn order through LINKS (prefers uncollected)
   let score = 0;
+  let runFiles = 0;
+  renderProgress();
   let stumble = 0; // collide/RETAKE wobble + slow-mo, decays
   let invuln = 0;
   let flashAmt = 0; // wall-clock flash (stomp / collide)
@@ -313,6 +397,8 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
   let lives = MAX_LIVES;
   let dead = false;
   let deathFall = 0; // 0..1 keel-over animation
+  let won = false;
+  let winCelebration = 0;
   const bulbLit = new Float32Array(16);
 
   function spawnObstacle(fun: number) {
@@ -368,8 +454,29 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     livesEl.innerHTML = s;
   }
   renderLives();
+  function clearLiveField() {
+    for (const tu of turtles) tu.active = false;
+    for (const m of memos) m.active = false;
+    for (const tk of tokens) tk.active = false;
+  }
+  function triggerWin() {
+    if (won) return;
+    won = true;
+    gameStarted = false;
+    input.jumpAt = -999;
+    input.keyDuck = false;
+    winCelebration = 0.001;
+    flashAmt = 0.9;
+    toast.classList.remove("show");
+    toastHideAt = 0;
+    clearLiveField();
+    startOverlay.classList.remove("show");
+    playfield.classList.add("is-won");
+    renderProgress();
+    winEl.classList.add("show");
+  }
   function loseLife() {
-    if (dead) return;
+    if (dead || won) return;
     lives--;
     renderLives();
     flashAmt = 0.7;
@@ -387,10 +494,13 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     renderLives();
     dead = false;
     deathFall = 0;
+    won = false;
+    winCelebration = 0;
+    runFiles = 0;
     restartEl.classList.remove("show");
-    for (const tu of turtles) tu.active = false;
-    for (const m of memos) m.active = false;
-    for (const tk of tokens) tk.active = false; // clear the live field; the COLLECTED links panel stays
+    winEl.classList.remove("show");
+    playfield.classList.remove("is-won");
+    clearLiveField(); // clear the live field; the COLLECTED links panel stays
     jy = 0;
     vy = 0;
     grounded = true;
@@ -400,7 +510,8 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     flashAmt = 0;
     spawnCd = 0.8;
     tokenCd = 1;
-    markInput();
+    renderProgress();
+    resetToStart();
   }
 
   // attract-mode AI: jump turtles, duck memos (so both controls are shown off),
@@ -630,18 +741,18 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
   }
 
   function drawMarquee(fun: number, dt: number) {
-    const lit = Math.min(score, bulbCount);
-    const span = Math.min(GW - 24, small ? 120 : 200);
+    const lit = Math.min(runFiles, WIN_FILES);
+    const span = Math.min(GW - 24, small ? 120 : 160);
     const x0 = Math.round((GW - span) / 2);
     const y = 6;
-    for (let i = 0; i < bulbCount; i++) {
-      const want = i < lit ? 0.4 + 0.6 * fun : 0.0;
+    for (let i = 0; i < WIN_FILES; i++) {
+      const want = i < lit ? 0.72 + 0.28 * fun : 0.0;
       bulbLit[i] = damp(bulbLit[i] ?? 0, want, 8, dt);
       const on = bulbLit[i] ?? 0;
-      const bx = Math.round(x0 + (span * i) / (bulbCount - 1));
-      R(bx - 1, y - 1, 4, 4, PAL.ink);
-      R(bx, y, 2, 2, on > 0.5 ? PAL.gold : PAL.creamSh);
-      if (on > 0.6) R(bx, y, 2, 1, PAL.cream);
+      const bx = Math.round(x0 + (span * i) / (WIN_FILES - 1));
+      R(bx - 2, y - 2, 6, 6, PAL.ink);
+      R(bx - 1, y - 1, 4, 4, on > 0.5 ? PAL.gold : PAL.creamSh);
+      if (on > 0.6) R(bx - 1, y - 1, 4, 1, PAL.cream);
     }
   }
 
@@ -659,6 +770,20 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     ctx.closePath();
     ctx.fill();
     ctx.globalAlpha = 1;
+  }
+
+  function drawWinCelebration() {
+    if (winCelebration <= 0) return;
+    const count = small ? 28 : 46;
+    const fall = winCelebration * 56;
+    for (let i = 0; i < count; i++) {
+      const x = Math.round(((i * 47 + Math.sin(winCelebration * 2.4 + i) * 18) % (GW + 24)) - 12);
+      const y = Math.round(((fall + i * 17) % (GH + 34)) - 24);
+      const w = i % 3 === 0 ? 4 : 2;
+      const h = i % 2 === 0 ? 2 : 4;
+      const color = i % 4 === 0 ? PAL.gold : i % 4 === 1 ? PAL.red : i % 4 === 2 ? PAL.cream : PAL.grass;
+      R(x, y, w, h, color);
+    }
   }
 
   let disposed = false;
@@ -680,12 +805,12 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     started = intro > 0.05; // the live loop runs only while the scene is on (reverses on scrub)
 
     /* --- choose control + advance the live game -------------------------- */
-    const manual = idle - input.lastInput < AUTO_AFTER;
+    const manual = gameStarted && idle - input.lastInput < AUTO_AFTER;
     if (!manual) stumble = 0; // the AI never inherits a manual crash's slow-mo
     const slowMo = 1 - 0.6 * smooth(stumble);
     const speed = RUN_SPEED * (1 + 0.5 * fun) * slowMo;
 
-    if (started && !dead) {
+    if (started && gameStarted && !dead && !won) {
       let wantJump: boolean;
       let wantDuck: boolean;
       if (manual) {
@@ -814,6 +939,7 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
       deathFall = Math.min(1, deathFall + dt * 3);
       if (idle - input.lastInput > DEAD_AUTORESTART) restart(); // recover the attract loop if abandoned
     }
+    if (won) winCelebration += dt;
 
     /* --- draw (back → front) --------------------------------------------- */
     ctx.clearRect(0, 0, GW, GH); // transparent sky → the paper page shows through
@@ -831,6 +957,10 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     wash((1 - fun) * 0.4, PAL.cream);
     // warm flashes (no particles): the fun crest, the RETAKE gag, a stomp/hit
     wash(clamp01(funBurst * (1 - funBurst) * 0.5 + retakePulse * 0.22 + flashAmt * 0.5), PAL.spot);
+    if (won) {
+      wash(0.12 + 0.08 * Math.sin(winCelebration * 7) ** 2, PAL.spot);
+      drawWinCelebration();
+    }
     // game over: a gentle dim behind the restart prompt
     if (dead) wash(0.26 * smooth(deathFall), "#241f1b");
     // intro fade-in (and fade the whole thing out on a backward scrub)
@@ -842,16 +972,21 @@ export function mountDirector3D(container: HTMLElement, _lang: Lang): { tick(t: 
     disposed = true;
     ro.disconnect();
     canvas.removeEventListener("pointerdown", onDown);
-    container.removeEventListener("pointerenter", onEnter);
-    container.removeEventListener("pointerleave", onLeave);
-    window.removeEventListener("keydown", onKeyDown);
-    window.removeEventListener("keyup", onKeyUp);
+    canvas.removeEventListener("click", onClick);
+    startOverlay.removeEventListener("pointerdown", swallow);
+    startOverlay.removeEventListener("click", swallow);
+    winEl.removeEventListener("pointerdown", swallow);
+    winEl.removeEventListener("click", swallow);
+    window.removeEventListener("keydown", onKeyDown, { capture: true });
+    window.removeEventListener("keyup", onKeyUp, { capture: true });
     livesEl.remove();
-    hint.remove();
+    controls.remove();
+    startOverlay.remove();
     toast.remove();
     panel.remove();
     restartEl.remove();
-    canvas.remove();
+    winEl.remove();
+    playfield.remove();
   }
 
   return { tick, dispose };

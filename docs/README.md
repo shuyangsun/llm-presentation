@@ -79,6 +79,7 @@ session, because early exports include duplicate numeric prefixes.
 - [Six bespoke 3D scenes session](transcripts/2026-06-14/0019-claude-more-3d-supporting-art-scenes.md) - records the shared `scene3d.ts` scaffold and the translate, sync, responsive, director, rag, and loop Three.js scene implementations.
 - [Repository documentation pass session](transcripts/2026-06-14/0020-codex-repository-doc-pass.md) - records the whole-repo documentation audit, session-memory indexing, export-transcript path realignment, retrieval-skill link fix, verification, and VCS integration request.
 - [Director's Dash pixel-art game session](transcripts/2026-06-14/0021-claude-director-dash-pixel-game.md) - records recasting the director scene (`web/src/engine/director3d.ts`) from a 3D spotlight stage into a 2D pixel-art platformer: J/K controls, necktie corporate-employee turtles, collectible open-source GitHub file links with facts about the talk, and a 3-lives death mechanic with cute "X X" eyes and Enter restart.
+- [Director Dash game controls session](transcripts/2026-06-14/0022-codex-director-game-controls.md) - records the J/K video-shortcut isolation, start overlay, five-document win condition, progress-square collection status, clickable win-screen docs list, visual/browser verification, transcript export, and VCS integration request.
 
 ## Coding Sessions
 
