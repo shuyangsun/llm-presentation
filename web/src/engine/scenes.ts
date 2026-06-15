@@ -300,9 +300,9 @@ function ragScene(lang: Lang): HTMLElement {
   // the RAG, don't just search for the string" — a 3D embedding-space constellation
   // of documents; a mouse-steered query probe pulls its nearest neighbours and the
   // beams converge to crystallise the answer. The crisp answer card stays in the DOM.
-  // The two named skills are NOT in the card here: rag3d draws each as an *edge*
-  // that scans random corpus-file nodes, then locks onto a node in the cloud and
-  // becomes a permanent link (one per `SKILL_AT`) — see mountRag3D.
+  // The two named skills are NOT in the card here: rag3d shows each as a link
+  // among the corpus nodes, anchored to a node in the cloud and fading in on its
+  // beat to stay (one per `SKILL_AT`) — see mountRag3D.
   if (REDUCE_MOTION || !webglAvailable()) return ragScene2D(lang);
   const root = el("div", "scene scene--rag scene--rag3d") as SceneNode;
   const stage = reveal(el("div", "rag-canvas")); // base 298.5

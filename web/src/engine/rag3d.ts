@@ -21,10 +21,11 @@
       mouse and a different neighbourhood lights up: that is "use the RAG".
       (Hovering a link hides these probe beams so the page is clean to click.)
 
-   3. SKILLS — the two named skills are DOM links whose curved edges scan the
-      labelled corpus nodes, then lock one-by-one onto a node in the centre cloud
-      as the narration names them (see the overlay below). The DOM answer card
-      resolves the model name on its own beat; there is no cloud convergence.
+   3. SKILLS — the two named skills are DOM links that sit among the corpus nodes
+      like the file labels do, each anchored to a node in the centre cloud. As the
+      narration names them they fade in one-by-one on their beat (see the overlay
+      below) — no pointer edges. The DOM answer card resolves the model name on its
+      own beat; there is no cloud convergence.
 
    Igloo.inc is the spirit (frosted volume, terracotta fresnel halo, warm
    particle glow) — palette warm Paper + terracotta, never icy blue. Glow is a
@@ -32,7 +33,7 @@
 
    Everything narrative is a pure function of the playhead `t` via phase(t,a,b),
    so scrubbing backward rewinds the galaxy and the skill reveals exactly;
-   makeClock() drives ONLY the idle twinkle/drift, the auto-orbit and edge scan. */
+   makeClock() drives ONLY the idle twinkle/drift and the auto-orbit. */
 
 import * as THREE from "three";
 import { createStage, palette, trackPointer, makeClock, phase, smooth, clamp01, damp, TAU } from "./scene3d";
@@ -42,9 +43,8 @@ import { SKILLS, SKILL_AT, CORPUS_FILES, type Lang } from "../data/timeline";
 const T_FORM_A = 298.5; // galaxy begins to fade/expand in
 const T_FORM_B = 300.2;
 
-// Each skill's edge stops scanning random corpus nodes, swings onto a node in the
-// cloud, and its DOM link goes permanently visible over this ramp — starting at
-// its SKILL_AT beat (imported; pinned to en.vtt, one skill at a time).
+// Each skill's DOM link fades in to stay at its cloud node over this ramp —
+// starting at its SKILL_AT beat (imported; pinned to en.vtt, one skill at a time).
 const SKILL_LOCK = 2.0;
 
 /* --- world layout -------------------------------------------------------- */
@@ -56,10 +56,12 @@ const R_THICK = 0.5; // embedding-space half-thickness (z)
 const K_NN = 5; // nearest neighbours lit per frame
 const MAX_LIT = K_NN; // beam segment budget = neighbours
 
-// Two document nodes parked in the dense centre — the "cloud" each named skill's
-// edge resolves onto (kept apart so their arrowheads don't coincide). World y is
-// up, x is right.
-const CLOUD = [new THREE.Vector3(-0.3, 0.18, 0.06), new THREE.Vector3(0.26, -0.07, -0.05)];
+// Two document nodes in the centre column — the "cloud" node each named skill's
+// link anchors to. They sit on their own vertical rows, clear of the file labels,
+// so nothing overlaps. Wide and narrow viewports get their own coordinates (the
+// file labels do too, below). World y is up, x is right.
+const CLOUD_WIDE = [new THREE.Vector3(-0.34, 0.18, 0.05), new THREE.Vector3(0.3, -0.36, -0.05)];
+const CLOUD_SMALL = [new THREE.Vector3(-0.1, 1.24, 0.05), new THREE.Vector3(-0.1, 0.08, -0.05)];
 
 /* ---- shaders ------------------------------------------------------------ */
 
@@ -168,8 +170,9 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
   const clock = makeClock();
   const tanH = Math.tan((FOV * Math.PI) / 360);
 
-  const P = small ? 1400 : 2600; // ambient corpus points
+  const P = small ? 850 : 1500; // ambient corpus points (fewer, slightly larger)
   const DOCS = small ? 22 : 30; // candidate "document" nodes
+  const CLOUD = small ? CLOUD_SMALL : CLOUD_WIDE; // chip anchor nodes for this viewport
 
   /* --- build the point field: corpus + documents in one THREE.Points ------ */
   const N = P + DOCS;
@@ -224,21 +227,46 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
   // docs 0,1 → the two cloud landing nodes (centre, slightly brighter).
   CLOUD.forEach((c, s) => placeDoc(s, c, 0.62));
 
-  // docs 2..2+NAMED-1 → the labelled open-source "corpus" nodes, spread on a loose
-  // ring so their file-name labels don't pile up (and away from the lower-left
-  // card). The emphasised file (rag3d.ts) is parked prominently up top, brighter.
+  // docs 2..2+NAMED-1 → the labelled open-source "corpus" nodes. The emphasised
+  // file (rag3d.ts) is parked prominently up top; the rest sit on explicit, well-
+  // separated vertical rows (alternating sides) so every long file-name label owns
+  // a clear horizontal band and none overlap — readability over a strict ring.
+  // Long names live on the left and grow rightward; the centre column is reserved
+  // for the two skill chips, and the lower-left stays open for the answer card.
+  // [x, y, z] in embedding space (y up), in CORPUS_FILES non-emphasis order. Wide
+  // viewports get two side columns; narrow ones stack into a single left column
+  // with bigger vertical gaps (the tall mobile frame squeezes the rows together).
+  const NAMED_POS: [number, number, number][] = small
+    ? [
+        [-1.3, 2.97, 0.1], //   0013 (long)
+        [-1.3, 2.39, -0.1], //  0018 (med)
+        [-1.3, 0.66, 0.12], //  brain_dump (short)
+        [-1.3, 1.82, 0.14], //  0017 (long)
+        [-1.3, -0.49, -0.08], // 0055 (longest)
+        [-1.3, -1.65, 0.1], //  0060 (med-long)
+        [-1.3, -1.07, -0.12], // README (short)
+      ]
+    : [
+        [-1.35, 1.05, 0.1], //  0013 (long)        — left,  upper
+        [1.28, 0.74, -0.1], //  0018 (med)         — right, upper
+        [1.4, -0.08, 0.12], //  brain_dump (short) — right, mid
+        [-1.18, 0.46, 0.14], // 0017 (long)        — left,  mid
+        [-1.3, -0.64, -0.08], // 0055 (longest)    — left,  lower
+        [1.05, -1.2, 0.1], //   0060 (med-long)    — right, bottom
+        [1.22, -0.92, -0.12], // README (short)    — right, lower
+      ];
   const NAMED = Math.min(CORPUS_FILES.length, DOCS - 3);
   const namedDoc: number[] = []; // doc-array indices that carry a label
+  let np = 0; // non-emphasis row counter (indexes NAMED_POS)
   for (let n = 0; n < NAMED; n++) {
     const d = 2 + n;
-    const emph = !!CORPUS_FILES[n].emphasis;
-    if (emph) {
-      placeDoc(d, new THREE.Vector3(-0.34, 1.04, 0.12), 0.95); // top-centre, bright
+    if (CORPUS_FILES[n].emphasis) {
+      const e = small ? new THREE.Vector3(-0.1, 3.55, 0.12) : new THREE.Vector3(-0.14, 1.38, 0.12);
+      placeDoc(d, e, 0.95); // top-centre, bright
     } else {
-      const ang = 0.62 + (n / NAMED) * TAU * 0.92; // ~340° arc, gap at lower-left
-      const rr = R_DISK * (0.8 + 0.16 * (((n * 7) % 5) / 4));
-      const z = (((n * 13) % 7) / 6 - 0.5) * R_THICK;
-      placeDoc(d, new THREE.Vector3(Math.cos(ang) * rr, Math.sin(ang) * rr * 0.82, z), 0.55);
+      const [x, y, z] = NAMED_POS[np % NAMED_POS.length];
+      placeDoc(d, new THREE.Vector3(x, y, z), 0.55);
+      np++;
     }
     namedDoc.push(d);
   }
@@ -258,8 +286,8 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
     uPixelRatio: { value: dpr },
     uForm: { value: 0 },
     uTime: { value: 0 },
-    uSizeBase: { value: small ? 9 : 12 },
-    uSizeLit: { value: small ? 20 : 26 },
+    uSizeBase: { value: small ? 11 : 15 },
+    uSizeLit: { value: small ? 24 : 31 },
     uCorpus: { value: pal.fgFaint.clone().lerp(pal.accent, 0.4) },
     uDoc: { value: pal.accent.clone().lerp(pal.paper, 0.18) },
     uHot: { value: hot },
@@ -335,21 +363,14 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
   const probe = makeGlow(small ? 34 : 44, pal.accent.clone());
   scene.add(probe.mesh);
 
-  /* --- DOM/SVG overlay: corpus-file labels + the two skill links -----------
+  /* --- DOM overlay: corpus-file labels + the two skill links ---------------
      The crisp type rides the DOM (matching the answer card), positioned each
-     frame by projecting world points to screen. The two skills are drawn as
-     curved SVG *edges*: before each skill is named its edge scans the labelled
-     corpus nodes (dashed, faint); at its SKILL_AT beat the edge locks onto a
-     node in the centre cloud and the link fades in to stay (one at a time).
-     Opacities are pure functions of the playhead, so scrubbing rewinds them. */
-  const SVGNS = "http://www.w3.org/2000/svg";
+     frame by projecting world points to screen. The two skills are pill-styled
+     links anchored to a node in the centre cloud (like the file labels); at its
+     SKILL_AT beat each one fades in to stay, one at a time. Opacities are pure
+     functions of the playhead, so scrubbing rewinds them. */
   const overlay = document.createElement("div");
   overlay.className = "rag-overlay";
-  const svg = document.createElementNS(SVGNS, "svg");
-  svg.setAttribute("class", "rag-edges");
-  svg.innerHTML =
-    '<defs><marker id="rag-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1 9 5 1 9z"/></marker></defs>';
-  overlay.appendChild(svg);
 
   // Hovering any overlay link calms the cloud: tick reads hoveredLinks to fade the
   // probe + k-NN beams, so the "other extending edges from the point cloud" don't
@@ -381,12 +402,10 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
     overlay.appendChild(a);
     return { el: a, d, emphasis: !!f.emphasis };
   });
-  const labelHi = new Float32Array(labelEls.length); // eased 0..1 scan highlight
 
-  // skill link chips, anchored at a fixed screen spot clear of the answer card
-  const tails = small
-    ? [{ fx: 0.5, fy: 0.12 }, { fx: 0.5, fy: 0.225 }]
-    : [{ fx: 0.8, fy: 0.3 }, { fx: 0.8, fy: 0.5 }];
+  // skill link chips — pill-styled links anchored to a node in the centre cloud,
+  // like the file labels. No pointer edge: each fades in at its node on its beat
+  // (see updateOverlay). The small ↗ marks it as an external link.
   const ARROW =
     '<svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
   const skillEls = SKILLS.map((sk, i) => {
@@ -401,26 +420,9 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
     }
     addHoverSuppress(link);
     overlay.appendChild(link);
-    const edge = document.createElementNS(SVGNS, "path") as SVGPathElement;
-    edge.setAttribute("class", "rag-edge");
-    edge.setAttribute("marker-end", "url(#rag-arrow)");
-    const dot = document.createElementNS(SVGNS, "circle") as SVGCircleElement;
-    dot.setAttribute("class", "rag-edge-src");
-    dot.setAttribute("r", "2.6");
-    svg.append(edge, dot);
-    const tail = tails[i] ?? tails[tails.length - 1];
     return {
       link,
-      edge,
-      dot,
-      tailFx: tail.fx,
-      tailFy: tail.fy,
-      cloud: CLOUD[i] ?? CLOUD[CLOUD.length - 1],
-      roam: (docPos[namedDoc[i] ?? 0] ?? CLOUD[0]).clone(), // damped edge head
-      halfW: sk.name.length * 4.1 + 24, // ~ half chip width in px (mono type)
-      halfH: 17,
-      bow: i % 2 === 0 ? 1 : -1, // curve sign so the two edges separate
-      scanIdx: -1, // which labelled node the edge currently scans (-1 = none)
+      cloud: CLOUD[i] ?? CLOUD[CLOUD.length - 1], // its node in the centre cloud
     };
   });
   container.appendChild(overlay);
@@ -436,81 +438,31 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
     };
   }
 
-  const tmpHead = new THREE.Vector3();
-  function updateOverlay(t: number, galaxy: number, clk: number, dt: number) {
+  function updateOverlay(t: number, galaxy: number) {
     const w = stage.size.w;
-    const h = stage.size.h;
     overlay.style.display = galaxy < 0.001 || w === 0 ? "none" : "block";
     if (galaxy < 0.001 || w === 0) return;
 
-    // --- the two skill edges + links ---
+    // --- the two skill links: each fades in at its centre-cloud node on its beat
+    // (same timing as before), sliding up a touch as it locks. No pointer edge. ---
     for (let i = 0; i < skillEls.length; i++) {
       const sk = skillEls[i];
       const lock = smooth(phase(t, SKILL_AT[i], SKILL_AT[i] + SKILL_LOCK)); // 0→1 reveal
-      // the edge/dot fade in a few seconds before the skill is named, scan, lock.
-      const present = smooth(phase(t, SKILL_AT[i] - 7, SKILL_AT[i] - 1.5));
-      const scanning = present > 0.4 && lock < 0.5;
-
-      // scan target cycles through the labelled nodes (idle, like the auto-orbit)
-      let scanIdx = -1;
-      if (labelEls.length) {
-        scanIdx = Math.floor(clk * 0.4 + i * 1.7) % labelEls.length;
-        if (scanIdx < 0) scanIdx += labelEls.length;
-      }
-      sk.scanIdx = scanning ? scanIdx : -1;
-      const scanPos = scanIdx >= 0 ? docPos[labelEls[scanIdx].d] : sk.cloud;
-
-      // head world: scan node (pre) → cloud node (post), damped for a smooth swing
-      tmpHead.copy(scanPos).lerp(sk.cloud, lock);
-      sk.roam.lerp(tmpHead, 1 - Math.exp(-(lock > 0.5 ? 11 : 5) * dt));
-
-      const tx = sk.tailFx * w;
-      const ty = sk.tailFy * h;
-      const head = toScreen(sk.roam);
-      const dx = head.x - tx;
-      const dy = head.y - ty;
-      const len = Math.hypot(dx, dy) || 1;
-      const ux = dx / len;
-      const uy = dy / len;
-      // start at the chip's edge along the head direction once locked; just off
-      // the source dot while scanning.
-      const rectGap = Math.min(sk.halfW / Math.max(1e-3, Math.abs(ux)), sk.halfH / Math.max(1e-3, Math.abs(uy)));
-      const startGap = 9 + (rectGap + 5 - 9) * lock;
-      const sx = tx + ux * startGap;
-      const sy = ty + uy * startGap;
-      const ex = head.x - ux * 9; // stop short so the arrowhead sits on the node
-      const ey = head.y - uy * 9;
-      const blen = Math.hypot(ex - sx, ey - sy) || 1;
-      const bow = sk.bow * Math.min(blen * 0.12, 44);
-      const cx = (sx + ex) / 2 + (-(ey - sy) / blen) * bow;
-      const cy = (sy + ey) / 2 + ((ex - sx) / blen) * bow;
-      sk.edge.setAttribute("d", `M${sx.toFixed(1)} ${sy.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`);
-      sk.edge.style.opacity = String(galaxy * present * (0.34 + 0.66 * lock) * (head.vis ? 1 : 0));
-      if (lock < 0.5) sk.edge.setAttribute("stroke-dasharray", "3 7");
-      else sk.edge.removeAttribute("stroke-dasharray");
-
-      sk.dot.setAttribute("cx", tx.toFixed(1));
-      sk.dot.setAttribute("cy", ty.toFixed(1));
-      sk.dot.style.opacity = String(galaxy * present * (1 - lock) * 0.8);
-
-      sk.link.style.left = `${tx.toFixed(1)}px`;
-      sk.link.style.top = `${ty.toFixed(1)}px`;
+      const s = toScreen(sk.cloud);
+      sk.link.style.left = `${s.x.toFixed(1)}px`;
+      sk.link.style.top = `${s.y.toFixed(1)}px`;
       sk.link.style.transform = `translate(-50%, -50%) translateY(${((1 - lock) * 9).toFixed(1)}px)`;
-      sk.link.style.opacity = String(lock);
-      sk.link.style.pointerEvents = lock > 0.6 ? "auto" : "none";
+      sk.link.style.opacity = String(s.vis ? lock : 0);
+      sk.link.style.pointerEvents = lock > 0.6 && s.vis ? "auto" : "none";
     }
 
     // --- corpus-file labels: steady, readable LINKS (they never fade out — the
-    // cloud no longer converges), lifted a touch while a skill scans them; the
-    // emphasised rag3d.ts sits brightest. pointer-events off while ~invisible. ---
+    // cloud no longer converges); the emphasised rag3d.ts sits brightest.
+    // pointer-events off while ~invisible. ---
     for (let n = 0; n < labelEls.length; n++) {
       const { el, d, emphasis } = labelEls[n];
       const s = toScreen(docPos[d]);
-      let hot = 0;
-      for (const sk of skillEls) if (sk.scanIdx === n) hot = 1;
-      labelHi[n] = damp(labelHi[n], hot, hot > labelHi[n] ? 9 : 4, dt);
-      const b = emphasis ? 0.95 : 0.52;
-      const op = s.vis ? galaxy * (b + (1 - b) * labelHi[n]) : 0;
+      const op = s.vis ? galaxy * (emphasis ? 0.95 : 0.66) : 0;
       // grow each label toward the side with room so long file names don't clip
       // off the edge (nodes in the right zone flip their text to the left).
       const flip = s.x > w * 0.6;
@@ -606,7 +558,7 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
     // during the idle auto-orbit, hover lifts it, link-hover fades it right out.
     beamU.uAlpha.value = form * 0.7 * (0.72 + 0.28 * smooth(hover)) * (1 - beamSuppress);
 
-    // the two centre "cloud" nodes (docs 0,1) brighten as their skill edge locks on
+    // the two centre "cloud" nodes (docs 0,1) brighten as their skill link locks on
     for (let i = 0; i < SKILL_AT.length && i < CLOUD.length; i++) {
       const lock = smooth(phase(t, SKILL_AT[i], SKILL_AT[i] + SKILL_LOCK)) * 0.95;
       const gi = docIndex[i];
@@ -626,8 +578,8 @@ export function mountRag3D(container: HTMLElement, lang: Lang): { tick(t: number
     }
     if (dirty) litAttr.needsUpdate = true;
 
-    // --- DOM overlay: corpus-file links + the two skill edges/links ---
-    updateOverlay(t, clamp01(form), clk, dt);
+    // --- DOM overlay: corpus-file links + the two skill links ---
+    updateOverlay(t, clamp01(form));
 
     stage.render();
   }

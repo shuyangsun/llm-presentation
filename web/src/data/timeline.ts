@@ -76,7 +76,7 @@ export const SKILLS_REPO = "https://github.com/shuyangsun/coding-agent-skills";
 export const SKILLS: SkillRef[] = [
   {
     name: "/retrieving-context",
-    href: `${SKILLS_REPO}/tree/main/.agents/skills/retrieving-context`,
+    href: `${SKILLS_REPO}/blob/main/.agents/skills/retrieving-context/SKILL.md`,
     blurb: {
       en: "Find prior context with RAG, not blind grep.",
       zh: "用 RAG 检索过往上下文，而不是盲目 grep。",
@@ -123,6 +123,8 @@ export const CORPUS_FILES: CorpusFile[] = [
   // complex session transcripts (this presentation + the skills/RAG work)
   { label: "0013-claude-interactive-presentation-prototype.md", href: `${GH}/llm-presentation/blob/main/docs/transcripts/2026-06-13/0013-claude-interactive-presentation-prototype.md` },
   { label: "0018-claude-3d-asr-supporting-art.md", href: `${GH}/llm-presentation/blob/main/docs/transcripts/2026-06-14/0018-claude-3d-asr-supporting-art.md` },
+  // the live subtitles of THIS very talk — the raw transcript being retrieved.
+  { label: "brain_dump_20260611.vtt", href: `${GH}/llm-presentation/blob/main/docs/subtitles/brain_dump_20260611.vtt` },
   { label: "0017-codex-vcs-script-first-jj-workspaces.md", href: `${GH}/coding-agent-skills/blob/main/docs/transcripts/2026-06-07/0017-codex-vcs-script-first-jj-workspaces.md` },
   { label: "0055-claude-wave4-contextual-retrieval-generator-comparison.md", href: `${GH}/coding-agent-skills/blob/main/docs/transcripts/2026-06-10/0055-claude-wave4-contextual-retrieval-generator-comparison.md` },
   { label: "0060-codex-rag-wave7-answer-faithfulness.md", href: `${GH}/coding-agent-skills/blob/main/docs/transcripts/2026-06-12/0060-codex-rag-wave7-answer-faithfulness.md` },

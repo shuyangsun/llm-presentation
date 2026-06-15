@@ -865,35 +865,15 @@ body.deck-on .wordmark {
   -webkit-backdrop-filter: blur(7px);
 }
 
-/* rag overlay — corpus-file node labels + the two skill links whose curved edges
-   point at graph nodes. left/top/transform/opacity are set by rag3d.ts each frame
-   (it projects world points to screen); the rules here are just look + layering. */
+/* rag overlay — corpus-file node labels + the two skill links, all anchored to
+   graph nodes. left/top/transform/opacity are set by rag3d.ts each frame (it
+   projects world points to screen); the rules here are just look + layering. */
 .scene--rag3d .rag-overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
   overflow: hidden;
   pointer-events: none; /* the canvas keeps the probe interaction; links opt back in */
-}
-.scene--rag3d .rag-edges {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  pointer-events: none; /* edges are decorative; only the links capture hover */
-}
-.scene--rag3d .rag-edge {
-  fill: none;
-  stroke: var(--accent-ink);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-.scene--rag3d .rag-edges #rag-arrow path {
-  fill: var(--accent);
-}
-.scene--rag3d .rag-edge-src {
-  fill: var(--accent-ink);
 }
 .scene--rag3d .rag-node-label {
   position: absolute;
@@ -903,8 +883,8 @@ body.deck-on .wordmark {
   flex-direction: column;
   gap: 2px;
   font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.1;
+  font-size: 13px;
+  line-height: 1.15;
   letter-spacing: 0.01em;
   white-space: nowrap;
   color: var(--fg-muted);
@@ -929,7 +909,7 @@ body.deck-on .wordmark {
 }
 /* the emphasised node — rag3d.ts, the source code of this very animation */
 .scene--rag3d .rag-node-label--src {
-  font-size: 13.5px;
+  font-size: 15.5px;
   z-index: 1;
 }
 .scene--rag3d .rag-node-label--src .nl-name {
@@ -937,20 +917,26 @@ body.deck-on .wordmark {
   font-weight: 500;
 }
 .scene--rag3d .rag-node-label--src .nl-tag {
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.05em;
   color: var(--fg-muted);
   opacity: 0.9;
 }
 @media (max-width: 760px) {
   .scene--rag3d .rag-node-label {
-    font-size: 9.5px;
+    font-size: 11.5px;
   }
   .scene--rag3d .rag-node-label--src {
-    font-size: 12px;
+    font-size: 14px;
   }
   .scene--rag3d .rag-node-label--src .nl-tag {
-    font-size: 8.5px;
+    font-size: 10px;
+  }
+  /* slimmer chips so all the rows clear the bottom answer card on a tall phone */
+  .scene--rag3d .rag-skill {
+    font-size: 12px;
+    padding: 6px 11px;
+    gap: 6px;
   }
 }
 .scene--rag3d .rag-skill {
