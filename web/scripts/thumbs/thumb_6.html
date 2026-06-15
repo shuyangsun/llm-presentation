@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  .thumb {
+    width: 360px;
+    height: 360px;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    background: linear-gradient(180deg, #fbf9f4 0%, #f4efe6 52%, #b27a4f 78%, #92603c 100%);
+  }
+  .thumb svg {
+    position: absolute;
+    inset: 0;
+    width: 360px;
+    height: 360px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    shape-rendering: crispEdges;
+  }
+  .vig {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(120% 110% at 50% 42%, rgba(0,0,0,0) 58%, rgba(43,39,34,0.16) 100%);
+  }
+</style>
+</head>
+<body>
+<div class="thumb">
+  <!-- Logical 30x30 grid, scaled x12 -> 360px. crispEdges keeps nearest-neighbour blocks. -->
+  <svg viewBox="0 0 30 30" shape-rendering="crispEdges">
+    <!-- ================= SKY (warm cream paper, baked as flat bands for blocky feel) ================= -->
+    <rect x="0" y="0" width="30" height="30" fill="#fbf9f4"/>
+    <rect x="0" y="6" width="30" height="6" fill="#f7f2e9"/>
+    <rect x="0" y="12" width="30" height="6" fill="#f4efe6"/>
+
+    <!-- ================= GOLD STAR / MARQUEE SPARKLE (upper-left) ================= -->
+    <!-- chunky 4-point pixel star -->
+    <g>
+      <rect x="4" y="1" width="2" height="6" fill="#e7b743"/>
+      <rect x="2" y="3" width="6" height="2" fill="#e7b743"/>
+      <rect x="3" y="2" width="4" height="4" fill="#e7b743"/>
+      <rect x="4" y="3" width="2" height="2" fill="#fff0c4"/>
+      <!-- tiny twinkle dot -->
+      <rect x="9" y="5" width="1" height="1" fill="#e7b743"/>
+    </g>
+    <!-- a second small gold sparkle, upper-right, for balance -->
+    <g>
+      <rect x="25" y="3" width="1" height="3" fill="#e7b743"/>
+      <rect x="24" y="4" width="3" height="1" fill="#e7b743"/>
+    </g>
+
+    <!-- ================= GROUND BAND: grass over dirt with darker seam ================= -->
+    <!-- dirt body -->
+    <rect x="0" y="24" width="30" height="6" fill="#b27a4f"/>
+    <rect x="0" y="27" width="30" height="3" fill="#92603c"/>
+    <!-- grass strip -->
+    <rect x="0" y="22" width="30" height="2" fill="#8c9a52"/>
+    <!-- darker seam line under grass -->
+    <rect x="0" y="24" width="30" height="1" fill="#6f7e40"/>
+    <!-- grass blade dither (top edge texture) -->
+    <rect x="2" y="21" width="1" height="1" fill="#8c9a52"/>
+    <rect x="6" y="21" width="1" height="1" fill="#8c9a52"/>
+    <rect x="11" y="21" width="1" height="1" fill="#8c9a52"/>
+    <rect x="18" y="21" width="1" height="1" fill="#8c9a52"/>
+    <rect x="23" y="21" width="1" height="1" fill="#8c9a52"/>
+    <rect x="27" y="21" width="1" height="1" fill="#8c9a52"/>
+    <!-- dirt pebble specks -->
+    <rect x="5" y="26" width="1" height="1" fill="#92603c"/>
+    <rect x="20" y="25" width="1" height="1" fill="#92603c"/>
+    <rect x="26" y="26" width="1" height="1" fill="#9c6a40"/>
+
+    <!-- ================= HERO: CLAPPERBOARD DIRECTOR SPRITE ================= -->
+    <!-- centred ~x9..x21 (12px wide), standing on grass top (y=22). Body 14 tall. -->
+
+    <!-- legs -->
+    <rect x="11" y="20" width="2" height="2" fill="#3a3530"/>
+    <rect x="17" y="20" width="2" height="2" fill="#3a3530"/>
+    <rect x="11" y="21" width="3" height="1" fill="#2b2722"/>
+    <rect x="17" y="21" width="3" height="1" fill="#2b2722"/>
+
+    <!-- body: ink outline then slate fill -->
+    <rect x="9" y="9" width="12" height="11" fill="#2b2722"/>
+    <rect x="10" y="10" width="10" height="9" fill="#3a3530"/>
+    <!-- top highlight -->
+    <rect x="10" y="10" width="10" height="1" fill="#55504a"/>
+
+    <!-- two cream square eyes -->
+    <rect x="12" y="13" width="2" height="2" fill="#f4efe6"/>
+    <rect x="16" y="13" width="2" height="2" fill="#f4efe6"/>
+    <!-- pupils for a touch of life -->
+    <rect x="13" y="14" width="1" height="1" fill="#2b2722"/>
+    <rect x="17" y="14" width="1" height="1" fill="#2b2722"/>
+
+    <!-- cream smile -->
+    <rect x="13" y="17" width="1" height="1" fill="#f4efe6"/>
+    <rect x="14" y="18" width="2" height="1" fill="#f4efe6"/>
+    <rect x="16" y="17" width="1" height="1" fill="#f4efe6"/>
+
+    <!-- ===== HINGED CLAPPER LID on top, tilted up-right (the recognizable silhouette) ===== -->
+    <!-- The lid is a thin slab above the body, angled: left end lower, right end higher.
+         Built as stepped rows of diagonal cream/red stripes with an ink hinge + outline. -->
+
+    <!-- ink hinge peg at left -->
+    <rect x="8" y="8" width="2" height="3" fill="#2b2722"/>
+
+    <!-- lid as a chunky 3-tall diagonal slab rising up-right, ink-outlined.
+         Stripe cells are 2px wide so cream/red alternation reads at 118px. -->
+
+    <!-- ink outline (one px fatter all around the stripe band) -->
+    <rect x="9"  y="6" width="4" height="4" fill="#2b2722"/>
+    <rect x="11" y="5" width="4" height="4" fill="#2b2722"/>
+    <rect x="13" y="4" width="4" height="4" fill="#2b2722"/>
+    <rect x="15" y="3" width="4" height="4" fill="#2b2722"/>
+    <rect x="17" y="2" width="5" height="4" fill="#2b2722"/>
+
+    <!-- bold 2px diagonal stripes, cream + terracotta alternating -->
+    <!-- segment 1 (cream) -->
+    <rect x="9"  y="7" width="2" height="2" fill="#f4efe6"/>
+    <!-- segment 2 (red) -->
+    <rect x="11" y="6" width="2" height="2" fill="#c25450"/>
+    <!-- segment 3 (cream) -->
+    <rect x="13" y="5" width="2" height="2" fill="#f4efe6"/>
+    <!-- segment 4 (red) -->
+    <rect x="15" y="4" width="2" height="2" fill="#c25450"/>
+    <!-- segment 5 (cream) -->
+    <rect x="17" y="3" width="2" height="2" fill="#f4efe6"/>
+    <!-- segment 6 (red tip) -->
+    <rect x="19" y="3" width="2" height="2" fill="#c25450"/>
+
+    <!-- thin ink line where lid meets body (the clap edge) -->
+    <rect x="9" y="9" width="11" height="1" fill="#2b2722"/>
+
+    <!-- soft contact shadow on grass under sprite -->
+    <rect x="10" y="22" width="10" height="1" fill="#6f7e40"/>
+  </svg>
+  <div class="vig"></div>
+</div>
+</body>
+</html>

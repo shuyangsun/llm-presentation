@@ -34,7 +34,7 @@ export const CROP_DURATION = 3.0;
 
 export interface Chapter {
   t: number;
-  thumb: number; // index into /media/thumbs/thumb_<n>.jpg
+  thumb: number; // index into the CDN thumbs (generated art, see web/scripts/thumbs/)
   label: Record<Lang, string>;
 }
 

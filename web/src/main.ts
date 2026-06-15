@@ -24,6 +24,9 @@ let manualLang: Lang | null = null; // set once the viewer picks a language
 const REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const VIDEO_SRC = "https://cdn.shuyangsun.com/videos/001_intro.v2.webm";
 const VIDEO_POSTER = "https://cdn.shuyangsun.com/videos/001_intro.poster.v1.jpg";
+// Progress-bar section thumbnails (generated art, one per chapter) — CDN-hosted
+// like the video/poster; sources + render script live in web/scripts/thumbs/.
+const THUMB_BASE = "https://cdn.shuyangsun.com/images/thumbs";
 const LIVE_AUDIO_ANALYSER_ENABLED = false;
 
 /* --- tiny DOM helper ----------------------------------------------------- */
@@ -46,7 +49,167 @@ const ICON = {
   fsIn: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM6 15v3h3v2H4v-5h2zm12 0h2v5h-5v-2h3v-3z"/></svg>',
   fsOut: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 9H4V4h5v2H6v3zm9-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg>',
   loop: '<svg class="loop" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" stroke-dasharray="58 18"/></svg>',
+  // a small globe glyph for the language trigger; soft, line-art, on-brand
+  globe:
+    '<svg class="lang-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.4 3.8 5.5 3.8 9s-1.3 6.6-3.8 9c-2.5-2.4-3.8-5.5-3.8-9S9.5 5.4 12 3z"/></svg>',
+  // the chevron in the trigger; rotates 180° via .lang-trigger[aria-expanded="true"]
+  chevron:
+    '<svg class="lang-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg>',
+  // the active-option marker — a soft terracotta check
+  check:
+    '<svg class="lang-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-6.5"/></svg>',
 };
+
+/* ============================================================================
+   Language picker — a bespoke, on-brand replacement for the native <select>.
+   ----------------------------------------------------------------------------
+   A pill trigger (current label + globe + chevron) that opens a small frosted
+   "Paper" card listing the two languages, with a terracotta active marker, full
+   ARIA listbox semantics, and keyboard support. It is deliberately framework-free
+   and self-contained so it can drop into the existing DOM-helper world.
+
+   The factory returns three things the rest of main.ts wires up:
+     • wrap     — the .langwrap element body.picker-on reveals (replaces langWrap)
+     • flashEl  — the .lang pill that gets the .flash confirmation pulse (langPick)
+     • setValue — reflects a language WITHOUT firing onChange, so applyLang can keep
+                  the control in two-way sync with the live site language.
+   onChange(lang) fires only on a genuine user pick → wired to setLang().
+   ============================================================================ */
+type LangPicker = { wrap: HTMLDivElement; flashEl: HTMLDivElement; setValue: (lang: Lang) => void };
+function createLangPicker(onChange: (lang: Lang) => void): LangPicker {
+  const LANGS: { value: Lang; label: string }[] = [
+    { value: "en", label: "English" },
+    { value: "zh", label: "简体中文" },
+  ];
+
+  let current: Lang = "en";
+  let open = false;
+
+  // trigger pill — a real <button> for SR/keyboard; matches the existing pill family
+  const triggerLabel = h("span", { class: "lang-label" }, LANGS[0].label);
+  const trigger = h(
+    "button",
+    {
+      type: "button",
+      class: "lang-trigger",
+      "aria-label": "Language",
+      "aria-haspopup": "listbox",
+      "aria-expanded": "false",
+    },
+  );
+  trigger.innerHTML = ICON.globe;
+  trigger.append(triggerLabel);
+  trigger.insertAdjacentHTML("beforeend", ICON.chevron);
+
+  // floating menu — a frosted Paper card; role=listbox over role=option rows
+  const menu = h("div", { class: "lang-menu", role: "listbox", "aria-label": "Language", tabindex: "-1" });
+  const options = LANGS.map(({ value, label }) => {
+    const opt = h("div", { class: "lang-option", role: "option", "data-value": value, "aria-selected": "false" });
+    opt.insertAdjacentHTML("beforeend", ICON.check); // marker (shown only when selected)
+    opt.append(h("span", { class: "lang-option-label" }, label));
+    return opt;
+  });
+  menu.append(...options);
+
+  // .lang is the pill that flashes; it wraps the trigger + the (absolutely-placed) menu
+  const flashEl = h("div", { class: "lang" }, trigger, menu);
+  const wrap = h("div", { class: "langwrap" }, flashEl);
+
+  /** Paint the selected state across the trigger label and the option markers. */
+  function reflect(lang: Lang) {
+    current = lang;
+    const match = LANGS.find((l) => l.value === lang) ?? LANGS[0];
+    triggerLabel.textContent = match.label;
+    options.forEach((opt) => {
+      const sel = opt.getAttribute("data-value") === lang;
+      opt.setAttribute("aria-selected", sel ? "true" : "false");
+      opt.classList.toggle("is-active", sel);
+    });
+  }
+
+  /** Visually focus an option (keyboard navigation) without changing selection. */
+  let activeIndex = 0;
+  function focusOption(i: number) {
+    activeIndex = (i + options.length) % options.length;
+    options.forEach((opt, idx) => opt.classList.toggle("is-focus", idx === activeIndex));
+    options[activeIndex].scrollIntoView({ block: "nearest" });
+  }
+
+  function openMenu() {
+    if (open) return;
+    open = true;
+    flashEl.classList.add("open");
+    trigger.setAttribute("aria-expanded", "true");
+    // start keyboard focus on the currently-selected option
+    focusOption(Math.max(0, options.findIndex((o) => o.getAttribute("data-value") === current)));
+    document.addEventListener("pointerdown", onDocPointer, true);
+    document.addEventListener("keydown", onDocKey, true);
+  }
+  function closeMenu(returnFocus = false) {
+    if (!open) return;
+    open = false;
+    flashEl.classList.remove("open");
+    trigger.setAttribute("aria-expanded", "false");
+    options.forEach((opt) => opt.classList.remove("is-focus"));
+    document.removeEventListener("pointerdown", onDocPointer, true);
+    document.removeEventListener("keydown", onDocKey, true);
+    if (returnFocus) trigger.focus();
+  }
+
+  /** Commit a user pick: close, then fire onChange only if it actually changed. */
+  function pick(lang: Lang) {
+    const changed = lang !== current;
+    closeMenu(true);
+    if (changed) onChange(lang); // → setLang → applyLang → setValue reflects it back
+  }
+
+  // click-outside / Esc / Tab all close; clicks inside are handled by the rows
+  function onDocPointer(e: PointerEvent) {
+    if (!flashEl.contains(e.target as Node)) closeMenu();
+  }
+  function onDocKey(e: KeyboardEvent) {
+    if (!open) return;
+    switch (e.key) {
+      case "Escape":
+        e.preventDefault();
+        closeMenu(true);
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        focusOption(activeIndex + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        focusOption(activeIndex - 1);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        pick(LANGS[activeIndex].value);
+        break;
+      case "Tab":
+        closeMenu(); // let focus move on naturally
+        break;
+    }
+  }
+
+  // trigger: toggle on click; Enter/Space/ArrowDown open (native button fires click
+  // on Enter/Space, so we only special-case ArrowDown here to open + step in)
+  trigger.addEventListener("click", () => (open ? closeMenu() : openMenu()));
+  trigger.addEventListener("keydown", (e) => {
+    if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      openMenu();
+    }
+  });
+
+  options.forEach((opt) =>
+    opt.addEventListener("click", () => pick(opt.getAttribute("data-value") as Lang)),
+  );
+
+  reflect("en");
+  return { wrap, flashEl, setValue: reflect };
+}
 
 /* ============================================================================
    Build the scaffold
@@ -87,19 +250,19 @@ const wordmark = h("div", { class: "wordmark interactive" });
 wordmark.innerHTML = ICON.loop;
 wordmark.append(h("div", {}, wmTitle, h("br"), wmSub));
 
-/* language picker — a drop-down beside the title. It appears on its own scripted
-   beat (BEATS.picker, via the body.picker-on flag) and then persists, since it now
-   lives next to the always-on title rather than in the bottom chrome. It stays in
-   two-way sync with the live site language: picking an option flips the site (and
-   the 3D translate scene, which reads data-lang); the scene flipping it updates
-   the drop-down back — both directions funnel through setLang → applyLang. */
-const langSelect = h("select", { class: "lang-select", "aria-label": "Language" });
-langSelect.append(
-  Object.assign(document.createElement("option"), { value: "en", textContent: "English" }),
-  Object.assign(document.createElement("option"), { value: "zh", textContent: "简体中文" }),
-);
-const langPick = h("div", { class: "lang" }, langSelect);
-const langWrap = h("div", { class: "langwrap" }, langPick);
+/* language picker — a bespoke drop-down beside the title. It appears on its own
+   scripted beat (BEATS.picker, via the body.picker-on flag) and then persists, since
+   it now lives next to the always-on title rather than in the bottom chrome. It stays
+   in two-way sync with the live site language: picking an option flips the site (and
+   the 3D translate scene, which reads data-lang); the scene flipping it updates the
+   drop-down back — both directions funnel through setLang → applyLang. Rather than a
+   native <select> dropping the OS menu, this is a small frosted "Paper" card built to
+   match the rest of the deck. createLangPicker returns { wrap, flashEl, setValue }:
+   wrap is what body.picker-on reveals, flashEl is the pill that pulses on a manual
+   pick, and setValue lets applyLang reflect the live language without firing onChange. */
+const langPicker = createLangPicker((next) => setLang(next));
+const langWrap = langPicker.wrap; // the .langwrap revealed by body.picker-on
+const langPick = langPicker.flashEl; // the pill element that gets the .flash pulse
 wordmark.append(langWrap);
 
 const sceneStage = h("div", { class: "scene-stage" });
@@ -441,8 +604,9 @@ function applyLang() {
   recText.textContent = STRINGS.rec[lang];
   gateHint.textContent = STRINGS.playHint[lang];
   // keep the drop-down in sync whenever the language changes from anywhere — the
-  // scripted flip, the 3D translate scene, or a manual pick (two-way sync).
-  langSelect.value = lang;
+  // scripted flip, the 3D translate scene, or a manual pick (two-way sync). setValue
+  // only reflects the displayed label/selection; it does not re-fire onChange.
+  langPicker.setValue(lang);
   renderPrompter(video.currentTime || 0, true);
   if (sceneIndex >= 0) {
     // Prefer an in-place language update when the active scene supports one (the
@@ -469,7 +633,8 @@ function setLang(next: Lang) {
   void langPick.offsetWidth;
   langPick.classList.add("flash");
 }
-langSelect.addEventListener("change", () => setLang(langSelect.value as Lang));
+// Selection is wired through createLangPicker's onChange callback (→ setLang above);
+// there is no native <select> change event to listen for anymore.
 
 // The 3D translate scene flips the whole site language when you drag the word
 // across the glass — cursor on the left → English, on the right → 中文.
@@ -561,7 +726,7 @@ bar.addEventListener("pointermove", (e) => {
     const t = ratio * duration;
     const ci = chapterIndexAt(t);
     barTip.style.left = `${ratio * 100}%`;
-    tipThumb.src = `/media/thumbs/thumb_${CHAPTERS[ci].thumb}.jpg`;
+    tipThumb.src = `${THUMB_BASE}/thumb_${CHAPTERS[ci].thumb}.webp`;
     tipTime.textContent = fmt(t);
     tipChapter.textContent = CHAPTERS[ci].label[lang];
   }

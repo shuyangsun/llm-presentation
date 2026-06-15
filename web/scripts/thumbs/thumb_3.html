@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  .thumb {
+    width: 360px;
+    height: 360px;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    background: linear-gradient(160deg, #faf7f1 0%, #f7f4ee 55%, #f1ebe2 100%);
+  }
+  .thumb svg { display: block; width: 360px; height: 360px; }
+</style>
+</head>
+<body>
+<div class="thumb">
+  <svg viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- frosted glass body fill: dusty rose with vertical fade -->
+      <linearGradient id="glassBody" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#fff5ea"/>
+        <stop offset="14%" stop-color="#e7c2b8"/>
+        <stop offset="55%" stop-color="#dcb3ac"/>
+        <stop offset="100%" stop-color="#d3a59d"/>
+      </linearGradient>
+      <!-- side face of slab (darker, in shadow for 3/4 read) -->
+      <linearGradient id="glassSide" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#e2bbb1"/>
+        <stop offset="100%" stop-color="#c79b91"/>
+      </linearGradient>
+      <!-- soft vignette -->
+      <radialGradient id="vig" cx="50%" cy="44%" r="72%">
+        <stop offset="0%"  stop-color="#000000" stop-opacity="0"/>
+        <stop offset="78%" stop-color="#000000" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#5b4a3e" stop-opacity="0.07"/>
+      </radialGradient>
+      <!-- particle haze blur for the rain -->
+      <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="0.5"/>
+      </filter>
+    </defs>
+
+    <!-- ======== WAVEFORM ROW (top ~40%) ========
+         Each bar: a front face (parallelogram-leaning via skew look), a top cap,
+         a right side face, a bright terracotta rim, and a warm-white glint.
+         Heights peak toward the middle. 3/4 lean: bars share a small horizontal
+         offset between front face and top to read as 3D blocks. -->
+
+    <!-- baseline the bars stand on -->
+    <line x1="58" y1="150" x2="302" y2="150" stroke="#d6cfc0" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="58" y1="150" x2="302" y2="150" stroke="#c25450" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+
+    <!-- BARS: drawn as groups. Each group = top cap (parallelogram) + body + rim + glint.
+         Bar width 18, gap ~10. dx lean = 7 (top shifted right). -->
+
+    <!-- bar 1 (short, left) -->
+    <g>
+      <polygon points="63,128 81,128 88,121 70,121" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="63" y="128" width="18" height="22" fill="url(#glassBody)"/>
+      <polygon points="63,128 81,128 88,121 70,121" fill="#fff5ea" opacity="0.55"/>
+      <rect x="63" y="128" width="18" height="22" fill="none" stroke="#c25450" stroke-width="2" opacity="0.85"/>
+      <rect x="65.5" y="130.5" width="3.4" height="17" fill="#fff5ea" opacity="0.7" rx="1.7"/>
+    </g>
+
+    <!-- bar 2 -->
+    <g>
+      <polygon points="91,108 109,108 116,101 98,101" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="91" y="108" width="18" height="42" fill="url(#glassBody)"/>
+      <polygon points="91,108 109,108 116,101 98,101" fill="#fff5ea" opacity="0.55"/>
+      <rect x="91" y="108" width="18" height="42" fill="none" stroke="#c25450" stroke-width="2" opacity="0.85"/>
+      <rect x="93.5" y="110.5" width="3.4" height="37" fill="#fff5ea" opacity="0.7" rx="1.7"/>
+    </g>
+
+    <!-- bar 3 -->
+    <g>
+      <polygon points="119,84 137,84 144,77 126,77" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="119" y="84" width="18" height="66" fill="url(#glassBody)"/>
+      <polygon points="119,84 137,84 144,77 126,77" fill="#fff5ea" opacity="0.6"/>
+      <rect x="119" y="84" width="18" height="66" fill="none" stroke="#c25450" stroke-width="2" opacity="0.9"/>
+      <rect x="121.5" y="86.5" width="3.6" height="61" fill="#fff5ea" opacity="0.72" rx="1.8"/>
+    </g>
+
+    <!-- bar 4 (tallest, center) -->
+    <g>
+      <polygon points="147,66 165,66 172,59 154,59" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="147" y="66" width="18" height="84" fill="url(#glassBody)"/>
+      <polygon points="147,66 165,66 172,59 154,59" fill="#fff5ea" opacity="0.62"/>
+      <rect x="147" y="66" width="18" height="84" fill="none" stroke="#c25450" stroke-width="2.1" opacity="0.92"/>
+      <rect x="149.5" y="68.5" width="3.8" height="79" fill="#fff5ea" opacity="0.74" rx="1.9"/>
+    </g>
+
+    <!-- bar 5 (center-right, tall) -->
+    <g>
+      <polygon points="175,76 193,76 200,69 182,69" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="175" y="76" width="18" height="74" fill="url(#glassBody)"/>
+      <polygon points="175,76 193,76 200,69 182,69" fill="#fff5ea" opacity="0.6"/>
+      <rect x="175" y="76" width="18" height="74" fill="none" stroke="#c25450" stroke-width="2.1" opacity="0.92"/>
+      <rect x="177.5" y="78.5" width="3.8" height="69" fill="#fff5ea" opacity="0.74" rx="1.9"/>
+    </g>
+
+    <!-- bar 6 -->
+    <g>
+      <polygon points="203,98 221,98 228,91 210,91" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="203" y="98" width="18" height="52" fill="url(#glassBody)"/>
+      <polygon points="203,98 221,98 228,91 210,91" fill="#fff5ea" opacity="0.58"/>
+      <rect x="203" y="98" width="18" height="52" fill="none" stroke="#c25450" stroke-width="2" opacity="0.88"/>
+      <rect x="205.5" y="100.5" width="3.6" height="47" fill="#fff5ea" opacity="0.72" rx="1.8"/>
+    </g>
+
+    <!-- bar 7 -->
+    <g>
+      <polygon points="231,116 249,116 256,109 238,109" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="231" y="116" width="18" height="34" fill="url(#glassBody)"/>
+      <polygon points="231,116 249,116 256,109 238,109" fill="#fff5ea" opacity="0.55"/>
+      <rect x="231" y="116" width="18" height="34" fill="none" stroke="#c25450" stroke-width="2" opacity="0.85"/>
+      <rect x="233.5" y="118.5" width="3.4" height="29" fill="#fff5ea" opacity="0.7" rx="1.7"/>
+    </g>
+
+    <!-- bar 8 (short, right) -->
+    <g>
+      <polygon points="259,132 277,132 284,125 266,125" fill="url(#glassSide)" opacity="0.9"/>
+      <rect x="259" y="132" width="18" height="18" fill="url(#glassBody)"/>
+      <polygon points="259,132 277,132 284,125 266,125" fill="#fff5ea" opacity="0.52"/>
+      <rect x="259" y="132" width="18" height="18" fill="none" stroke="#c25450" stroke-width="1.9" opacity="0.82"/>
+      <rect x="261.5" y="134.5" width="3.2" height="13" fill="#fff5ea" opacity="0.68" rx="1.6"/>
+    </g>
+
+    <!-- fresnel halo behind the tall center bars (translucent glow) -->
+    <ellipse cx="170" cy="100" rx="62" ry="56" fill="#efcabf" opacity="0.16"/>
+
+    <!-- ======== INK PARTICLE RAIN (middle) ========
+         Densest just under the bars, fanning slightly as it falls. -->
+    <g filter="url(#soft)" fill="#c25450">
+      <circle cx="118" cy="158" r="2.4"/>
+      <circle cx="142" cy="160" r="2.6" fill="#9c3f3c"/>
+      <circle cx="166" cy="157" r="2.7"/>
+      <circle cx="190" cy="159" r="2.5" fill="#9c3f3c"/>
+      <circle cx="214" cy="161" r="2.3"/>
+      <circle cx="238" cy="158" r="2.2"/>
+      <circle cx="100" cy="168" r="2.1" fill="#efcabf"/>
+      <circle cx="130" cy="172" r="2.5"/>
+      <circle cx="158" cy="170" r="2.4" fill="#9c3f3c"/>
+      <circle cx="182" cy="173" r="2.6"/>
+      <circle cx="206" cy="171" r="2.4" fill="#9c3f3c"/>
+      <circle cx="234" cy="170" r="2.0"/>
+      <circle cx="258" cy="167" r="1.9" fill="#efcabf"/>
+      <circle cx="110" cy="184" r="2.2"/>
+      <circle cx="148" cy="186" r="2.3" fill="#9c3f3c"/>
+      <circle cx="176" cy="188" r="2.5"/>
+      <circle cx="198" cy="185" r="2.2"/>
+      <circle cx="224" cy="187" r="2.1" fill="#9c3f3c"/>
+      <circle cx="252" cy="184" r="1.8" fill="#efcabf"/>
+      <circle cx="92"  cy="180" r="1.7" fill="#efcabf"/>
+      <circle cx="134" cy="198" r="2.1"/>
+      <circle cx="168" cy="200" r="2.3" fill="#9c3f3c"/>
+      <circle cx="200" cy="199" r="2.0"/>
+      <circle cx="232" cy="200" r="1.9" fill="#efcabf"/>
+      <circle cx="120" cy="204" r="1.8" fill="#efcabf"/>
+      <circle cx="186" cy="206" r="1.9"/>
+    </g>
+
+    <!-- ======== TRANSCRIPT LINES (bottom ~35%) ========
+         2-3 short rounded caption lines made of clustered dots / solid pills,
+         decreasing width, left-ish aligned. -->
+
+    <!-- line 1 (~85%) -->
+    <g>
+      <rect x="74" y="234" width="212" height="13" rx="6.5" fill="#c25450"/>
+      <rect x="74" y="234" width="212" height="13" rx="6.5" fill="#9c3f3c" opacity="0.45"/>
+      <rect x="74" y="235" width="212" height="4.5" rx="2.2" fill="#efcabf" opacity="0.4"/>
+    </g>
+    <!-- line 2 (~60%) -->
+    <g>
+      <rect x="74" y="262" width="150" height="13" rx="6.5" fill="#c25450"/>
+      <rect x="74" y="262" width="150" height="13" rx="6.5" fill="#9c3f3c" opacity="0.42"/>
+      <rect x="74" y="263" width="150" height="4.5" rx="2.2" fill="#efcabf" opacity="0.38"/>
+    </g>
+    <!-- line 3 (~45%, partially still forming from dots) -->
+    <g>
+      <rect x="74" y="290" width="96" height="13" rx="6.5" fill="#c25450"/>
+      <rect x="74" y="290" width="96" height="13" rx="6.5" fill="#9c3f3c" opacity="0.38"/>
+      <rect x="74" y="291" width="96" height="4.5" rx="2.2" fill="#efcabf" opacity="0.36"/>
+    </g>
+
+    <!-- a few stray dots just above / between the lines, mid-coalesce -->
+    <g fill="#c25450">
+      <circle cx="296" cy="240" r="2.0" opacity="0.55"/>
+      <circle cx="236" cy="268" r="2.0" opacity="0.5"/>
+      <circle cx="182" cy="296" r="2.0" opacity="0.6"/>
+      <circle cx="200" cy="296" r="1.7" opacity="0.4"/>
+      <circle cx="158" cy="222" r="1.8" opacity="0.5" fill="#9c3f3c"/>
+    </g>
+
+    <rect x="0" y="0" width="360" height="360" fill="url(#vig)"/>
+  </svg>
+</div>
+</body>
+</html>

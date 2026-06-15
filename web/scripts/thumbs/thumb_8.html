@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;600&family=JetBrains+Mono&family=Caveat&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; }
+  .thumb {
+    width: 360px;
+    height: 360px;
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    background: linear-gradient(150deg, #f7f4ee 0%, #f2ede3 100%);
+  }
+  .thumb svg { position: absolute; inset: 0; display: block; }
+  /* subtle vignette */
+  .vig {
+    position: absolute; inset: 0;
+    background: radial-gradient(120% 120% at 50% 46%, rgba(0,0,0,0) 58%, rgba(40,32,28,0.07) 100%);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="thumb">
+  <svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- frosted body sweep: green ice (lower-left) -> terracotta (toward top gap) -->
+      <linearGradient id="bodySweep" x1="0.12" y1="0.92" x2="0.74" y2="0.06">
+        <stop offset="0%"  stop-color="#8fdcc0"/>
+        <stop offset="36%" stop-color="#7fd6bb"/>
+        <stop offset="54%" stop-color="#84cb9e"/>
+        <stop offset="62%" stop-color="#c98a78"/>
+        <stop offset="72%" stop-color="#cd6259"/>
+        <stop offset="100%" stop-color="#c25450"/>
+      </linearGradient>
+      <!-- saturated rim/fresnel sweep -->
+      <linearGradient id="rimSweep" x1="0.12" y1="0.92" x2="0.74" y2="0.06">
+        <stop offset="0%"  stop-color="#2bb673"/>
+        <stop offset="40%" stop-color="#2bb673"/>
+        <stop offset="58%" stop-color="#5f9a55"/>
+        <stop offset="74%" stop-color="#c25450"/>
+        <stop offset="100%" stop-color="#9c3f3c"/>
+      </linearGradient>
+      <!-- inner shadow of the tube (gives 3D depth toward the hole) -->
+      <linearGradient id="innerShade" x1="0.12" y1="0.92" x2="0.74" y2="0.06">
+        <stop offset="0%"  stop-color="#1f8f5b"/>
+        <stop offset="50%" stop-color="#4f8a5a"/>
+        <stop offset="100%" stop-color="#9c3f3c"/>
+      </linearGradient>
+      <!-- soft frost blur for the body -->
+      <filter id="frost" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="1.1"/>
+      </filter>
+      <radialGradient id="lipGlowL" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+        <stop offset="45%" stop-color="#ffd9cf" stop-opacity="0.8"/>
+        <stop offset="100%" stop-color="#c25450" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="lipGlowR" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ecfff7" stop-opacity="0.95"/>
+        <stop offset="45%" stop-color="#bff0db" stop-opacity="0.75"/>
+        <stop offset="100%" stop-color="#2bb673" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="plumeGlow" cx="50%" cy="100%" r="90%">
+        <stop offset="0%" stop-color="#c25450" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#c25450" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!--
+      Geometry: center (180,178). The ring is drawn head-on as a fat torus.
+      We build it from stacked arc strokes. The GAP is at the TOP: the arc runs
+      from the right lip clockwise all the way around to the left lip, skipping
+      the top wedge (about a quarter of the arc).
+      Arc start angle (right lip) ~ -58deg from top; sweeps the long way round.
+      We use an SVG path drawn as the full near-circle.
+      Path: large fat O. Outer R ~ 128, tube thickness ~ 50 -> stroke width ~50.
+    -->
+
+    <!-- faint warm plume glow behind the gap -->
+    <ellipse cx="180" cy="74" rx="70" ry="86" fill="url(#plumeGlow)"/>
+
+    <g transform="translate(180,182)">
+      <!-- The torus tube as a thick stroked arc with a TOP gap.
+           Center radius Rc = 100. The arc skips the top wedge.
+           Endpoints at angle measured from +x axis (math), top = 90deg.
+           Right lip at 132deg? We'll define by coordinates.
+           Gap spans roughly from 60deg to 120deg (top, ~quarter).
+           So the stroke goes from 60deg clockwise down/around to 120deg the long way. -->
+
+      <!-- DROP shadow on paper -->
+      <path d="M 50.0 86.6
+               A 100 100 0 1 0 -50.0 86.6"
+            fill="none" stroke="rgba(60,50,44,0.10)" stroke-width="56"
+            stroke-linecap="round" transform="translate(3,7)"/>
+
+      <!-- BODY (frosted, blurred) -->
+      <path d="M 50.0 86.6
+               A 100 100 0 1 0 -50.0 86.6"
+            fill="none" stroke="url(#bodySweep)" stroke-width="54"
+            stroke-linecap="round" filter="url(#frost)"/>
+
+      <!-- inner tube shadow (toward the hole) -->
+      <path d="M 50.0 86.6
+               A 100 100 0 1 0 -50.0 86.6"
+            fill="none" stroke="url(#innerShade)" stroke-width="20"
+            stroke-linecap="round" opacity="0.30"
+            transform="scale(0.78)"/>
+
+      <!-- OUTER rim fresnel highlight -->
+      <path d="M 50.0 86.6
+               A 100 100 0 1 0 -50.0 86.6"
+            fill="none" stroke="url(#rimSweep)" stroke-width="6"
+            stroke-linecap="round"
+            transform="scale(1.205)" opacity="0.85"/>
+
+      <!-- top specular sheen on the tube (frosted glint), green side -->
+      <path d="M -18 -96
+               A 100 100 0 0 0 -86.6 -50"
+            fill="none" stroke="#ecfff7" stroke-width="7"
+            stroke-linecap="round" opacity="0.55"
+            transform="scale(1.05)"/>
+      <path d="M -86.6 -50
+               A 100 100 0 0 0 -98 18"
+            fill="none" stroke="#ffffff" stroke-width="6"
+            stroke-linecap="round" opacity="0.40"
+            transform="scale(1.05)"/>
+
+      <!-- trapped GREEN particles inside the tube (lower-left arc) -->
+      <g fill="#157f3c">
+        <circle cx="-70" cy="62" r="6.5"/>
+        <circle cx="-86" cy="40" r="5.5"/>
+        <circle cx="-58" cy="78" r="5"/>
+        <circle cx="-92" cy="14" r="6"/>
+        <circle cx="-44" cy="86" r="4.5"/>
+        <circle cx="-78" cy="58" r="4"/>
+        <circle cx="-96" cy="-8" r="4.5"/>
+      </g>
+      <g fill="#1f8f5b" opacity="0.85">
+        <circle cx="-64" cy="50" r="3.5"/>
+        <circle cx="-50" cy="72" r="3"/>
+        <circle cx="-82" cy="28" r="3.2"/>
+      </g>
+
+      <!-- a couple warming particles near the red side inside the tube -->
+      <g fill="#9c3f3c">
+        <circle cx="62" cy="58" r="5"/>
+        <circle cx="80" cy="34" r="4.2"/>
+        <circle cx="50" cy="74" r="3.6"/>
+      </g>
+
+      <!-- HOT LIP ends flanking the gap -->
+      <!-- left lip (~120deg): green-ice side -> minty hot glint -->
+      <circle cx="-50" cy="-86.6" r="25" fill="url(#lipGlowR)"/>
+      <circle cx="-50" cy="-86.6" r="8.5" fill="#f3fffb"/>
+      <!-- right lip (~60deg): terracotta side -> warm hot glint -->
+      <circle cx="50" cy="-86.6" r="25" fill="url(#lipGlowL)"/>
+      <circle cx="50" cy="-86.6" r="8.5" fill="#fff3ee"/>
+    </g>
+
+    <!-- upward plume of particles pouring OUT of the gap, re-forming a human -->
+    <g>
+      <!-- stream dots rising from inside the gap, warming to terracotta -->
+      <circle cx="180" cy="96"  r="5"   fill="#c25450" opacity="0.8"/>
+      <circle cx="170" cy="86"  r="3.6" fill="#cf6f63" opacity="0.7"/>
+      <circle cx="191" cy="86"  r="3.6" fill="#cf6f63" opacity="0.7"/>
+      <circle cx="180" cy="74"  r="4"   fill="#c25450" opacity="0.78"/>
+
+      <!-- faint HUMAN silhouette (head + shoulders) emerging above the opening -->
+      <g fill="#9c3f3c" opacity="0.95">
+        <!-- head -->
+        <circle cx="180" cy="34" r="15"/>
+        <!-- shoulders / torso -->
+        <path d="M 148 66
+                 C 152 48, 166 43, 180 43
+                 C 194 43, 208 48, 212 66
+                 Q 180 55, 148 66 Z"/>
+      </g>
+      <!-- a few sparse particles flanking the silhouette to keep it 'forming' -->
+      <circle cx="156" cy="44" r="2.8" fill="#c25450" opacity="0.5"/>
+      <circle cx="204" cy="44" r="2.8" fill="#c25450" opacity="0.5"/>
+    </g>
+  </svg>
+  <div class="vig"></div>
+</div>
+</body>
+</html>
