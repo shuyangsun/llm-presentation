@@ -322,8 +322,8 @@ const spinner = h("div", { class: "spinner" }, h("i", {}));
 const helpCard = h("div", { class: "help-card" });
 helpCard.innerHTML = `
   <h3>Keyboard</h3>
-  <div class="help-row"><span>Play / pause</span><span><kbd>space</kbd> <kbd>k</kbd></span></div>
-  <div class="help-row"><span>Seek ±5s / ±10s</span><span><kbd>←</kbd> <kbd>→</kbd> · <kbd>j</kbd> <kbd>l</kbd></span></div>
+  <div class="help-row"><span>Play / pause</span><span><kbd>space</kbd></span></div>
+  <div class="help-row"><span>Seek ±5s / +10s</span><span><kbd>←</kbd> <kbd>→</kbd> · <kbd>l</kbd></span></div>
   <div class="help-row"><span>Jump to 0–90%</span><span><kbd>0</kbd> … <kbd>9</kbd></span></div>
   <div class="help-row"><span>Volume / mute</span><span><kbd>↑</kbd> <kbd>↓</kbd> · <kbd>m</kbd></span></div>
   <div class="help-row"><span>Fullscreen</span><span><kbd>f</kbd></span></div>
@@ -774,7 +774,7 @@ document.addEventListener("keydown", (e) => {
 
   // Cold open: zero GUI. The first meaningful key *is* the play gesture.
   if (!hasBegun) {
-    if (e.code === "Space" || e.key === "k" || e.key === "Enter") {
+    if (e.code === "Space" || e.key === "Enter") {
       e.preventDefault();
       begin();
     }
@@ -786,7 +786,7 @@ document.addEventListener("keydown", (e) => {
   const onControl = ae instanceof HTMLButtonElement || ae instanceof HTMLAnchorElement;
   if (onControl && (e.code === "Space" || e.key === "Enter")) return;
 
-  if (e.code === "Space" || e.key === "k") {
+  if (e.code === "Space") {
     e.preventDefault();
     togglePlay();
   } else if (e.key === "ArrowRight") {
@@ -795,8 +795,6 @@ document.addEventListener("keydown", (e) => {
     seekBy(-5);
   } else if (e.key === "l") {
     seekBy(10);
-  } else if (e.key === "j") {
-    seekBy(-10);
   } else if (e.key === "ArrowUp") {
     e.preventDefault();
     video.volume = Math.min(1, video.volume + 0.1);
